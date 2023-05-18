@@ -1,0 +1,13 @@
+[package]
+name = "slac"
+version = "0.1.0"
+author = "Dennis Prediger <dennis.prediger@gmail.com>"
+edition = "2021"
+rust-version = "1.70.0"
+description = "The \"Simple Logic & Arithmetic Compiler\" (SLAC) transforms a single expression into an a abstract syntax tree."
+license = "Apache-2.0"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
