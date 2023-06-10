@@ -13,4 +13,5 @@ pub enum Expression {
     },
     Literal(Token),
     Variable(Token),
+    Error(String),
 }

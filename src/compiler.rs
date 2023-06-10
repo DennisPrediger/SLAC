@@ -1,158 +1,102 @@
-use crate::{ast::Expression, token::Token};
+use crate::{
+    ast::Expression,
+    token::{Precedence, Token},
+};
 
 pub struct Compiler {
     tokens: Vec<Token>,
     current: usize,
 }
 
-macro_rules! match_tokens {
-    ($sel:ident, $( $x:expr),*) => {
-        {
-            if $($sel.check($x) )||* {
-                $sel.advance();
-                true
-            } else {
-                false
-            }
-        }
-    };
-}
-
 impl Compiler {
-    pub fn compile_ast(tokens: Vec<Token>) -> Result<Expression, String> {
+    pub fn compile_ast(tokens: Vec<Token>) -> Expression {
         let mut compiler = Compiler { tokens, current: 0 };
 
-        compiler.compile()
+        match compiler.compile() {
+            Ok(expression) => expression,
+            Err(message) => Expression::Error(message),
+        }
     }
 
     fn compile(&mut self) -> Result<Expression, String> {
-        self.expression()
+        let expression = self.expression()?;
+
+        if self.current().is_some() {
+            Err("only one expression expected".to_string())
+        } else {
+            Ok(expression)
+        }
     }
 
     fn expression(&mut self) -> Result<Expression, String> {
-        self.or()
+        self.parse_precedence(Precedence::Or)
     }
 
-    fn or(&mut self) -> Result<Expression, String> {
-        let mut expression = self.and()?;
+    fn parse_precedence(&mut self, precedence: Precedence) -> Result<Expression, String> {
+        self.advance();
+        let mut expression = self.do_prefix()?;
 
-        while match_tokens!(self, Token::Or) {
-            let operator = self.previous().clone();
-            let right = self.and()?;
-
-            expression = Expression::Binary {
-                left: Box::new(expression),
-                right: Box::new(right),
-                operator,
-            }
+        while self
+            .current()
+            .is_some_and(|t| precedence <= Precedence::from(t))
+        {
+            self.advance();
+            expression = self.do_infix(expression)?;
         }
 
         Ok(expression)
     }
 
-    fn and(&mut self) -> Result<Expression, String> {
-        let mut expression = self.equality()?;
-
-        while match_tokens!(self, Token::And) {
-            let operator = self.previous().clone();
-            let right = self.equality()?;
-
-            expression = Expression::Binary {
-                left: Box::new(expression),
-                right: Box::new(right),
-                operator,
+    fn do_prefix(&mut self) -> Result<Expression, String> {
+        let previous = self.previous();
+        match previous {
+            Token::Boolean(_) | Token::String(_) | Token::Number(_) => {
+                Ok(Expression::Literal(previous.clone()))
             }
+            Token::Identifier(_) => Ok(Expression::Variable(previous.clone())),
+            Token::LeftParen => self.grouping(),
+            Token::Not | Token::Minus => self.unary(),
+            _ => Err("expected expression".to_string()),
         }
-
-        Ok(expression)
     }
 
-    fn equality(&mut self) -> Result<Expression, String> {
-        let mut expression = self.comparison()?;
-
-        while match_tokens!(self, Token::Equal, Token::NotEqual) {
-            let operator = self.previous().clone();
-            let right = self.comparison()?;
-
-            expression = Expression::Binary {
-                left: Box::new(expression),
-                right: Box::new(right),
-                operator,
-            }
+    fn do_infix(&mut self, left: Expression) -> Result<Expression, String> {
+        match self.previous() {
+            Token::Minus
+            | Token::Plus
+            | Token::Star
+            | Token::Slash
+            | Token::Equal
+            | Token::NotEqual
+            | Token::Greater
+            | Token::GreaterEqual
+            | Token::Less
+            | Token::LessEqual
+            | Token::And
+            | Token::Or => self.binary(left),
+            _ => unreachable!(),
         }
-
-        Ok(expression)
     }
 
-    fn comparison(&mut self) -> Result<Expression, String> {
-        let mut expression = self.addition()?;
+    fn binary(&mut self, left: Expression) -> Result<Expression, String> {
+        let operator = self.previous().clone();
+        let right = self.parse_precedence(Precedence::from(&operator).next())?;
 
-        while match_tokens!(
-            self,
-            Token::Greater,
-            Token::GreaterEqual,
-            Token::Less,
-            Token::LessEqual
-        ) {
-            let operator = self.previous().clone();
-            let right = self.addition()?;
-
-            expression = Expression::Binary {
-                left: Box::new(expression),
-                right: Box::new(right),
-                operator,
-            }
-        }
-
-        Ok(expression)
-    }
-
-    fn addition(&mut self) -> Result<Expression, String> {
-        let mut expression = self.multipication()?;
-
-        while match_tokens!(self, Token::Plus, Token::Minus) {
-            let operator = self.previous().clone();
-            let right = self.multipication()?;
-
-            expression = Expression::Binary {
-                left: Box::new(expression),
-                right: Box::new(right),
-                operator,
-            }
-        }
-
-        Ok(expression)
-    }
-
-    fn multipication(&mut self) -> Result<Expression, String> {
-        let mut expression = self.unary()?;
-
-        while match_tokens!(self, Token::Star, Token::Slash) {
-            let operator = self.previous().clone();
-            let right = self.unary()?;
-
-            expression = Expression::Binary {
-                left: Box::new(expression),
-                right: Box::new(right),
-                operator,
-            }
-        }
-
-        Ok(expression)
+        Ok(Expression::Binary {
+            left: Box::new(left),
+            right: Box::new(right),
+            operator,
+        })
     }
 
     fn unary(&mut self) -> Result<Expression, String> {
-        if match_tokens!(self, Token::Not, Token::Minus) {
-            let operator = self.previous().clone();
-            let right = self.unary()?;
+        let operator = self.previous().clone();
+        let right = self.parse_precedence(Precedence::Unary)?;
 
-            Ok(Expression::Unary {
-                right: Box::new(right),
-                operator: operator,
-            })
-        } else {
-            self.primary()
-        }
+        Ok(Expression::Unary {
+            right: Box::new(right),
+            operator,
+        })
     }
 
     fn grouping(&mut self) -> Result<Expression, String> {
@@ -162,40 +106,22 @@ impl Compiler {
         Ok(expression)
     }
 
-    fn primary(&mut self) -> Result<Expression, String> {
-        self.advance();
-        let current = self.previous();
-
-        match current {
-            Token::Boolean(_) | Token::String(_) | Token::Number(_) => {
-                Ok(Expression::Literal(current.clone()))
-            }
-            Token::Identifier(_) => Ok(Expression::Variable(current.clone())),
-            Token::LeftParen => self.grouping(),
-            _ => Err("Expected literal Value".to_string()),
-        }
-    }
-
-    fn check(&self, ref token: Token) -> bool {
-        Some(token) == self.tokens.get(self.current)
-    }
-
     fn advance(&mut self) {
         if self.current <= self.tokens.len() - 1 {
             self.current += 1;
         }
     }
 
-    fn current(&self) -> &Token {
-        self.tokens.get(self.current).unwrap()
+    fn current(&self) -> Option<&Token> {
+        self.tokens.get(self.current)
     }
 
     fn previous(&self) -> &Token {
-        self.tokens.get(self.current - 1).unwrap()
+        self.tokens.get(self.current - 1).expect("some token")
     }
 
     fn chomp(&mut self, ref token: Token, message: &str) -> Result<(), String> {
-        if self.current() == token {
+        if self.current() == Some(token) {
             self.advance();
             Ok(())
         } else {
@@ -212,7 +138,7 @@ mod test {
 
     #[test]
     fn single_literal() -> Result<(), String> {
-        let ast = Compiler::compile_ast(vec![Token::Boolean(true)])?;
+        let ast = Compiler::compile_ast(vec![Token::Boolean(true)]);
         let expected = Expression::Literal(Token::Boolean(true));
 
         assert_eq!(ast, expected);
@@ -221,7 +147,7 @@ mod test {
 
     #[test]
     fn single_variable() -> Result<(), String> {
-        let ast = Compiler::compile_ast(vec![Token::Identifier(String::from("test"))])?;
+        let ast = Compiler::compile_ast(vec![Token::Identifier(String::from("test"))]);
         let expected = Expression::Variable(Token::Identifier(String::from("test")));
 
         assert_eq!(ast, expected);
@@ -234,7 +160,7 @@ mod test {
             Token::LeftParen,
             Token::Boolean(true),
             Token::RightParen,
-        ])?;
+        ]);
         let expected = Expression::Literal(Token::Boolean(true));
 
         assert_eq!(ast, expected);
@@ -243,7 +169,7 @@ mod test {
 
     #[test]
     fn unary_literal() -> Result<(), String> {
-        let ast = Compiler::compile_ast(vec![Token::Minus, Token::Number(42.0)])?;
+        let ast = Compiler::compile_ast(vec![Token::Minus, Token::Number(42.0)]);
         let expected = Expression::Unary {
             right: Box::new(Expression::Literal(Token::Number(42.0))),
             operator: Token::Minus,
@@ -255,7 +181,7 @@ mod test {
 
     #[test]
     fn multiply_number() -> Result<(), String> {
-        let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Star, Token::Number(2.0)])?;
+        let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Star, Token::Number(2.0)]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Number(3.0))),
             right: Box::new(Expression::Literal(Token::Number(2.0))),
@@ -268,7 +194,7 @@ mod test {
 
     #[test]
     fn add_number() -> Result<(), String> {
-        let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Plus, Token::Number(2.0)])?;
+        let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Plus, Token::Number(2.0)]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Number(3.0))),
             right: Box::new(Expression::Literal(Token::Number(2.0))),
@@ -287,7 +213,7 @@ mod test {
             Token::Number(2.0),
             Token::Star,
             Token::Number(3.0),
-        ])?;
+        ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Number(1.0))),
             right: Box::new(Expression::Binary {
@@ -304,8 +230,7 @@ mod test {
 
     #[test]
     fn comparison_equal() -> Result<(), String> {
-        let ast =
-            Compiler::compile_ast(vec![Token::Number(5.0), Token::Equal, Token::Number(7.0)])?;
+        let ast = Compiler::compile_ast(vec![Token::Number(5.0), Token::Equal, Token::Number(7.0)]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Number(5.0))),
             right: Box::new(Expression::Literal(Token::Number(7.0))),
@@ -322,7 +247,7 @@ mod test {
             Token::Boolean(true),
             Token::And,
             Token::Boolean(false),
-        ])?;
+        ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Boolean(true))),
             right: Box::new(Expression::Literal(Token::Boolean(false))),
@@ -343,7 +268,7 @@ mod test {
             Token::RightParen,
             Token::Star,
             Token::Number(4.0),
-        ])?;
+        ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Binary {
                 left: Box::new(Expression::Literal(Token::Number(5.0))),
@@ -366,7 +291,7 @@ mod test {
             Token::Identifier(String::from("SOME_VAR")),
             Token::Star,
             Token::Number(4.0),
-        ])?;
+        ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Variable(Token::Identifier(String::from(
                 "SOME_VAR",
