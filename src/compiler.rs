@@ -1,5 +1,6 @@
 use crate::{
     ast::Expression,
+    error::SyntaxError,
     token::{Precedence, Token},
 };
 
@@ -8,31 +9,28 @@ pub struct Compiler {
     current: usize,
 }
 
-impl Compiler {
-    pub fn compile_ast(tokens: Vec<Token>) -> Expression {
-        let mut compiler = Compiler { tokens, current: 0 };
+type Result<T> = std::result::Result<T, SyntaxError>;
 
-        match compiler.compile() {
-            Ok(expression) => expression,
-            Err(message) => Expression::Error(message),
-        }
+impl Compiler {
+    pub fn compile_ast(tokens: Vec<Token>) -> Result<Expression> {
+        let mut compiler = Compiler { tokens, current: 0 };
+        compiler.compile()
     }
 
-    fn compile(&mut self) -> Result<Expression, String> {
+    fn compile(&mut self) -> Result<Expression> {
         let expression = self.expression()?;
 
-        if self.current().is_some() {
-            Err("only one expression expected".to_string())
-        } else {
-            Ok(expression)
+        match self.current() {
+            Some(token) => Err(SyntaxError::new(token, "expected operator")),
+            None => Ok(expression),
         }
     }
 
-    fn expression(&mut self) -> Result<Expression, String> {
+    fn expression(&mut self) -> Result<Expression> {
         self.parse_precedence(Precedence::Or)
     }
 
-    fn parse_precedence(&mut self, precedence: Precedence) -> Result<Expression, String> {
+    fn parse_precedence(&mut self, precedence: Precedence) -> Result<Expression> {
         self.advance();
         let mut expression = self.do_prefix()?;
 
@@ -47,7 +45,7 @@ impl Compiler {
         Ok(expression)
     }
 
-    fn do_prefix(&mut self) -> Result<Expression, String> {
+    fn do_prefix(&mut self) -> Result<Expression> {
         let previous = self.previous();
         match previous {
             Token::Boolean(_) | Token::String(_) | Token::Number(_) => {
@@ -56,11 +54,14 @@ impl Compiler {
             Token::Identifier(_) => Ok(Expression::Variable(previous.clone())),
             Token::LeftParen => self.grouping(),
             Token::Not | Token::Minus => self.unary(),
-            _ => Err("expected expression".to_string()),
+            _ => Err(SyntaxError::new(
+                previous,
+                "expected left side of expression",
+            )),
         }
     }
 
-    fn do_infix(&mut self, left: Expression) -> Result<Expression, String> {
+    fn do_infix(&mut self, left: Expression) -> Result<Expression> {
         match self.previous() {
             Token::Minus
             | Token::Plus
@@ -78,7 +79,7 @@ impl Compiler {
         }
     }
 
-    fn binary(&mut self, left: Expression) -> Result<Expression, String> {
+    fn binary(&mut self, left: Expression) -> Result<Expression> {
         let operator = self.previous().clone();
         let right = self.parse_precedence(Precedence::from(&operator).next())?;
 
@@ -89,7 +90,7 @@ impl Compiler {
         })
     }
 
-    fn unary(&mut self) -> Result<Expression, String> {
+    fn unary(&mut self) -> Result<Expression> {
         let operator = self.previous().clone();
         let right = self.parse_precedence(Precedence::Unary)?;
 
@@ -99,9 +100,9 @@ impl Compiler {
         })
     }
 
-    fn grouping(&mut self) -> Result<Expression, String> {
+    fn grouping(&mut self) -> Result<Expression> {
         let expression = self.expression()?;
-        self.chomp(Token::RightParen, "Expected ')' after expression.")?;
+        self.chomp(Token::RightParen, "expected ')' after group expression")?;
 
         Ok(expression)
     }
@@ -117,15 +118,17 @@ impl Compiler {
     }
 
     fn previous(&self) -> &Token {
-        self.tokens.get(self.current - 1).expect("some token")
+        self.tokens
+            .get(self.current - 1)
+            .expect("expected some token")
     }
 
-    fn chomp(&mut self, ref token: Token, message: &str) -> Result<(), String> {
+    fn chomp(&mut self, ref token: Token, message: &str) -> Result<()> {
         if self.current() == Some(token) {
             self.advance();
             Ok(())
         } else {
-            Err(message.to_string())
+            Err(SyntaxError::new(token, message))
         }
     }
 }
@@ -137,25 +140,23 @@ mod test {
     use super::Compiler;
 
     #[test]
-    fn single_literal() -> Result<(), String> {
+    fn single_literal() {
         let ast = Compiler::compile_ast(vec![Token::Boolean(true)]);
         let expected = Expression::Literal(Token::Boolean(true));
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn single_variable() -> Result<(), String> {
+    fn single_variable() {
         let ast = Compiler::compile_ast(vec![Token::Identifier(String::from("test"))]);
         let expected = Expression::Variable(Token::Identifier(String::from("test")));
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn expression_group() -> Result<(), String> {
+    fn expression_group() {
         let ast = Compiler::compile_ast(vec![
             Token::LeftParen,
             Token::Boolean(true),
@@ -163,24 +164,22 @@ mod test {
         ]);
         let expected = Expression::Literal(Token::Boolean(true));
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn unary_literal() -> Result<(), String> {
+    fn unary_literal() {
         let ast = Compiler::compile_ast(vec![Token::Minus, Token::Number(42.0)]);
         let expected = Expression::Unary {
             right: Box::new(Expression::Literal(Token::Number(42.0))),
             operator: Token::Minus,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn multiply_number() -> Result<(), String> {
+    fn multiply_number() {
         let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Star, Token::Number(2.0)]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Number(3.0))),
@@ -188,12 +187,11 @@ mod test {
             operator: Token::Star,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn add_number() -> Result<(), String> {
+    fn add_number() {
         let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Plus, Token::Number(2.0)]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Number(3.0))),
@@ -201,12 +199,11 @@ mod test {
             operator: Token::Plus,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn precedence_multiply_addition() -> Result<(), String> {
+    fn precedence_multiply_addition() {
         let ast = Compiler::compile_ast(vec![
             Token::Number(1.0),
             Token::Plus,
@@ -224,12 +221,11 @@ mod test {
             operator: Token::Plus,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn comparison_equal() -> Result<(), String> {
+    fn comparison_equal() {
         let ast = Compiler::compile_ast(vec![Token::Number(5.0), Token::Equal, Token::Number(7.0)]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Token::Number(5.0))),
@@ -237,12 +233,11 @@ mod test {
             operator: Token::Equal,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn boolean_and() -> Result<(), String> {
+    fn boolean_and() {
         let ast = Compiler::compile_ast(vec![
             Token::Boolean(true),
             Token::And,
@@ -254,12 +249,11 @@ mod test {
             operator: Token::And,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn variable_add() -> Result<(), String> {
+    fn variable_add() {
         let ast = Compiler::compile_ast(vec![
             Token::LeftParen,
             Token::Number(5.0),
@@ -281,12 +275,11 @@ mod test {
             operator: Token::Star,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 
     #[test]
-    fn variable_mul() -> Result<(), String> {
+    fn variable_mul() {
         let ast = Compiler::compile_ast(vec![
             Token::Identifier(String::from("SOME_VAR")),
             Token::Star,
@@ -300,7 +293,6 @@ mod test {
             operator: Token::Star,
         };
 
-        assert_eq!(ast, expected);
-        Ok(())
+        assert_eq!(ast, Ok(expected));
     }
 }

@@ -5,7 +5,7 @@ fn test_single_boolean_true() {
     let result = compile("True");
     let expected = Expression::Literal(Token::Boolean(true));
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
@@ -13,7 +13,7 @@ fn test_single_boolean_false() {
     let result = compile("False");
     let expected = Expression::Literal(Token::Boolean(false));
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
@@ -21,7 +21,7 @@ fn test_single_variable() {
     let result = compile("SOME_VAR");
     let expected = Expression::Variable(Token::Identifier("SOME_VAR".to_string()));
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
@@ -33,7 +33,7 @@ fn test_simple_addition() {
         operator: Token::Plus,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn test_multiply_addition() {
         operator: Token::Plus,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn test_addition_multiply() {
         operator: Token::Plus,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
@@ -81,36 +81,36 @@ fn test_group_addition_multiply() {
         operator: Token::Star,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_and() {
-    let result = compile("True && False");
+    let result = compile("True and False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Token::Boolean(true))),
         right: Box::new(Expression::Literal(Token::Boolean(false))),
         operator: Token::And,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_or() {
-    let result = compile("True || False");
+    let result = compile("True or False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Token::Boolean(true))),
         right: Box::new(Expression::Literal(Token::Boolean(false))),
         operator: Token::Or,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_and_or() {
-    let result = compile("False && True || False");
+    let result = compile("False and True or False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Token::Boolean(false))),
@@ -121,12 +121,12 @@ fn test_and_or() {
         operator: Token::Or,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_or_and() {
-    let result = compile("False || True && False");
+    let result = compile("False or True and False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Token::Boolean(false))),
         right: Box::new(Expression::Binary {
@@ -137,80 +137,80 @@ fn test_or_and() {
         operator: Token::Or,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_unary_not() {
-    let result = compile("!False");
+    let result = compile("not False");
     let expected = Expression::Unary {
         right: Box::new(Expression::Literal(Token::Boolean(false))),
-        operator: Token::Bang,
+        operator: Token::Not,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_unary_not_and() {
-    let result = compile("!False || True");
+    let result = compile("not False or True");
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
             right: Box::new(Expression::Literal(Token::Boolean(false))),
-            operator: Token::Bang,
+            operator: Token::Not,
         }),
         right: Box::new(Expression::Literal(Token::Boolean(true))),
         operator: Token::Or,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_equals() {
-    let result = compile("1 == 3");
+    let result = compile("1 = 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Token::Number(1.0))),
         right: Box::new(Expression::Literal(Token::Number(3.0))),
-        operator: Token::EqualEqual,
+        operator: Token::Equal,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_not_equals() {
-    let result = compile("1 != 3");
+    let result = compile("1 <> 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Token::Number(1.0))),
         right: Box::new(Expression::Literal(Token::Number(3.0))),
-        operator: Token::BangEqual,
+        operator: Token::NotEqual,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_not_equals_unary() {
-    let result = compile("!true != !false");
+    let result = compile("not true <> not false");
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
             right: Box::new(Expression::Literal(Token::Boolean(true))),
-            operator: Token::Bang,
+            operator: Token::Not,
         }),
         right: Box::new(Expression::Unary {
             right: Box::new(Expression::Literal(Token::Boolean(false))),
-            operator: Token::Bang,
+            operator: Token::Not,
         }),
-        operator: Token::BangEqual,
+        operator: Token::NotEqual,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
 fn test_add_equals() {
-    let result = compile("1 + 2 == 10 - 7");
+    let result = compile("1 + 2 = 10 - 7");
 
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
@@ -223,10 +223,10 @@ fn test_add_equals() {
             right: Box::new(Expression::Literal(Token::Number(7.0))),
             operator: Token::Minus,
         }),
-        operator: Token::EqualEqual,
+        operator: Token::Equal,
     };
 
-    assert_eq!(result, expected);
+    assert_eq!(result, Ok(expected));
 }
 
 #[test]
