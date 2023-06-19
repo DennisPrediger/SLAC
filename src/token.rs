@@ -2,7 +2,7 @@
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Token {
   // Single-character tokens
-  LeftParen, RightParen,
+  LeftParen, RightParen, Comma,
   Plus, Minus, Star, Slash, 
   // One or two character tokens
   Greater, GreaterEqual,
@@ -27,6 +27,7 @@ pub enum Precedence {
     Term,       // + -
     Factor,     // * /
     Unary,      // ! -
+    Call,       // ()
     Primary,    // Literals
 }
 
@@ -40,6 +41,7 @@ impl From<&Token> for Precedence {
             Token::Less | Token::LessEqual => Precedence::Comparison,
             Token::And => Precedence::And,
             Token::Or => Precedence::Or,
+            Token::LeftParen => Precedence::Call,
             _ => Precedence::None,
         }
     }
@@ -55,7 +57,8 @@ impl Precedence {
             Precedence::Comparison => Precedence::Term,
             Precedence::Term => Precedence::Factor,
             Precedence::Factor => Precedence::Unary,
-            Precedence::Unary => Precedence::Primary,
+            Precedence::Unary => Precedence::Call,
+            Precedence::Call => Precedence::Primary,
             Precedence::Primary => Precedence::None,
         }
     }

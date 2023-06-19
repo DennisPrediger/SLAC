@@ -31,6 +31,7 @@ impl<'a> Iterator for Scanner<'a> {
             '\'' => self.string(),
             '(' => self.single(Token::LeftParen),
             ')' => self.single(Token::RightParen),
+            ',' => self.single(Token::Comma),
             '+' => self.single(Token::Plus),
             '-' => self.single(Token::Minus),
             '*' => self.single(Token::Star),

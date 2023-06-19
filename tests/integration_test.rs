@@ -253,3 +253,44 @@ fn test_add_add_add() {
 
     assert_eq!(result, Ok(expected));
 }
+
+#[test]
+fn test_function_call() {
+    let result = compile("max(1 + 5, 3) > 2");
+
+    let expected = Expression::Binary {
+        left: Box::new(Expression::Call(
+            Token::Identifier("max".to_string()),
+            vec![
+                Expression::Binary {
+                    left: Box::new(Expression::Literal(Token::Number(1.0))),
+                    right: Box::new(Expression::Literal(Token::Number(5.0))),
+                    operator: Token::Plus,
+                },
+                Expression::Literal(Token::Number(3.0)),
+            ],
+        )),
+        right: Box::new(Expression::Literal(Token::Number(2.0))),
+        operator: Token::Greater,
+    };
+
+    assert_eq!(result, Ok(expected));
+}
+
+#[test]
+fn test_function_call_no_params() {
+    let result = compile("Now() > current_date");
+
+    let expected = Expression::Binary {
+        left: Box::new(Expression::Call(
+            Token::Identifier("Now".to_string()),
+            vec![],
+        )),
+        right: Box::new(Expression::Variable(Token::Identifier(
+            "current_date".to_string(),
+        ))),
+        operator: Token::Greater,
+    };
+
+    assert_eq!(result, Ok(expected));
+}

@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::{
     ast::Expression,
     error::SyntaxError,
@@ -75,7 +77,41 @@ impl Compiler {
             | Token::LessEqual
             | Token::And
             | Token::Or => self.binary(left),
+            Token::LeftParen => self.call(left),
             _ => unreachable!(),
+        }
+    }
+
+    fn arguments(&mut self) -> Result<Vec<Expression>> {
+        let mut arguments: Vec<Expression> = vec![];
+
+        if !(self.current() == Some(&Token::RightParen)) {
+            loop {
+                arguments.push(self.expression()?);
+
+                if self.current() == Some(&Token::Comma) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+
+            self.chomp(Token::RightParen, "expected ')' after argument list")?;
+        } else {
+            self.advance(); // chomp the ')'
+        }
+
+        Ok(arguments)
+    }
+
+    fn call(&mut self, left: Expression) -> Result<Expression> {
+        if let Expression::Variable(token) = left {
+            Ok(Expression::Call(token, self.arguments()?))
+        } else {
+            Err(SyntaxError::new(
+                self.previous(),
+                "can only call identifiers",
+            ))
         }
     }
 
@@ -292,6 +328,27 @@ mod test {
             right: Box::new(Expression::Literal(Token::Number(4.0))),
             operator: Token::Star,
         };
+
+        assert_eq!(ast, Ok(expected));
+    }
+
+    #[test]
+    fn function_call() {
+        let ast = Compiler::compile_ast(vec![
+            Token::Identifier(String::from("max")),
+            Token::LeftParen,
+            Token::Number(1.0),
+            Token::Comma,
+            Token::Number(2.0),
+            Token::RightParen,
+        ]);
+        let expected = Expression::Call(
+            Token::Identifier(String::from("max")),
+            vec![
+                Expression::Literal(Token::Number(1.0)),
+                Expression::Literal(Token::Number(2.0)),
+            ],
+        );
 
         assert_eq!(ast, Ok(expected));
     }

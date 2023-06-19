@@ -13,4 +13,5 @@ pub enum Expression {
     },
     Literal(Token),
     Variable(Token),
+    Call(Token, Vec<Expression>),
 }
