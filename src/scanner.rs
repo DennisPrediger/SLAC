@@ -13,21 +13,31 @@ impl<'a> Iterator for Scanner<'a> {
         self.skip_whitespace();
         self.start = self.current;
 
-        if self.is_at_end() {
-            return None;
-        }
+        self.next_char().map(|c| self.next_token(c)).flatten()
+    }
+}
 
-        let next_char = self.next_char();
+impl<'a> Scanner<'a> {
+    pub fn tokenize(source: &'a str) -> Vec<Token> {
+        let scanner = Scanner {
+            source,
+            start: 0,
+            current: 0,
+        };
 
-        if Scanner::is_identifier_start(next_char) {
+        scanner.collect()
+    }
+
+    fn next_token(&mut self, next: char) -> Option<Token> {
+        if Scanner::is_identifier_start(next) {
             return self.identifier();
         }
 
-        if next_char.is_numeric() {
+        if char::is_numeric(next) {
             return self.number();
         }
 
-        match next_char {
+        match next {
             '\'' => self.string(),
             '(' => self.single(Token::LeftParen),
             ')' => self.single(Token::RightParen),
@@ -41,18 +51,6 @@ impl<'a> Iterator for Scanner<'a> {
             '<' => self.lesser(),
             _ => None,
         }
-    }
-}
-
-impl<'a> Scanner<'a> {
-    pub fn tokenize(source: &'a str) -> Vec<Token> {
-        let scanner = Scanner {
-            source,
-            start: 0,
-            current: 0,
-        };
-
-        scanner.collect()
     }
 
     fn is_at_end(&self) -> bool {
@@ -73,9 +71,9 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn next_char(&mut self) -> char {
+    fn next_char(&mut self) -> Option<char> {
         self.advance();
-        self.source.chars().nth(self.current - 1).unwrap()
+        self.source.chars().nth(self.current - 1)
     }
 
     fn peek(&self) -> Option<char> {
