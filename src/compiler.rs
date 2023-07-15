@@ -1,3 +1,4 @@
+use crate::error::Result;
 use std::vec;
 
 use crate::{
@@ -11,8 +12,6 @@ pub struct Compiler {
     current: usize,
 }
 
-type Result<T> = std::result::Result<T, SyntaxError>;
-
 impl Compiler {
     pub fn compile_ast(tokens: Vec<Token>) -> Result<Expression> {
         let mut compiler = Compiler { tokens, current: 0 };
@@ -23,7 +22,7 @@ impl Compiler {
         let expression = self.expression()?;
 
         match self.current() {
-            Some(token) => Err(SyntaxError::new(token, "expected operator")),
+            Some(token) => Err(SyntaxError::expected("end of expresssion", token)),
             None => Ok(expression),
         }
     }
@@ -56,10 +55,7 @@ impl Compiler {
             Token::Identifier(_) => Ok(Expression::Variable(previous.clone())),
             Token::LeftParen => self.grouping(),
             Token::Not | Token::Minus => self.unary(),
-            _ => Err(SyntaxError::new(
-                previous,
-                "expected left side of expression",
-            )),
+            _ => Err(SyntaxError::expected("left side of expression", previous)),
         }
     }
 
@@ -96,7 +92,7 @@ impl Compiler {
                 }
             }
 
-            self.chomp(Token::RightParen, "expected ')' after argument list")?;
+            self.chomp(Token::RightParen, "')' after argument list")?;
         } else {
             self.advance(); // chomp the ')'
         }
@@ -108,10 +104,7 @@ impl Compiler {
         if let Expression::Variable(token) = left {
             Ok(Expression::Call(token, self.arguments()?))
         } else {
-            Err(SyntaxError::new(
-                self.previous(),
-                "can only call identifiers",
-            ))
+            Err(SyntaxError::expected("some identifier", self.previous()))
         }
     }
 
@@ -138,7 +131,7 @@ impl Compiler {
 
     fn grouping(&mut self) -> Result<Expression> {
         let expression = self.expression()?;
-        self.chomp(Token::RightParen, "expected ')' after group expression")?;
+        self.chomp(Token::RightParen, "')' after group expression")?;
 
         Ok(expression)
     }
@@ -164,7 +157,7 @@ impl Compiler {
             self.advance();
             Ok(())
         } else {
-            Err(SyntaxError::new(token, message))
+            Err(SyntaxError::expected(message, token))
         }
     }
 }

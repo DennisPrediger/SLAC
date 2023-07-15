@@ -30,6 +30,8 @@ pub mod token;
 /// assert_eq!(ast, Ok(expected));
 /// ```
 pub fn compile(source: &str) -> Result<Expression, SyntaxError> {
-    let tokens = Scanner::tokenize(source);
-    Compiler::compile_ast(tokens)
+    let tokens = Scanner::tokenize(source)?;
+    let ast = Compiler::compile_ast(tokens)?;
+
+    Ok(ast)
 }

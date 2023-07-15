@@ -1,3 +1,6 @@
+use std::vec;
+
+use crate::error::{Result, SyntaxError};
 use crate::token::Token;
 
 pub struct Scanner<'a> {
@@ -6,29 +9,32 @@ pub struct Scanner<'a> {
     current: usize,
 }
 
-impl<'a> Iterator for Scanner<'a> {
-    type Item = Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.skip_whitespace();
-        self.start = self.current;
-
-        self.next_char().map(|c| self.next_token(c)).flatten()
-    }
-}
-
 impl<'a> Scanner<'a> {
-    pub fn tokenize(source: &'a str) -> Vec<Token> {
-        let scanner = Scanner {
+    pub fn tokenize(source: &'a str) -> Result<Vec<Token>> {
+        let mut scanner = Scanner {
             source,
             start: 0,
             current: 0,
         };
 
-        scanner.collect()
+        let mut tokens: Vec<Token> = vec![];
+
+        while !scanner.is_at_end() {
+            tokens.push(scanner.next_token()?);
+        }
+
+        if tokens.is_empty() {
+            Err(SyntaxError::from("empty String"))
+        } else {
+            Ok(tokens)
+        }
     }
 
-    fn next_token(&mut self, next: char) -> Option<Token> {
+    fn next_token(&mut self) -> Result<Token> {
+        self.skip_whitespace();
+        self.start = self.current;
+        let next = self.next_char().unwrap();
+
         if Scanner::is_identifier_start(next) {
             return self.identifier();
         }
@@ -39,17 +45,18 @@ impl<'a> Scanner<'a> {
 
         match next {
             '\'' => self.string(),
-            '(' => self.single(Token::LeftParen),
-            ')' => self.single(Token::RightParen),
-            ',' => self.single(Token::Comma),
-            '+' => self.single(Token::Plus),
-            '-' => self.single(Token::Minus),
-            '*' => self.single(Token::Star),
-            '/' => self.single(Token::Slash),
-            '=' => self.single(Token::Equal),
-            '>' => self.greater(),
-            '<' => self.lesser(),
-            _ => None,
+            '(' => Ok(Token::LeftParen),
+            ')' => Ok(Token::RightParen),
+            ',' => Ok(Token::Comma),
+            '+' => Ok(Token::Plus),
+            '-' => Ok(Token::Minus),
+            '*' => Ok(Token::Star),
+            '/' => Ok(Token::Slash),
+            '=' => Ok(Token::Equal),
+            '>' => Ok(self.greater()),
+            '<' => Ok(self.lesser()),
+            '.' => self.number(), // interprete .1 as 0.1
+            _ => Err(SyntaxError(format!("invalid token: {}", next))),
         }
     }
 
@@ -90,12 +97,18 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn get_content(&self, trim_by: usize) -> String {
-        self.source
-            .get(self.start + trim_by..self.current - trim_by)
-            .unwrap()
+    fn get_content(&self, trim_by: usize) -> Result<String> {
+        let from = self.start + trim_by;
+        let to = self.current - trim_by;
+
+        let content = self
+            .source
+            .get(from..to)
+            .ok_or(SyntaxError::from("invalid content length"))?
             .chars()
-            .collect::<String>()
+            .collect::<String>();
+
+        Ok(content)
     }
 
     fn is_identifier_start(character: char) -> bool {
@@ -106,82 +119,83 @@ impl<'a> Scanner<'a> {
         character.is_alphanumeric() || character == '_' || character == '-'
     }
 
-    fn identifier(&mut self) -> Option<Token> {
+    fn identifier(&mut self) -> Result<Token> {
         while self.peek().is_some_and(Scanner::is_identifier) {
             self.advance();
         }
 
-        let ident = self.get_content(0);
+        let ident = self.get_content(0)?;
 
-        match ident.to_lowercase().as_str() {
-            "true" => Some(Token::Boolean(true)),
-            "false" => Some(Token::Boolean(false)),
-            "and" => Some(Token::And),
-            "or" => Some(Token::Or),
-            "not" => Some(Token::Not),
-            _ => Some(Token::Identifier(ident)),
-        }
+        let token = match ident.to_lowercase().as_str() {
+            "true" => Token::Boolean(true),
+            "false" => Token::Boolean(false),
+            "and" => Token::And,
+            "or" => Token::Or,
+            "not" => Token::Not,
+            _ => Token::Identifier(ident),
+        };
+
+        Ok(token)
     }
 
-    fn number(&mut self) -> Option<Token> {
-        self.advance_numeric();
+    fn extract_number(&self, content: &str) -> Result<f64> {
+        content
+            .parse::<f64>()
+            .map_err(|o| SyntaxError(o.to_string()))
+    }
+
+    fn number(&mut self) -> Result<Token> {
+        self.advance_numeric(); // advance integral
 
         if self.peek() == Some('.') {
-            match self.peek_ahead(1) {
-                Some(fractional) if fractional.is_numeric() => {
-                    self.advance(); // advance dot
+            self.advance(); // advance dot
+
+            if let Some(fractional) = self.peek() {
+                if fractional.is_numeric() {
                     self.advance_numeric(); // advance fraction
                 }
-                _ => (),
             }
         }
 
-        match self.get_content(0).parse::<f64>() {
-            Ok(number) => Some(Token::Number(number)),
-            Err(_) => None,
-        }
+        let content = self.get_content(0)?;
+        let number = self.extract_number(content.as_str())?;
+
+        Ok(Token::Number(number))
     }
 
-    fn string(&mut self) -> Option<Token> {
+    fn string(&mut self) -> Result<Token> {
         while self.peek().is_some_and(|c| c != '\'') {
             self.advance();
         }
 
         if self.is_at_end() {
-            None
-        } else {
-            self.advance();
-            Some(Token::String(self.get_content(1)))
+            let message = format!("Unterminated String at character {}", self.start);
+            return Err(SyntaxError(message));
+        };
+
+        self.advance();
+        let content = self.get_content(1)?;
+
+        Ok(Token::String(content))
+    }
+
+    fn encounter_double(&mut self, token: Token) -> Token {
+        self.advance();
+        token
+    }
+
+    fn greater(&mut self) -> Token {
+        match self.peek() {
+            Some('=') => self.encounter_double(Token::GreaterEqual),
+            _ => Token::Greater,
         }
     }
 
-    fn single(&self, token: Token) -> Option<Token> {
-        Some(token)
-    }
-
-    fn greater(&mut self) -> Option<Token> {
+    fn lesser(&mut self) -> Token {
         match self.peek() {
-            Some('=') => {
-                self.advance();
-                Some(Token::GreaterEqual)
-            }
-            Some(_) => Some(Token::Greater),
-            _ => None,
-        }
-    }
-
-    fn lesser(&mut self) -> Option<Token> {
-        match self.peek() {
-            Some('=') => {
-                self.advance();
-                Some(Token::LessEqual)
-            }
-            Some('>') => {
-                self.advance();
-                Some(Token::NotEqual)
-            }
-            Some(_) => Some(Token::Less),
-            _ => None,
+            Some('=') => self.encounter_double(Token::LessEqual),
+            Some('>') => self.encounter_double(Token::NotEqual),
+            _ => Token::Less,
         }
     }
 }
@@ -189,59 +203,126 @@ impl<'a> Scanner<'a> {
 #[cfg(test)]
 mod tests {
     use super::{Scanner, Token};
+    use crate::error::{Result, SyntaxError};
 
     #[test]
-    fn simple_bool() {
-        let tokens = Scanner::tokenize("True");
+    fn simple_bool() -> Result<()> {
+        let tokens = Scanner::tokenize("True")?;
         let expected = Token::Boolean(true);
 
         assert_eq!(tokens[0], expected);
+        Ok(())
     }
 
     #[test]
-    fn simple_integer() {
-        let tokens = Scanner::tokenize("9001");
+    fn simple_integer() -> Result<()> {
+        let tokens = Scanner::tokenize("9001")?;
         let expected = Token::Number(9001.0);
 
         assert_eq!(tokens[0], expected);
+        Ok(())
     }
 
     #[test]
-    fn simple_float() {
-        let tokens = Scanner::tokenize("3.14");
+    fn simple_float() -> Result<()> {
+        let tokens = Scanner::tokenize("3.14")?;
         let expected = Token::Number(3.14);
 
         assert_eq!(tokens[0], expected);
+        Ok(())
     }
 
     #[test]
-    fn simple_string() {
-        let tokens = Scanner::tokenize("'Hello World'");
+    fn simple_string() -> Result<()> {
+        let tokens = Scanner::tokenize("'Hello World'")?;
         let expected = Token::String(String::from("Hello World"));
 
         assert!(tokens.first().is_some());
         assert_eq!(tokens[0], expected);
+        Ok(())
     }
 
     #[test]
-    fn multiple_tokens() {
-        let tokens = Scanner::tokenize("1 + 1");
+    fn multiple_tokens() -> Result<()> {
+        let tokens = Scanner::tokenize("1 + 1")?;
         let expected: Vec<Token> = vec![Token::Number(1.0), Token::Plus, Token::Number(1.0)];
 
         assert_eq!(tokens, expected);
+        Ok(())
     }
 
     #[test]
-    fn var_name_underscore() {
-        let tokens = Scanner::tokenize("(SOME_VAR1 * ANOTHER-ONE)");
+    fn var_name_underscore() -> Result<()> {
+        let tokens = Scanner::tokenize("(_SOME_VAR1 * ANOTHER-ONE)")?;
         let expected = vec![
             Token::LeftParen,
-            Token::Identifier(String::from("SOME_VAR1")),
+            Token::Identifier(String::from("_SOME_VAR1")),
             Token::Star,
             Token::Identifier(String::from("ANOTHER-ONE")),
             Token::RightParen,
         ];
 
-        assert_eq!(expected, tokens)
+        assert_eq!(expected, tokens);
+        Ok(())
+    }
+
+    #[test]
+    fn unterminated_less() -> Result<()> {
+        let tokens = Scanner::tokenize("<")?;
+        let expected = vec![Token::Less];
+
+        assert_eq!(expected, tokens);
+        Ok(())
+    }
+
+    fn test_number(input: &str, expected: f64) -> Result<()> {
+        let tokens = Scanner::tokenize(input)?;
+        let expected = vec![Token::Number(expected)];
+
+        assert_eq!(expected, tokens);
+        Ok(())
+    }
+
+    #[test]
+    fn number_parts() -> Result<()> {
+        test_number("10", 10.0)?;
+        test_number("10.0", 10.0)?;
+        test_number("20.4", 20.4)?;
+        test_number("30.", 30.0)?;
+        test_number(".4", 0.4)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn err_empty_input() {
+        let tokens = Scanner::tokenize("");
+        let expected = Err(SyntaxError::from("empty String"));
+
+        assert_eq!(expected, tokens);
+    }
+
+    #[test]
+    fn err_unknown_token_1() {
+        let tokens = Scanner::tokenize("$");
+        let expected = Err(SyntaxError::from("invalid token: $"));
+
+        assert_eq!(expected, tokens);
+    }
+
+    #[test]
+    fn err_unknown_token_2() {
+        let tokens = Scanner::tokenize("$hello");
+        let expected = Err(SyntaxError::from("invalid token: $"));
+
+        assert_eq!(expected, tokens);
+    }
+
+    #[test]
+    fn err_unterminated_string() {
+        let tokens = Scanner::tokenize("'hello' + 'world");
+        let expected = Err(SyntaxError::from("Unterminated String at character 10"));
+
+        assert_eq!(expected, tokens);
     }
 }
