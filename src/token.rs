@@ -1,3 +1,5 @@
+/// A [`Token`] is the smallest logical unit evaluated by the compiler.
+/// It containes either an operator or a literal value.
 #[rustfmt::skip]
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Token {
@@ -11,12 +13,15 @@ pub enum Token {
   Equal, NotEqual,
   // Keywords
   And, Or, Not,
-  // Literals
+  // Literal Values
   Boolean(bool),
   String(String), Number(f64),
   Identifier(String)
 }
 
+/// The precedences used to order the operators evaluated in the
+/// [Pratt-Parser](https://en.wikipedia.org/wiki/Operator-precedence_parser#Pratt_parsing)
+/// when building the [`Expression`](crate::ast::Expression) tree.
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum Precedence {
     None,

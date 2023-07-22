@@ -10,6 +10,19 @@ pub struct Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
+    /// Converts an input string into a series of [`Tokens`](Token).
+    /// Returns a [`SyntaxError`] when encountering an error.
+    ///
+    /// # Examples
+    /// ```
+    /// use slac::scanner::Scanner;
+    /// use slac::token::Token;
+    ///
+    /// let tokens = Scanner::tokenize("40 + 2").unwrap();
+    /// let expected: Vec<Token> = vec![Token::Number(40.0), Token::Plus, Token::Number(2.0)];
+    ///
+    /// assert_eq!(tokens, expected);
+    /// ```
     pub fn tokenize(source: &'a str) -> Result<Vec<Token>> {
         let mut scanner = Scanner {
             source,

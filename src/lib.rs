@@ -1,3 +1,10 @@
+//! The **Simple Logic & Arithmetic Compiler** is a library to convert an expression
+//! string into a structured [`ast::Expression`] tree (an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)).
+//!
+//! While the interals are public you probalby want to use the [`compile`]
+//! function, which returns a [`Result`] of either the compiled [`ast::Expression`]
+//! tree or an [`error::SyntaxError`].
+
 use ast::Expression;
 use compiler::Compiler;
 use error::SyntaxError;
@@ -9,10 +16,9 @@ pub mod error;
 pub mod scanner;
 pub mod token;
 
-/// Compiles an string expression into into a structured AST
+/// Compiles a string into an [`ast::Expression`] tree or an /// [`error::SyntaxError`].
 ///
 /// # Examples
-///
 /// ```
 /// use slac::{ast::Expression, compile, token::Token};
 ///

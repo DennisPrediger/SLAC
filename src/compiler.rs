@@ -13,6 +13,7 @@ pub struct Compiler {
 }
 
 impl Compiler {
+    /// From a series of [`Tokens`](Token) compiles a structured [`Expression`] tree.
     pub fn compile_ast(tokens: Vec<Token>) -> Result<Expression> {
         let mut compiler = Compiler { tokens, current: 0 };
         compiler.compile()

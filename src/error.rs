@@ -3,6 +3,8 @@ use std::fmt;
 
 use crate::token::Token;
 
+/// A SyntaxError occures on invalid user input in the [scanner](crate::scanner) or
+/// [compiler](crate::compiler) Phase.
 #[derive(Debug, PartialEq)]
 pub struct SyntaxError(pub String);
 
