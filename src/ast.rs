@@ -16,9 +16,8 @@ pub enum Expression {
     },
     /// A literal Value, represented by a single [`Token`].
     Literal(Token),
-    /// A named variable, represented by a single [`Token`].
-    Variable(Token),
-    /// A call to an external function, named by a single [`Token`] and has a list
-    /// of [`Expressions`](Expression) as parameters.
-    Call(Token, Vec<Expression>),
+    /// A named external variable.
+    Variable(String),
+    /// A call to an external function with a list of [`Expression`] parameters.
+    Call(String, Vec<Expression>),
 }

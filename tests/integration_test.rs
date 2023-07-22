@@ -19,7 +19,7 @@ fn test_single_boolean_false() {
 #[test]
 fn test_single_variable() {
     let result = compile("SOME_VAR");
-    let expected = Expression::Variable(Token::Identifier("SOME_VAR".to_string()));
+    let expected = Expression::Variable("SOME_VAR".to_string());
 
     assert_eq!(result, Ok(expected));
 }
@@ -260,7 +260,7 @@ fn test_function_call() {
 
     let expected = Expression::Binary {
         left: Box::new(Expression::Call(
-            Token::Identifier("max".to_string()),
+            "max".to_string(),
             vec![
                 Expression::Binary {
                     left: Box::new(Expression::Literal(Token::Number(1.0))),
@@ -282,13 +282,8 @@ fn test_function_call_no_params() {
     let result = compile("Now() > current_date");
 
     let expected = Expression::Binary {
-        left: Box::new(Expression::Call(
-            Token::Identifier("Now".to_string()),
-            vec![],
-        )),
-        right: Box::new(Expression::Variable(Token::Identifier(
-            "current_date".to_string(),
-        ))),
+        left: Box::new(Expression::Call("Now".to_string(), vec![])),
+        right: Box::new(Expression::Variable("current_date".to_string())),
         operator: Token::Greater,
     };
 

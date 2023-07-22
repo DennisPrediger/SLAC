@@ -53,7 +53,7 @@ impl Compiler {
             Token::Boolean(_) | Token::String(_) | Token::Number(_) => {
                 Ok(Expression::Literal(previous.clone()))
             }
-            Token::Identifier(_) => Ok(Expression::Variable(previous.clone())),
+            Token::Identifier(token) => Ok(Expression::Variable(token.clone())),
             Token::LeftParen => self.grouping(),
             Token::Not | Token::Minus => self.unary(),
             _ => Err(SyntaxError::expected("left side of expression", previous)),
@@ -102,8 +102,8 @@ impl Compiler {
     }
 
     fn call(&mut self, left: Expression) -> Result<Expression> {
-        if let Expression::Variable(token) = left {
-            Ok(Expression::Call(token, self.arguments()?))
+        if let Expression::Variable(name) = left {
+            Ok(Expression::Call(name, self.arguments()?))
         } else {
             Err(SyntaxError::expected("some identifier", self.previous()))
         }
@@ -180,7 +180,7 @@ mod test {
     #[test]
     fn single_variable() {
         let ast = Compiler::compile_ast(vec![Token::Identifier(String::from("test"))]);
-        let expected = Expression::Variable(Token::Identifier(String::from("test")));
+        let expected = Expression::Variable(String::from("test"));
 
         assert_eq!(ast, Ok(expected));
     }
@@ -296,9 +296,7 @@ mod test {
         let expected = Expression::Binary {
             left: Box::new(Expression::Binary {
                 left: Box::new(Expression::Literal(Token::Number(5.0))),
-                right: Box::new(Expression::Variable(Token::Identifier(String::from(
-                    "SOME_VAR",
-                )))),
+                right: Box::new(Expression::Variable(String::from("SOME_VAR"))),
                 operator: Token::Plus,
             }),
             right: Box::new(Expression::Literal(Token::Number(4.0))),
@@ -316,9 +314,7 @@ mod test {
             Token::Number(4.0),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Variable(Token::Identifier(String::from(
-                "SOME_VAR",
-            )))),
+            left: Box::new(Expression::Variable(String::from("SOME_VAR"))),
             right: Box::new(Expression::Literal(Token::Number(4.0))),
             operator: Token::Star,
         };
@@ -337,7 +333,7 @@ mod test {
             Token::RightParen,
         ]);
         let expected = Expression::Call(
-            Token::Identifier(String::from("max")),
+            String::from("max"),
             vec![
                 Expression::Literal(Token::Number(1.0)),
                 Expression::Literal(Token::Number(2.0)),
