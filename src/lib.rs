@@ -13,23 +13,25 @@ use scanner::Scanner;
 pub mod ast;
 pub mod compiler;
 pub mod error;
+pub mod interpreter;
 pub mod scanner;
 pub mod token;
+pub mod value;
 
 /// Compiles a string into an [`ast::Expression`] tree or an [`error::SyntaxError`].
 ///
 /// # Examples
 /// ```
-/// use slac::{ast::Expression, compile, token::Token};
+/// use slac::{ast::Expression, compile, token::Token, value::Value};
 ///
 /// let ast = compile("10 + 20 >= 30");
 /// let expected = Expression::Binary {
 ///     left: Box::new(Expression::Binary {
-///         left: Box::new(Expression::Literal(Token::Number(10.0))),
-///         right: Box::new(Expression::Literal(Token::Number(20.0))),
+///         left: Box::new(Expression::Literal(Value::Number(10.0))),
+///         right: Box::new(Expression::Literal(Value::Number(20.0))),
 ///         operator: Token::Plus,
 ///     }),
-///     right: Box::new(Expression::Literal(Token::Number(30.0))),
+///     right: Box::new(Expression::Literal(Value::Number(30.0))),
 ///     operator: Token::GreaterEqual,
 /// };
 ///

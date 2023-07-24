@@ -50,10 +50,8 @@ impl Compiler {
     fn do_prefix(&mut self) -> Result<Expression> {
         let previous = self.previous();
         match previous {
-            Token::Boolean(_) | Token::String(_) | Token::Number(_) => {
-                Ok(Expression::Literal(previous.clone()))
-            }
-            Token::Identifier(token) => Ok(Expression::Variable(token.clone())),
+            Token::Literal(value) => Ok(Expression::Literal(value.clone())),
+            Token::Identifier(name) => Ok(Expression::Variable(name.clone())),
             Token::LeftParen => self.grouping(),
             Token::Not | Token::Minus => self.unary(),
             _ => Err(SyntaxError::expected("left side of expression", previous)),
@@ -165,14 +163,14 @@ impl Compiler {
 
 #[cfg(test)]
 mod test {
-    use crate::{ast::Expression, token::Token};
+    use crate::{ast::Expression, token::Token, value::Value};
 
     use super::Compiler;
 
     #[test]
     fn single_literal() {
-        let ast = Compiler::compile_ast(vec![Token::Boolean(true)]);
-        let expected = Expression::Literal(Token::Boolean(true));
+        let ast = Compiler::compile_ast(vec![Token::Literal(Value::Boolean(true))]);
+        let expected = Expression::Literal(Value::Boolean(true));
 
         assert_eq!(ast, Ok(expected));
     }
@@ -189,19 +187,19 @@ mod test {
     fn expression_group() {
         let ast = Compiler::compile_ast(vec![
             Token::LeftParen,
-            Token::Boolean(true),
+            Token::Literal(Value::Boolean(true)),
             Token::RightParen,
         ]);
-        let expected = Expression::Literal(Token::Boolean(true));
+        let expected = Expression::Literal(Value::Boolean(true));
 
         assert_eq!(ast, Ok(expected));
     }
 
     #[test]
     fn unary_literal() {
-        let ast = Compiler::compile_ast(vec![Token::Minus, Token::Number(42.0)]);
+        let ast = Compiler::compile_ast(vec![Token::Minus, Token::Literal(Value::Number(42.0))]);
         let expected = Expression::Unary {
-            right: Box::new(Expression::Literal(Token::Number(42.0))),
+            right: Box::new(Expression::Literal(Value::Number(42.0))),
             operator: Token::Minus,
         };
 
@@ -210,10 +208,14 @@ mod test {
 
     #[test]
     fn multiply_number() {
-        let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Star, Token::Number(2.0)]);
+        let ast = Compiler::compile_ast(vec![
+            Token::Literal(Value::Number(3.0)),
+            Token::Star,
+            Token::Literal(Value::Number(2.0)),
+        ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(3.0))),
-            right: Box::new(Expression::Literal(Token::Number(2.0))),
+            left: Box::new(Expression::Literal(Value::Number(3.0))),
+            right: Box::new(Expression::Literal(Value::Number(2.0))),
             operator: Token::Star,
         };
 
@@ -222,10 +224,14 @@ mod test {
 
     #[test]
     fn add_number() {
-        let ast = Compiler::compile_ast(vec![Token::Number(3.0), Token::Plus, Token::Number(2.0)]);
+        let ast = Compiler::compile_ast(vec![
+            Token::Literal(Value::Number(3.0)),
+            Token::Plus,
+            Token::Literal(Value::Number(2.0)),
+        ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(3.0))),
-            right: Box::new(Expression::Literal(Token::Number(2.0))),
+            left: Box::new(Expression::Literal(Value::Number(3.0))),
+            right: Box::new(Expression::Literal(Value::Number(2.0))),
             operator: Token::Plus,
         };
 
@@ -235,17 +241,17 @@ mod test {
     #[test]
     fn precedence_multiply_addition() {
         let ast = Compiler::compile_ast(vec![
-            Token::Number(1.0),
+            Token::Literal(Value::Number(1.0)),
             Token::Plus,
-            Token::Number(2.0),
+            Token::Literal(Value::Number(2.0)),
             Token::Star,
-            Token::Number(3.0),
+            Token::Literal(Value::Number(3.0)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(1.0))),
+            left: Box::new(Expression::Literal(Value::Number(1.0))),
             right: Box::new(Expression::Binary {
-                left: Box::new(Expression::Literal(Token::Number(2.0))),
-                right: Box::new(Expression::Literal(Token::Number(3.0))),
+                left: Box::new(Expression::Literal(Value::Number(2.0))),
+                right: Box::new(Expression::Literal(Value::Number(3.0))),
                 operator: Token::Star,
             }),
             operator: Token::Plus,
@@ -256,10 +262,14 @@ mod test {
 
     #[test]
     fn comparison_equal() {
-        let ast = Compiler::compile_ast(vec![Token::Number(5.0), Token::Equal, Token::Number(7.0)]);
+        let ast = Compiler::compile_ast(vec![
+            Token::Literal(Value::Number(5.0)),
+            Token::Equal,
+            Token::Literal(Value::Number(7.0)),
+        ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(5.0))),
-            right: Box::new(Expression::Literal(Token::Number(7.0))),
+            left: Box::new(Expression::Literal(Value::Number(5.0))),
+            right: Box::new(Expression::Literal(Value::Number(7.0))),
             operator: Token::Equal,
         };
 
@@ -269,13 +279,13 @@ mod test {
     #[test]
     fn boolean_and() {
         let ast = Compiler::compile_ast(vec![
-            Token::Boolean(true),
+            Token::Literal(Value::Boolean(true)),
             Token::And,
-            Token::Boolean(false),
+            Token::Literal(Value::Boolean(false)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Boolean(true))),
-            right: Box::new(Expression::Literal(Token::Boolean(false))),
+            left: Box::new(Expression::Literal(Value::Boolean(true))),
+            right: Box::new(Expression::Literal(Value::Boolean(false))),
             operator: Token::And,
         };
 
@@ -286,20 +296,20 @@ mod test {
     fn variable_add() {
         let ast = Compiler::compile_ast(vec![
             Token::LeftParen,
-            Token::Number(5.0),
+            Token::Literal(Value::Number(5.0)),
             Token::Plus,
             Token::Identifier(String::from("SOME_VAR")),
             Token::RightParen,
             Token::Star,
-            Token::Number(4.0),
+            Token::Literal(Value::Number(4.0)),
         ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Binary {
-                left: Box::new(Expression::Literal(Token::Number(5.0))),
+                left: Box::new(Expression::Literal(Value::Number(5.0))),
                 right: Box::new(Expression::Variable(String::from("SOME_VAR"))),
                 operator: Token::Plus,
             }),
-            right: Box::new(Expression::Literal(Token::Number(4.0))),
+            right: Box::new(Expression::Literal(Value::Number(4.0))),
             operator: Token::Star,
         };
 
@@ -311,11 +321,11 @@ mod test {
         let ast = Compiler::compile_ast(vec![
             Token::Identifier(String::from("SOME_VAR")),
             Token::Star,
-            Token::Number(4.0),
+            Token::Literal(Value::Number(4.0)),
         ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Variable(String::from("SOME_VAR"))),
-            right: Box::new(Expression::Literal(Token::Number(4.0))),
+            right: Box::new(Expression::Literal(Value::Number(4.0))),
             operator: Token::Star,
         };
 
@@ -327,16 +337,16 @@ mod test {
         let ast = Compiler::compile_ast(vec![
             Token::Identifier(String::from("max")),
             Token::LeftParen,
-            Token::Number(1.0),
+            Token::Literal(Value::Number(1.0)),
             Token::Comma,
-            Token::Number(2.0),
+            Token::Literal(Value::Number(2.0)),
             Token::RightParen,
         ]);
         let expected = Expression::Call(
             String::from("max"),
             vec![
-                Expression::Literal(Token::Number(1.0)),
-                Expression::Literal(Token::Number(2.0)),
+                Expression::Literal(Value::Number(1.0)),
+                Expression::Literal(Value::Number(2.0)),
             ],
         );
 

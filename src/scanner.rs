@@ -2,6 +2,7 @@ use std::vec;
 
 use crate::error::{Result, SyntaxError};
 use crate::token::Token;
+use crate::value::Value;
 
 pub struct Scanner<'a> {
     source: &'a str,
@@ -16,10 +17,10 @@ impl<'a> Scanner<'a> {
     /// # Examples
     /// ```
     /// use slac::scanner::Scanner;
-    /// use slac::token::Token;
+    /// use slac::{token::Token, value::Value};
     ///
     /// let tokens = Scanner::tokenize("40 + 2").unwrap();
-    /// let expected: Vec<Token> = vec![Token::Number(40.0), Token::Plus, Token::Number(2.0)];
+    /// let expected: Vec<Token> = vec![Token::Literal(Value::Number(40.0)), Token::Plus, Token::Literal(Value::Number(2.0))];
     ///
     /// assert_eq!(tokens, expected);
     /// ```
@@ -140,8 +141,8 @@ impl<'a> Scanner<'a> {
         let ident = self.get_content(0)?;
 
         let token = match ident.to_lowercase().as_str() {
-            "true" => Token::Boolean(true),
-            "false" => Token::Boolean(false),
+            "true" => Token::Literal(Value::Boolean(true)),
+            "false" => Token::Literal(Value::Boolean(false)),
             "and" => Token::And,
             "or" => Token::Or,
             "not" => Token::Not,
@@ -173,7 +174,7 @@ impl<'a> Scanner<'a> {
         let content = self.get_content(0)?;
         let number = self.extract_number(content.as_str())?;
 
-        Ok(Token::Number(number))
+        Ok(Token::Literal(Value::Number(number)))
     }
 
     fn string(&mut self) -> Result<Token> {
@@ -189,7 +190,7 @@ impl<'a> Scanner<'a> {
         self.advance();
         let content = self.get_content(1)?;
 
-        Ok(Token::String(content))
+        Ok(Token::Literal(Value::String(content)))
     }
 
     fn encounter_double(&mut self, token: Token) -> Token {
@@ -216,12 +217,15 @@ impl<'a> Scanner<'a> {
 #[cfg(test)]
 mod tests {
     use super::{Scanner, Token};
-    use crate::error::{Result, SyntaxError};
+    use crate::{
+        error::{Result, SyntaxError},
+        value::Value,
+    };
 
     #[test]
     fn simple_bool() -> Result<()> {
         let tokens = Scanner::tokenize("True")?;
-        let expected = Token::Boolean(true);
+        let expected = Token::Literal(Value::Boolean(true));
 
         assert_eq!(tokens[0], expected);
         Ok(())
@@ -230,7 +234,7 @@ mod tests {
     #[test]
     fn simple_integer() -> Result<()> {
         let tokens = Scanner::tokenize("9001")?;
-        let expected = Token::Number(9001.0);
+        let expected = Token::Literal(Value::Number(9001.0));
 
         assert_eq!(tokens[0], expected);
         Ok(())
@@ -239,7 +243,7 @@ mod tests {
     #[test]
     fn simple_float() -> Result<()> {
         let tokens = Scanner::tokenize("3.14")?;
-        let expected = Token::Number(3.14);
+        let expected = Token::Literal(Value::Number(3.14));
 
         assert_eq!(tokens[0], expected);
         Ok(())
@@ -248,7 +252,7 @@ mod tests {
     #[test]
     fn simple_string() -> Result<()> {
         let tokens = Scanner::tokenize("'Hello World'")?;
-        let expected = Token::String(String::from("Hello World"));
+        let expected = Token::Literal(Value::String(String::from("Hello World")));
 
         assert!(tokens.first().is_some());
         assert_eq!(tokens[0], expected);
@@ -258,7 +262,11 @@ mod tests {
     #[test]
     fn multiple_tokens() -> Result<()> {
         let tokens = Scanner::tokenize("1 + 1")?;
-        let expected: Vec<Token> = vec![Token::Number(1.0), Token::Plus, Token::Number(1.0)];
+        let expected: Vec<Token> = vec![
+            Token::Literal(Value::Number(1.0)),
+            Token::Plus,
+            Token::Literal(Value::Number(1.0)),
+        ];
 
         assert_eq!(tokens, expected);
         Ok(())
@@ -290,7 +298,7 @@ mod tests {
 
     fn test_number(input: &str, expected: f64) -> Result<()> {
         let tokens = Scanner::tokenize(input)?;
-        let expected = vec![Token::Number(expected)];
+        let expected = vec![Token::Literal(Value::Number(expected))];
 
         assert_eq!(expected, tokens);
         Ok(())

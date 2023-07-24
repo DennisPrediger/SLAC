@@ -1,3 +1,5 @@
+use crate::value::Value;
+
 /// A [`Token`] is the smallest logical unit evaluated by the compiler.
 /// It containes either an operator or a literal value.
 #[rustfmt::skip]
@@ -14,8 +16,7 @@ pub enum Token {
   // Keywords
   And, Or, Not,
   // Literal Values
-  Boolean(bool),
-  String(String), Number(f64),
+  Literal(Value),
   Identifier(String)
 }
 

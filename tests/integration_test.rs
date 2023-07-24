@@ -1,9 +1,9 @@
-use slac::{ast::Expression, compile, token::Token};
+use slac::{ast::Expression, compile, token::Token, value::Value};
 
 #[test]
 fn test_single_boolean_true() {
     let result = compile("True");
-    let expected = Expression::Literal(Token::Boolean(true));
+    let expected = Expression::Literal(Value::Boolean(true));
 
     assert_eq!(result, Ok(expected));
 }
@@ -11,7 +11,7 @@ fn test_single_boolean_true() {
 #[test]
 fn test_single_boolean_false() {
     let result = compile("False");
-    let expected = Expression::Literal(Token::Boolean(false));
+    let expected = Expression::Literal(Value::Boolean(false));
 
     assert_eq!(result, Ok(expected));
 }
@@ -28,8 +28,8 @@ fn test_single_variable() {
 fn test_simple_addition() {
     let result = compile("1 + 2");
     let expected = Expression::Binary {
-        left: Box::new(Expression::Literal(Token::Number(1.0))),
-        right: Box::new(Expression::Literal(Token::Number(2.0))),
+        left: Box::new(Expression::Literal(Value::Number(1.0))),
+        right: Box::new(Expression::Literal(Value::Number(2.0))),
         operator: Token::Plus,
     };
 
@@ -41,11 +41,11 @@ fn test_multiply_addition() {
     let result = compile("1 * 2 + 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(1.0))),
-            right: Box::new(Expression::Literal(Token::Number(2.0))),
+            left: Box::new(Expression::Literal(Value::Number(1.0))),
+            right: Box::new(Expression::Literal(Value::Number(2.0))),
             operator: Token::Star,
         }),
-        right: Box::new(Expression::Literal(Token::Number(3.0))),
+        right: Box::new(Expression::Literal(Value::Number(3.0))),
         operator: Token::Plus,
     };
 
@@ -56,10 +56,10 @@ fn test_multiply_addition() {
 fn test_addition_multiply() {
     let result = compile("1 + 2 * 3");
     let expected = Expression::Binary {
-        left: Box::new(Expression::Literal(Token::Number(1.0))),
+        left: Box::new(Expression::Literal(Value::Number(1.0))),
         right: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(2.0))),
-            right: Box::new(Expression::Literal(Token::Number(3.0))),
+            left: Box::new(Expression::Literal(Value::Number(2.0))),
+            right: Box::new(Expression::Literal(Value::Number(3.0))),
             operator: Token::Star,
         }),
         operator: Token::Plus,
@@ -73,11 +73,11 @@ fn test_group_addition_multiply() {
     let result = compile("(1 + 2) * 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(1.0))),
-            right: Box::new(Expression::Literal(Token::Number(2.0))),
+            left: Box::new(Expression::Literal(Value::Number(1.0))),
+            right: Box::new(Expression::Literal(Value::Number(2.0))),
             operator: Token::Plus,
         }),
-        right: Box::new(Expression::Literal(Token::Number(3.0))),
+        right: Box::new(Expression::Literal(Value::Number(3.0))),
         operator: Token::Star,
     };
 
@@ -88,8 +88,8 @@ fn test_group_addition_multiply() {
 fn test_and() {
     let result = compile("True and False");
     let expected = Expression::Binary {
-        left: Box::new(Expression::Literal(Token::Boolean(true))),
-        right: Box::new(Expression::Literal(Token::Boolean(false))),
+        left: Box::new(Expression::Literal(Value::Boolean(true))),
+        right: Box::new(Expression::Literal(Value::Boolean(false))),
         operator: Token::And,
     };
 
@@ -100,8 +100,8 @@ fn test_and() {
 fn test_or() {
     let result = compile("True or False");
     let expected = Expression::Binary {
-        left: Box::new(Expression::Literal(Token::Boolean(true))),
-        right: Box::new(Expression::Literal(Token::Boolean(false))),
+        left: Box::new(Expression::Literal(Value::Boolean(true))),
+        right: Box::new(Expression::Literal(Value::Boolean(false))),
         operator: Token::Or,
     };
 
@@ -113,11 +113,11 @@ fn test_and_or() {
     let result = compile("False and True or False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Boolean(false))),
-            right: Box::new(Expression::Literal(Token::Boolean(true))),
+            left: Box::new(Expression::Literal(Value::Boolean(false))),
+            right: Box::new(Expression::Literal(Value::Boolean(true))),
             operator: Token::And,
         }),
-        right: Box::new(Expression::Literal(Token::Boolean(false))),
+        right: Box::new(Expression::Literal(Value::Boolean(false))),
         operator: Token::Or,
     };
 
@@ -128,10 +128,10 @@ fn test_and_or() {
 fn test_or_and() {
     let result = compile("False or True and False");
     let expected = Expression::Binary {
-        left: Box::new(Expression::Literal(Token::Boolean(false))),
+        left: Box::new(Expression::Literal(Value::Boolean(false))),
         right: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Boolean(true))),
-            right: Box::new(Expression::Literal(Token::Boolean(false))),
+            left: Box::new(Expression::Literal(Value::Boolean(true))),
+            right: Box::new(Expression::Literal(Value::Boolean(false))),
             operator: Token::And,
         }),
         operator: Token::Or,
@@ -144,7 +144,7 @@ fn test_or_and() {
 fn test_unary_not() {
     let result = compile("not False");
     let expected = Expression::Unary {
-        right: Box::new(Expression::Literal(Token::Boolean(false))),
+        right: Box::new(Expression::Literal(Value::Boolean(false))),
         operator: Token::Not,
     };
 
@@ -156,10 +156,10 @@ fn test_unary_not_and() {
     let result = compile("not False or True");
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
-            right: Box::new(Expression::Literal(Token::Boolean(false))),
+            right: Box::new(Expression::Literal(Value::Boolean(false))),
             operator: Token::Not,
         }),
-        right: Box::new(Expression::Literal(Token::Boolean(true))),
+        right: Box::new(Expression::Literal(Value::Boolean(true))),
         operator: Token::Or,
     };
 
@@ -170,8 +170,8 @@ fn test_unary_not_and() {
 fn test_equals() {
     let result = compile("1 = 3");
     let expected = Expression::Binary {
-        left: Box::new(Expression::Literal(Token::Number(1.0))),
-        right: Box::new(Expression::Literal(Token::Number(3.0))),
+        left: Box::new(Expression::Literal(Value::Number(1.0))),
+        right: Box::new(Expression::Literal(Value::Number(3.0))),
         operator: Token::Equal,
     };
 
@@ -182,8 +182,8 @@ fn test_equals() {
 fn test_not_equals() {
     let result = compile("1 <> 3");
     let expected = Expression::Binary {
-        left: Box::new(Expression::Literal(Token::Number(1.0))),
-        right: Box::new(Expression::Literal(Token::Number(3.0))),
+        left: Box::new(Expression::Literal(Value::Number(1.0))),
+        right: Box::new(Expression::Literal(Value::Number(3.0))),
         operator: Token::NotEqual,
     };
 
@@ -195,11 +195,11 @@ fn test_not_equals_unary() {
     let result = compile("not true <> not false");
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
-            right: Box::new(Expression::Literal(Token::Boolean(true))),
+            right: Box::new(Expression::Literal(Value::Boolean(true))),
             operator: Token::Not,
         }),
         right: Box::new(Expression::Unary {
-            right: Box::new(Expression::Literal(Token::Boolean(false))),
+            right: Box::new(Expression::Literal(Value::Boolean(false))),
             operator: Token::Not,
         }),
         operator: Token::NotEqual,
@@ -214,13 +214,13 @@ fn test_add_equals() {
 
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(1.0))),
-            right: Box::new(Expression::Literal(Token::Number(2.0))),
+            left: Box::new(Expression::Literal(Value::Number(1.0))),
+            right: Box::new(Expression::Literal(Value::Number(2.0))),
             operator: Token::Plus,
         }),
         right: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(10.0))),
-            right: Box::new(Expression::Literal(Token::Number(7.0))),
+            left: Box::new(Expression::Literal(Value::Number(10.0))),
+            right: Box::new(Expression::Literal(Value::Number(7.0))),
             operator: Token::Minus,
         }),
         operator: Token::Equal,
@@ -237,17 +237,17 @@ fn test_add_add_add() {
         left: Box::new(Expression::Binary {
             left: Box::new(Expression::Binary {
                 left: Box::new(Expression::Binary {
-                    left: Box::new(Expression::Literal(Token::Number(1.0))),
-                    right: Box::new(Expression::Literal(Token::Number(2.0))),
+                    left: Box::new(Expression::Literal(Value::Number(1.0))),
+                    right: Box::new(Expression::Literal(Value::Number(2.0))),
                     operator: Token::Plus,
                 }),
-                right: Box::new(Expression::Literal(Token::Number(3.0))),
+                right: Box::new(Expression::Literal(Value::Number(3.0))),
                 operator: Token::Plus,
             }),
-            right: Box::new(Expression::Literal(Token::Number(4.0))),
+            right: Box::new(Expression::Literal(Value::Number(4.0))),
             operator: Token::Plus,
         }),
-        right: Box::new(Expression::Literal(Token::Number(5.0))),
+        right: Box::new(Expression::Literal(Value::Number(5.0))),
         operator: Token::Plus,
     };
 
@@ -263,14 +263,14 @@ fn test_function_call() {
             "max".to_string(),
             vec![
                 Expression::Binary {
-                    left: Box::new(Expression::Literal(Token::Number(1.0))),
-                    right: Box::new(Expression::Literal(Token::Number(5.0))),
+                    left: Box::new(Expression::Literal(Value::Number(1.0))),
+                    right: Box::new(Expression::Literal(Value::Number(5.0))),
                     operator: Token::Plus,
                 },
-                Expression::Literal(Token::Number(3.0)),
+                Expression::Literal(Value::Number(3.0)),
             ],
         )),
-        right: Box::new(Expression::Literal(Token::Number(2.0))),
+        right: Box::new(Expression::Literal(Value::Number(2.0))),
         operator: Token::Greater,
     };
 
