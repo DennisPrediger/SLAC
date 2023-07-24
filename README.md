@@ -16,11 +16,11 @@ fn main() {
 
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Token::Number(1.0))),
-            right: Box::new(Expression::Literal(Token::Number(2.0))),
+            left: Box::new(Expression::Literal(Value::Number(1.0))),
+            right: Box::new(Expression::Literal(Value::Number(2.0))),
             operator: Token::Star,
         }),
-        right: Box::new(Expression::Literal(Token::Number(3.0))),
+        right: Box::new(Expression::Literal(Value::Number(3.0))),
         operator: Token::Plus,
     };
 
@@ -53,7 +53,7 @@ True and not False
 someFunc(true)
 // > depends on the definition of 'someFunc'
 
-// application defined constants
+// application defined variables
 SOME_VAR + -10
 // > depends on the definition of 'SOME_VAR'
 
