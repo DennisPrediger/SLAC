@@ -1,11 +1,12 @@
 # SLAC: Simple Logic & Arithmetic Compiler
 
-SLAC is a small compiler which converts a single expression statement into an AST. 
+SLAC is a small and simple compiler which converts a single expression statement into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 
-Written in Rust, it compiles easily as an executable, wasm module, or standalone DLL.
-Delphi syntax was chosen for the expression syntax due to its simplicity.
+It is written in Rust and as such compiles easily as an executable, wasm module, or standalone DLL.
 
-# Example
+# Examples
+
+## Library usage
 
 ```rust
 use slac::{ast::Expression, compile};
@@ -27,11 +28,42 @@ fn main() {
 }
 ```
 
+## Script syntax
+
+The script syntax itself is similar to Delphi Pascal code.
+
+```pascal
+// arithmetic operators
+40 + 1 * 2
+// > 42
+
+// comparisons
+50 + 50 = 100
+// > True
+
+// logical operators
+True and not False
+// > True
+
+// grouping
+(40 + 1) * 2
+// > 82
+
+// application defined external functions
+someFunc(true)
+// > depends on the definition of 'someFunc'
+
+// application defined constants
+SOME_VAR + -10
+// > depends on the definition of 'SOME_VAR'
+
+```
+
 # Installation
 
 The minimum required Rust toolchain version for SLAC is **1.70.0** or higher. 
 
-Use `cargo add` to install the library as a dependency in your application.
+Use `cargo add` to install the library from [crates.io](https://crates.io/crates/slac) as a dependency in your application.
 
 # License
 
