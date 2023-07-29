@@ -48,3 +48,11 @@ fn boolean_not() {
     assert_eq!(Value::Boolean(true), execute("not false and true"));
     assert_eq!(Value::Boolean(false), execute("false or not true"));
 }
+
+#[test]
+fn number_arithmetics() {
+    assert_eq!(Value::Number(10.0), execute("5+3+2"));
+    assert_eq!(Value::Number(10.0), execute("4+3*2"));
+    assert_eq!(Value::Number(2.0), execute("5 div 2"));
+    assert_eq!(Value::Number(1.0), execute("5 mod 2"));
+}

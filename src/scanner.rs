@@ -146,6 +146,8 @@ impl<'a> Scanner<'a> {
             "and" => Token::And,
             "or" => Token::Or,
             "not" => Token::Not,
+            "div" => Token::Div,
+            "mod" => Token::Mod,
             _ => Token::Identifier(ident),
         };
 

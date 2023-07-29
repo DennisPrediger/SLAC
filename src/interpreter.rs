@@ -46,6 +46,8 @@ impl<'a> TreeWalkingInterpreter<'a> {
             Token::Minus => left - right,
             Token::Star => left * right,
             Token::Slash => left / right,
+            Token::Div => left.div_int(right),
+            Token::Mod => left % right,
             Token::Greater => Value::Boolean(left > right),
             Token::GreaterEqual => Value::Boolean(left >= right),
             Token::Less => Value::Boolean(left < right),

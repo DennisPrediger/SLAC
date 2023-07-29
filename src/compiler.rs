@@ -64,6 +64,8 @@ impl Compiler {
             | Token::Plus
             | Token::Star
             | Token::Slash
+            | Token::Div
+            | Token::Mod
             | Token::Equal
             | Token::NotEqual
             | Token::Greater

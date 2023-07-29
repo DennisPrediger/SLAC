@@ -14,7 +14,7 @@ pub enum Token {
   // Equality
   Equal, NotEqual,
   // Keywords
-  And, Or, Not,
+  And, Or, Not, Div, Mod,
   // Literal Values
   Literal(Value),
   Identifier(String)
@@ -41,7 +41,7 @@ impl From<&Token> for Precedence {
     fn from(token: &Token) -> Self {
         match token {
             Token::Minus | Token::Plus => Precedence::Term,
-            Token::Star | Token::Slash => Precedence::Factor,
+            Token::Star | Token::Slash | Token::Div | Token::Mod => Precedence::Factor,
             Token::Equal | Token::NotEqual => Precedence::Equality,
             Token::Greater | Token::GreaterEqual => Precedence::Comparison,
             Token::Less | Token::LessEqual => Precedence::Comparison,
