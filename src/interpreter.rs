@@ -151,7 +151,7 @@ mod test {
         let ast = Expression::Variable("test".to_string());
         let mut env = Environment::default();
 
-        env.add_var("test".to_string(), Value::Number(42.0));
+        env.add_var("test", Value::Number(42.0));
         let result = TreeWalkingInterpreter::interprete(&env, &ast);
         let expected = Value::Number(42.0);
 
@@ -187,7 +187,7 @@ mod test {
         );
 
         let mut env = Environment::default();
-        env.add_native_func(String::from("max"), 2, max);
+        env.add_native_func("max", 2, max);
 
         let result = TreeWalkingInterpreter::interprete(&env, &ast);
         let expected = Value::Number(20.0);

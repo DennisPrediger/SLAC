@@ -51,7 +51,7 @@ impl Compiler {
         let previous = self.previous();
         match previous {
             Token::Literal(value) => Ok(Expression::Literal(value.clone())),
-            Token::Identifier(name) => Ok(Expression::Variable(name.to_lowercase().clone())),
+            Token::Identifier(name) => Ok(Expression::Variable(name.to_lowercase())),
             Token::LeftParen => self.grouping(),
             Token::Not | Token::Minus => self.unary(),
             _ => Err(SyntaxError::expected("left side of expression", previous)),

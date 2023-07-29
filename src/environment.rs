@@ -16,11 +16,13 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn add_var(&mut self, name: String, value: Value) {
+    pub fn add_var(&mut self, name: &str, value: Value) {
+        let name = name.to_lowercase();
         self.variables.insert(name, value);
     }
 
-    pub fn add_native_func(&mut self, name: String, arity: usize, func: NativeFunction) {
+    pub fn add_native_func(&mut self, name: &str, arity: usize, func: NativeFunction) {
+        let name = name.to_lowercase();
         self.functions.insert(name, Function { func, arity });
     }
 

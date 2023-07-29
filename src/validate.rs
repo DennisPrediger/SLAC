@@ -106,7 +106,7 @@ mod test {
         };
 
         let mut env = Environment::default();
-        env.add_native_func("max".to_string(), 2, dummy_max);
+        env.add_native_func("max", 2, dummy_max);
 
         let result = validate_env(&env, &ast);
 
