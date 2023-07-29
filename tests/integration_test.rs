@@ -1,7 +1,7 @@
 use slac::{ast::Expression, compile, token::Token, value::Value};
 
 #[test]
-fn test_single_boolean_true() {
+fn single_boolean_true() {
     let result = compile("True");
     let expected = Expression::Literal(Value::Boolean(true));
 
@@ -9,7 +9,7 @@ fn test_single_boolean_true() {
 }
 
 #[test]
-fn test_single_boolean_false() {
+fn single_boolean_false() {
     let result = compile("False");
     let expected = Expression::Literal(Value::Boolean(false));
 
@@ -17,7 +17,7 @@ fn test_single_boolean_false() {
 }
 
 #[test]
-fn test_single_variable() {
+fn single_variable() {
     let result = compile("SOME_VAR");
     let expected = Expression::Variable("SOME_VAR".to_string());
 
@@ -25,7 +25,7 @@ fn test_single_variable() {
 }
 
 #[test]
-fn test_simple_addition() {
+fn simple_addition() {
     let result = compile("1 + 2");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Number(1.0))),
@@ -37,7 +37,7 @@ fn test_simple_addition() {
 }
 
 #[test]
-fn test_multiply_addition() {
+fn multiply_addition() {
     let result = compile("1 * 2 + 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
@@ -53,7 +53,7 @@ fn test_multiply_addition() {
 }
 
 #[test]
-fn test_addition_multiply() {
+fn addition_multiply() {
     let result = compile("1 + 2 * 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Number(1.0))),
@@ -69,7 +69,7 @@ fn test_addition_multiply() {
 }
 
 #[test]
-fn test_group_addition_multiply() {
+fn group_addition_multiply() {
     let result = compile("(1 + 2) * 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
@@ -85,7 +85,7 @@ fn test_group_addition_multiply() {
 }
 
 #[test]
-fn test_and() {
+fn and() {
     let result = compile("True and False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Boolean(true))),
@@ -97,7 +97,7 @@ fn test_and() {
 }
 
 #[test]
-fn test_or() {
+fn or() {
     let result = compile("True or False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Boolean(true))),
@@ -109,7 +109,7 @@ fn test_or() {
 }
 
 #[test]
-fn test_and_or() {
+fn and_or() {
     let result = compile("False and True or False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
@@ -125,7 +125,7 @@ fn test_and_or() {
 }
 
 #[test]
-fn test_or_and() {
+fn or_and() {
     let result = compile("False or True and False");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Boolean(false))),
@@ -141,7 +141,7 @@ fn test_or_and() {
 }
 
 #[test]
-fn test_unary_not() {
+fn unary_not() {
     let result = compile("not False");
     let expected = Expression::Unary {
         right: Box::new(Expression::Literal(Value::Boolean(false))),
@@ -152,7 +152,7 @@ fn test_unary_not() {
 }
 
 #[test]
-fn test_unary_not_and() {
+fn unary_not_and() {
     let result = compile("not False or True");
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
@@ -167,7 +167,7 @@ fn test_unary_not_and() {
 }
 
 #[test]
-fn test_equals() {
+fn equals() {
     let result = compile("1 = 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Number(1.0))),
@@ -179,7 +179,7 @@ fn test_equals() {
 }
 
 #[test]
-fn test_not_equals() {
+fn not_equals() {
     let result = compile("1 <> 3");
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Number(1.0))),
@@ -191,7 +191,7 @@ fn test_not_equals() {
 }
 
 #[test]
-fn test_not_equals_unary() {
+fn not_equals_unary() {
     let result = compile("not true <> not false");
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
@@ -209,7 +209,7 @@ fn test_not_equals_unary() {
 }
 
 #[test]
-fn test_add_equals() {
+fn add_equals() {
     let result = compile("1 + 2 = 10 - 7");
 
     let expected = Expression::Binary {
@@ -230,7 +230,7 @@ fn test_add_equals() {
 }
 
 #[test]
-fn test_add_add_add() {
+fn add_add_add() {
     let result = compile("1 + 2 + 3 + 4 + 5");
 
     let expected = Expression::Binary {
@@ -255,7 +255,7 @@ fn test_add_add_add() {
 }
 
 #[test]
-fn test_function_call() {
+fn function_call() {
     let result = compile("max(1 + 5, 3) > 2");
 
     let expected = Expression::Binary {
@@ -278,7 +278,7 @@ fn test_function_call() {
 }
 
 #[test]
-fn test_function_call_no_params() {
+fn function_call_no_params() {
     let result = compile("Now() > current_date");
 
     let expected = Expression::Binary {

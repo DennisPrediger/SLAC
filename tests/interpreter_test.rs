@@ -11,13 +11,13 @@ fn execute(script: &str) -> Value {
 }
 
 #[test]
-fn test_add_number() {
+fn add_number() {
     assert_eq!(Value::Number(100.0), execute("99 + 1"));
     assert_eq!(Value::Number(100.5), execute("99.2 + 1.3"));
 }
 
 #[test]
-fn test_add_string() {
+fn add_string() {
     assert_eq!(
         Value::String("Hello World".to_string()),
         execute("'Hello' + ' ' + 'World'")
@@ -25,7 +25,7 @@ fn test_add_string() {
 }
 
 #[test]
-fn test_boolean_and() {
+fn boolean_and() {
     assert_eq!(Value::Boolean(false), execute("true and false"));
     assert_eq!(Value::Boolean(true), execute("true and true"));
     assert_eq!(Value::Boolean(false), execute("false and false"));
@@ -34,14 +34,14 @@ fn test_boolean_and() {
 }
 
 #[test]
-fn test_boolean_or() {
+fn boolean_or() {
     assert_eq!(Value::Boolean(true), execute("true or false"));
     assert_eq!(Value::Boolean(true), execute("true or true"));
     assert_eq!(Value::Boolean(false), execute("false or false"));
 }
 
 #[test]
-fn test_boolean_not() {
+fn boolean_not() {
     assert_eq!(Value::Boolean(false), execute("not true"));
     assert_eq!(Value::Boolean(true), execute("not false"));
 
