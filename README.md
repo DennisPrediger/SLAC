@@ -28,6 +28,28 @@ fn main() {
 }
 ```
 
+## Interpreter
+
+SLAC features a built-in [tree walk interpreter](https://en.wikipedia.org/wiki/Interpreter_(computing)#Abstract_syntax_tree_interpreters).
+Create an `Environment` which houses the variables and user defined functions. Then use the `TreeWalkingInterpreter` class to execute the AST against the environment.
+
+```rust
+use slac::compile;
+use slac::environment::Environment;
+use slac::interpreter::TreeWalkingInterpreter;
+use slac::value::Value;
+
+fn main() {
+    let ast = compile("some_var > 5").unwrap();
+    let mut env = Environment::default();
+    env.add_var("some_var", Value::Number(42.0));
+
+    let result = TreeWalkingInterpreter::interprete(&env, &ast);
+
+    assert_eq!(result, Value::Boolean(true));
+}
+```
+
 ## Script syntax
 
 The script syntax itself is similar to Delphi Pascal code.
@@ -36,6 +58,10 @@ The script syntax itself is similar to Delphi Pascal code.
 // arithmetic operators
 40 + 1 * 2
 // > 42
+
+// Integer Division and Modulo
+50 div 20 mod 2
+// > 2
 
 // comparisons
 50 + 50 = 100

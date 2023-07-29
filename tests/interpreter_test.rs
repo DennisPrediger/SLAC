@@ -55,4 +55,5 @@ fn number_arithmetics() {
     assert_eq!(Value::Number(10.0), execute("4+3*2"));
     assert_eq!(Value::Number(2.0), execute("5 div 2"));
     assert_eq!(Value::Number(1.0), execute("5 mod 2"));
+    assert_eq!(Value::Number(2.0), execute("50 div 20 mod 3"));
 }

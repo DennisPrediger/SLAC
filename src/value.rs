@@ -1,7 +1,10 @@
 use std::ops::{Add, Div, Mul, Neg, Not, Rem, Sub};
 
+/// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Value {
+    /// [`Value::Nil`] is only created by invalid operations and not from literals
+    /// in the AST.
     Nil,
     Boolean(bool),
     String(String),

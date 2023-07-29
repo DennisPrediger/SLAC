@@ -1,5 +1,7 @@
 use crate::{ast::Expression, environment::Environment, token::Token, value::Value};
 
+/// A tree walking interpreter which given an [`Environment`] and an [`AST`](Expression)
+/// recursivly walks the tree and computes a single [`Value`].
 pub struct TreeWalkingInterpreter<'a> {
     environment: &'a Environment,
 }

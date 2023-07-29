@@ -4,6 +4,8 @@
 //! While the interals are public you may want to use the [`compile`] function
 //! which returns a [`Result`] of either the compiled [`ast::Expression`]
 //! tree or an [`error::SyntaxError`].
+//!
+//! The [`AST`](ast::Expression) can be evaluated using the built-in [`interpreter::TreeWalkingInterpreter`].
 
 use ast::Expression;
 use compiler::Compiler;

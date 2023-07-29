@@ -8,6 +8,8 @@ pub enum ValidationResult {
     ParamCountMismatch(usize, usize),
 }
 
+/// Validates `Variable` and `Call` [`Expressions`](crate::ast::Expression) by walking
+/// the tree and returning a [`ValidationResult`] on the first error.
 pub fn validate_env(env: &Environment, expr: &Expression) -> ValidationResult {
     let mut result = ValidationResult::Valid;
 
