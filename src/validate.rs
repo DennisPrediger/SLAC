@@ -12,7 +12,7 @@ pub fn validate_env(env: &Environment, expr: &Expression) -> ValidationResult {
     let mut result = ValidationResult::Valid;
 
     match expr {
-        Expression::Unary { right, operator: _ } => result = validate_env(env, &right),
+        Expression::Unary { right, operator: _ } => result = validate_env(env, right),
         Expression::Binary {
             left,
             right,
@@ -20,23 +20,23 @@ pub fn validate_env(env: &Environment, expr: &Expression) -> ValidationResult {
         } => {
             result = validate_env(env, left);
             if let ValidationResult::Valid = result {
-                result = validate_env(env, right)
+                result = validate_env(env, right);
             }
         }
         Expression::Variable(name) => {
-            if let None = env.get_var(name) {
-                result = ValidationResult::MissingVariable(name.clone())
+            if env.get_var(name).is_none() {
+                result = ValidationResult::MissingVariable(name.clone());
             }
         }
         Expression::Call(name, params) => match env.get_function(name) {
             Some(function) => {
                 if function.arity != params.len() {
-                    result = ValidationResult::ParamCountMismatch(function.arity, params.len())
+                    result = ValidationResult::ParamCountMismatch(function.arity, params.len());
                 }
             }
             None => result = ValidationResult::MissingFunction(name.clone()),
         },
-        _ => (),
+        Expression::Literal(_) => (),
     };
 
     result
@@ -59,7 +59,7 @@ mod test {
             operator: Token::Plus,
         };
 
-        let result = validate_env(&Environment::new(), &ast);
+        let result = validate_env(&Environment::default(), &ast);
 
         assert_eq!(ValidationResult::Valid, result);
     }
@@ -72,7 +72,7 @@ mod test {
             operator: Token::Plus,
         };
 
-        let result = validate_env(&Environment::new(), &ast);
+        let result = validate_env(&Environment::default(), &ast);
 
         assert_eq!(
             ValidationResult::MissingVariable("VAR_NAME".to_string()),
@@ -88,7 +88,7 @@ mod test {
             operator: Token::Plus,
         };
 
-        let result = validate_env(&Environment::new(), &ast);
+        let result = validate_env(&Environment::default(), &ast);
 
         assert_eq!(ValidationResult::MissingFunction("max".to_string()), result);
     }
@@ -105,7 +105,7 @@ mod test {
             operator: Token::Plus,
         };
 
-        let mut env = Environment::new();
+        let mut env = Environment::default();
         env.add_native_func("max".to_string(), 2, dummy_max);
 
         let result = validate_env(&env, &ast);

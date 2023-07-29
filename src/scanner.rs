@@ -70,7 +70,7 @@ impl<'a> Scanner<'a> {
             '>' => Ok(self.greater()),
             '<' => Ok(self.lesser()),
             '.' => self.number(), // interprete .1 as 0.1
-            _ => Err(SyntaxError(format!("invalid token: {}", next))),
+            _ => Err(SyntaxError(format!("invalid token: {next}"))),
         }
     }
 
@@ -85,7 +85,7 @@ impl<'a> Scanner<'a> {
     fn advance_numeric(&mut self) {
         while let Some(c) = self.peek() {
             if c.is_numeric() {
-                self.advance()
+                self.advance();
             } else {
                 break;
             }
@@ -106,7 +106,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        while let Some(' ') | Some('\r') | Some('\t') | Some('\n') = self.peek() {
+        while let Some(' ' | '\r' | '\t' | '\n') = self.peek() {
             self.advance();
         }
     }
@@ -154,7 +154,7 @@ impl<'a> Scanner<'a> {
         Ok(token)
     }
 
-    fn extract_number(&self, content: &str) -> Result<f64> {
+    fn extract_number(content: &str) -> Result<f64> {
         content
             .parse::<f64>()
             .map_err(|o| SyntaxError(o.to_string()))
@@ -174,7 +174,7 @@ impl<'a> Scanner<'a> {
         }
 
         let content = self.get_content(0)?;
-        let number = self.extract_number(content.as_str())?;
+        let number = Scanner::extract_number(content.as_str())?;
 
         Ok(Token::Literal(Value::Number(number)))
     }
@@ -218,6 +218,8 @@ impl<'a> Scanner<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::f64::consts::PI;
+
     use super::{Scanner, Token};
     use crate::{
         error::{Result, SyntaxError},
@@ -244,8 +246,8 @@ mod tests {
 
     #[test]
     fn simple_float() -> Result<()> {
-        let tokens = Scanner::tokenize("3.14")?;
-        let expected = Token::Literal(Value::Number(3.14));
+        let tokens = Scanner::tokenize("3.141592653589793")?;
+        let expected = Token::Literal(Value::Number(PI));
 
         assert_eq!(tokens[0], expected);
         Ok(())

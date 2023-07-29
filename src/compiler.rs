@@ -138,7 +138,7 @@ impl Compiler {
     }
 
     fn advance(&mut self) {
-        if self.current <= self.tokens.len() - 1 {
+        if self.current < self.tokens.len() {
             self.current += 1;
         }
     }
@@ -153,12 +153,12 @@ impl Compiler {
             .expect("expected some token")
     }
 
-    fn chomp(&mut self, ref token: Token, message: &str) -> Result<()> {
-        if self.current() == Some(token) {
+    fn chomp(&mut self, token: Token, message: &str) -> Result<()> {
+        if self.current() == Some(&token) {
             self.advance();
             Ok(())
         } else {
-            Err(SyntaxError::expected(message, token))
+            Err(SyntaxError::expected(message, &token))
         }
     }
 }

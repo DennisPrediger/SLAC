@@ -9,19 +9,13 @@ pub struct Function {
     pub arity: usize,
 }
 
+#[derive(Default)]
 pub struct Environment {
     variables: HashMap<String, Value>,
     functions: HashMap<String, Function>,
 }
 
 impl Environment {
-    pub fn new() -> Self {
-        Self {
-            variables: HashMap::new(),
-            functions: HashMap::new(),
-        }
-    }
-
     pub fn add_var(&mut self, name: String, value: Value) {
         self.variables.insert(name, value);
     }

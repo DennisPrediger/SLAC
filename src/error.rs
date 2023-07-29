@@ -12,7 +12,7 @@ impl error::Error for SyntaxError {}
 
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Syntax error: {}", self)
+        write!(f, "Syntax error: {}", self.0)
     }
 }
 
@@ -24,7 +24,7 @@ impl From<&str> for SyntaxError {
 
 impl SyntaxError {
     pub fn expected(expected: &str, recieved: &Token) -> Self {
-        Self(format!("Expected {} got \"{:?}\"", expected, recieved))
+        Self(format!("Expected {expected} got \"{recieved:?}\""))
     }
 }
 

@@ -132,7 +132,7 @@ mod test {
     fn number_mod() {
         match test_mod_int(0.0) {
             Value::Number(value) => assert!(value.is_nan()),
-            _ => assert!(false),
+            _ => panic!(),
         }
         assert_eq!(Value::Number(0.0), test_mod_int(1.0));
         assert_eq!(Value::Number(0.0), test_mod_int(2.0));

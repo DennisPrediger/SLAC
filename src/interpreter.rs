@@ -102,7 +102,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Boolean(false))),
             operator: Token::Not,
         };
-        let env = Environment::new();
+        let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(true), value);
@@ -114,7 +114,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Number(42.0))),
             operator: Token::Minus,
         };
-        let env = Environment::new();
+        let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Number(-42.0), value);
@@ -127,7 +127,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Boolean(true))),
             operator: Token::And,
         };
-        let env = Environment::new();
+        let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(true), value);
@@ -140,7 +140,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Boolean(false))),
             operator: Token::And,
         };
-        let env = Environment::new();
+        let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(false), value);
@@ -149,7 +149,7 @@ mod test {
     #[test]
     fn variable_access() {
         let ast = Expression::Variable("test".to_string());
-        let mut env = Environment::new();
+        let mut env = Environment::default();
 
         env.add_var("test".to_string(), Value::Number(42.0));
         let result = TreeWalkingInterpreter::interprete(&env, &ast);
@@ -186,7 +186,7 @@ mod test {
             ],
         );
 
-        let mut env = Environment::new();
+        let mut env = Environment::default();
         env.add_native_func(String::from("max"), 2, max);
 
         let result = TreeWalkingInterpreter::interprete(&env, &ast);

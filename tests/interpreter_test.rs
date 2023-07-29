@@ -5,7 +5,7 @@ use slac::value::Value;
 
 fn execute(script: &str) -> Value {
     let ast = compile(script).unwrap();
-    let env = Environment::new();
+    let env = Environment::default();
 
     TreeWalkingInterpreter::interprete(&env, &ast)
 }
