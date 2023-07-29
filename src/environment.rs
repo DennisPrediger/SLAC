@@ -5,8 +5,8 @@ use crate::value::Value;
 type NativeFunction = fn(Vec<Value>) -> Result<Value, String>;
 
 pub struct Function {
-    func: NativeFunction,
-    arity: usize,
+    pub func: NativeFunction,
+    pub arity: usize,
 }
 
 pub struct Environment {
@@ -34,9 +34,12 @@ impl Environment {
         self.variables.get(name)
     }
 
+    pub fn get_function(&self, name: &str) -> Option<&Function> {
+        self.functions.get(name)
+    }
+
     pub fn get_func(&self, name: &str, param_count: usize) -> Option<&NativeFunction> {
-        self.functions
-            .get(name)
+        self.get_function(name)
             .filter(|f| f.arity == param_count)
             .map(|f| &f.func)
     }

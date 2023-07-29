@@ -17,6 +17,7 @@ pub mod error;
 pub mod interpreter;
 pub mod scanner;
 pub mod token;
+pub mod validate;
 pub mod value;
 
 /// Compiles a string into an [`ast::Expression`] tree or an [`error::SyntaxError`].
