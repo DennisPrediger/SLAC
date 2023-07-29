@@ -1,31 +1,19 @@
-use std::collections::HashMap;
+use crate::{ast::Expression, environment::Environment, token::Token, value::Value};
 
-use crate::{ast::Expression, token::Token, value::Value};
-
-type NativeFunction = fn(Vec<Value>) -> Result<Value, String>;
-
-pub struct Environment {
-    constants: HashMap<String, Value>,
-    functions: HashMap<String, NativeFunction>,
+pub struct TreeWalkingInterpreter<'a> {
+    environment: &'a Environment,
 }
 
-impl Environment {
-    pub fn new() -> Self {
-        Self {
-            constants: HashMap::new(),
-            functions: HashMap::new(),
-        }
+impl<'a> TreeWalkingInterpreter<'a> {
+    pub fn new(environment: &'a Environment) -> Self {
+        Self { environment }
     }
 
-    pub fn add_const(&mut self, name: String, value: Value) {
-        self.constants.insert(name, value);
+    pub fn interprete(env: &Environment, expression: &Expression) -> Value {
+        TreeWalkingInterpreter::new(env).expression(expression)
     }
 
-    pub fn add_native_func(&mut self, name: String, func: NativeFunction) {
-        self.functions.insert(name, func);
-    }
-
-    pub fn interprete(&self, expression: &Expression) -> Value {
+    fn expression(&self, expression: &Expression) -> Value {
         match expression {
             Expression::Unary { right, operator } => self.unary(right, operator),
             Expression::Binary {
@@ -40,7 +28,7 @@ impl Environment {
     }
 
     fn unary(&self, right: &Expression, operator: &Token) -> Value {
-        let right = self.interprete(right);
+        let right = self.expression(right);
 
         match operator {
             Token::Minus => -right,
@@ -50,8 +38,8 @@ impl Environment {
     }
 
     fn binary(&self, left: &Expression, right: &Expression, operator: &Token) -> Value {
-        let left = self.interprete(left);
-        let right = self.interprete(right);
+        let left = self.expression(left);
+        let right = self.expression(right);
 
         match operator {
             Token::Plus => left + right,
@@ -77,18 +65,18 @@ impl Environment {
     }
 
     fn variable(&self, name: &str) -> Value {
-        self.constants
-            .get(name)
+        self.environment
+            .get_var(name)
             .unwrap_or(&Value::Boolean(false))
             .clone()
     }
 
     fn call(&self, name: &str, params: &Vec<Expression>) -> Value {
-        match self.functions.get(name) {
+        match self.environment.get_func(name, params.len()) {
             Some(func) => {
                 let params = params
                     .iter()
-                    .map(|expression| self.interprete(expression))
+                    .map(|expression| self.expression(expression))
                     .collect();
 
                 func(params).unwrap_or(Value::Boolean(false))
@@ -100,7 +88,9 @@ impl Environment {
 
 #[cfg(test)]
 mod test {
-    use crate::{ast::Expression, token::Token, value::Value};
+    use std::cmp::Ordering;
+
+    use crate::{ast::Expression, interpreter::TreeWalkingInterpreter, token::Token, value::Value};
 
     use super::Environment;
 
@@ -111,7 +101,7 @@ mod test {
             operator: Token::Not,
         };
         let env = Environment::new();
-        let value = env.interprete(&ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(true), value);
     }
@@ -123,7 +113,7 @@ mod test {
             operator: Token::Minus,
         };
         let env = Environment::new();
-        let value = env.interprete(&ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Number(-42.0), value);
     }
@@ -136,7 +126,7 @@ mod test {
             operator: Token::And,
         };
         let env = Environment::new();
-        let value = env.interprete(&ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(true), value);
     }
@@ -149,8 +139,56 @@ mod test {
             operator: Token::And,
         };
         let env = Environment::new();
-        let value = env.interprete(&ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(false), value);
+    }
+
+    #[test]
+    fn variable_access() {
+        let ast = Expression::Variable("test".to_string());
+        let mut env = Environment::new();
+
+        env.add_var("test".to_string(), Value::Number(42.0));
+        let result = TreeWalkingInterpreter::interprete(&env, &ast);
+        let expected = Value::Number(42.0);
+
+        assert_eq!(expected, result);
+    }
+
+    fn max(params: Vec<Value>) -> Result<Value, String> {
+        let result = params
+            .iter()
+            .max_by(|a, b| {
+                if a > b {
+                    Ordering::Greater
+                } else if a < b {
+                    Ordering::Less
+                } else {
+                    Ordering::Equal
+                }
+            })
+            .unwrap()
+            .clone();
+
+        Ok(result)
+    }
+
+    #[test]
+    fn func_access() {
+        let ast = Expression::Call(
+            String::from("max"),
+            vec![
+                Expression::Literal(Value::Number(10.0)),
+                Expression::Literal(Value::Number(20.0)),
+            ],
+        );
+
+        let mut env = Environment::new();
+        env.add_native_func(String::from("max"), 2, max);
+
+        let result = TreeWalkingInterpreter::interprete(&env, &ast);
+        let expected = Value::Number(20.0);
+        assert_eq!(expected, result);
     }
 }

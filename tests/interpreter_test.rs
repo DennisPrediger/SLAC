@@ -1,12 +1,13 @@
 use slac::compile;
-use slac::interpreter::Environment;
+use slac::environment::Environment;
+use slac::interpreter::TreeWalkingInterpreter;
 use slac::value::Value;
 
 fn execute(script: &str) -> Value {
     let ast = compile(script).unwrap();
     let env = Environment::new();
 
-    env.interprete(&ast)
+    TreeWalkingInterpreter::interprete(&env, &ast)
 }
 
 #[test]

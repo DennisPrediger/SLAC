@@ -12,6 +12,7 @@ use scanner::Scanner;
 
 pub mod ast;
 pub mod compiler;
+pub mod environment;
 pub mod error;
 pub mod interpreter;
 pub mod scanner;
