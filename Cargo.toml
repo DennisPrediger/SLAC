@@ -1,10 +1,11 @@
 [package]
 name = "slac"
 version = "0.1.0"
-author = "Dennis Prediger <dennis.prediger@gmail.com>"
+authors = ["Dennis Prediger <dennis.prediger@gmail.com>"]
 edition = "2021"
 rust-version = "1.70.0"
 description = "The \"Simple Logic & Arithmetic Compiler\" (SLAC) transforms a single expression into an a abstract syntax tree."
+categories = ["compilers", "parsing"]
 license = "Apache-2.0"
 
 
