@@ -51,7 +51,7 @@ impl Compiler {
         let previous = self.previous();
         match previous {
             Token::Literal(value) => Ok(Expression::Literal(value.clone())),
-            Token::Identifier(name) => Ok(Expression::Variable(name.clone())),
+            Token::Identifier(name) => Ok(Expression::Variable(name.to_lowercase().clone())),
             Token::LeftParen => self.grouping(),
             Token::Not | Token::Minus => self.unary(),
             _ => Err(SyntaxError::expected("left side of expression", previous)),
@@ -103,7 +103,7 @@ impl Compiler {
 
     fn call(&mut self, left: Expression) -> Result<Expression> {
         if let Expression::Variable(name) = left {
-            Ok(Expression::Call(name, self.arguments()?))
+            Ok(Expression::Call(name.to_lowercase(), self.arguments()?))
         } else {
             Err(SyntaxError::expected("some identifier", self.previous()))
         }
@@ -308,7 +308,7 @@ mod test {
         let expected = Expression::Binary {
             left: Box::new(Expression::Binary {
                 left: Box::new(Expression::Literal(Value::Number(5.0))),
-                right: Box::new(Expression::Variable(String::from("SOME_VAR"))),
+                right: Box::new(Expression::Variable(String::from("some_var"))),
                 operator: Token::Plus,
             }),
             right: Box::new(Expression::Literal(Value::Number(4.0))),
@@ -326,7 +326,7 @@ mod test {
             Token::Literal(Value::Number(4.0)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Variable(String::from("SOME_VAR"))),
+            left: Box::new(Expression::Variable(String::from("some_var"))),
             right: Box::new(Expression::Literal(Value::Number(4.0))),
             operator: Token::Star,
         };

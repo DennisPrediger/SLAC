@@ -19,7 +19,7 @@ fn single_boolean_false() {
 #[test]
 fn single_variable() {
     let result = compile("SOME_VAR");
-    let expected = Expression::Variable("SOME_VAR".to_string());
+    let expected = Expression::Variable("some_var".to_string());
 
     assert_eq!(result, Ok(expected));
 }
@@ -282,7 +282,7 @@ fn function_call_no_params() {
     let result = compile("Now() > current_date");
 
     let expected = Expression::Binary {
-        left: Box::new(Expression::Call("Now".to_string(), vec![])),
+        left: Box::new(Expression::Call("now".to_string(), vec![])),
         right: Box::new(Expression::Variable("current_date".to_string())),
         operator: Token::Greater,
     };
