@@ -1,6 +1,16 @@
+#[cfg(feature = "serde")]
+use serde;
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
 use crate::{token::Token, value::Value};
 
 /// An expression represents an entity which can be evaluated to a value.
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(
+    feature = "serde",
+    serde(tag = "type", content = "value", rename_all = "camelCase")
+)]
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum Expression {
     /// An operation on a single [`Expression`] operand with a [`Token`] operator.

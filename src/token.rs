@@ -1,3 +1,6 @@
+#[cfg(feature = "serde")]
+use serde::{Serialize, Serializer};
+
 use crate::value::Value;
 
 /// A [`Token`] is the smallest logical unit evaluated by the compiler.
@@ -20,6 +23,39 @@ pub enum Token {
   // Literal Values
   Literal(Value),
   Identifier(String)
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for Token {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Token::LeftParen => serializer.serialize_char('('),
+            Token::RightParen => serializer.serialize_char(')'),
+            Token::LeftBracket => serializer.serialize_char('['),
+            Token::RightBracket => serializer.serialize_char(']'),
+            Token::Plus => serializer.serialize_char('+'),
+            Token::Minus => serializer.serialize_char('-'),
+            Token::Star => serializer.serialize_char('*'),
+            Token::Slash => serializer.serialize_char('/'),
+            Token::Comma => serializer.serialize_char(','),
+            Token::Greater => serializer.serialize_char('>'),
+            Token::GreaterEqual => serializer.serialize_str(">="),
+            Token::Less => serializer.serialize_char('<'),
+            Token::LessEqual => serializer.serialize_str("<="),
+            Token::Equal => serializer.serialize_char('='),
+            Token::NotEqual => serializer.serialize_str("<>"),
+            Token::And => serializer.serialize_str("and"),
+            Token::Or => serializer.serialize_str("or"),
+            Token::Not => serializer.serialize_str("not"),
+            Token::Div => serializer.serialize_str("div"),
+            Token::Mod => serializer.serialize_str("mod"),
+            Token::Identifier(name) => serializer.serialize_str(name),
+            Token::Literal(value) => value.serialize(serializer),
+        }
+    }
 }
 
 /// The precedences used to order the operators evaluated in the

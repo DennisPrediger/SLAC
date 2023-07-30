@@ -1,6 +1,13 @@
+#[cfg(feature = "serde")]
+use serde;
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
 use std::ops::{Add, Div, Mul, Neg, Not, Rem, Sub};
 
 /// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Value {
     /// [`Value::Nil`] is only created by invalid operations and not from literals
