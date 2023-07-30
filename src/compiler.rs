@@ -53,6 +53,7 @@ impl Compiler {
             Token::Literal(value) => Ok(Expression::Literal(value.clone())),
             Token::Identifier(name) => Ok(Expression::Variable(name.to_lowercase())),
             Token::LeftParen => self.grouping(),
+            Token::LeftBracket => self.array(),
             Token::Not | Token::Minus => self.unary(),
             _ => Err(SyntaxError::expected("left side of expression", previous)),
         }
@@ -82,7 +83,7 @@ impl Compiler {
     fn arguments(&mut self) -> Result<Vec<Expression>> {
         let mut arguments: Vec<Expression> = vec![];
 
-        if !(self.current() == Some(&Token::RightParen)) {
+        if self.current() != Some(&Token::RightParen) {
             loop {
                 arguments.push(self.expression()?);
 
@@ -107,6 +108,21 @@ impl Compiler {
         } else {
             Err(SyntaxError::expected("some identifier", self.previous()))
         }
+    }
+
+    fn array(&mut self) -> Result<Expression> {
+        let mut expressions: Vec<Expression> = vec![];
+
+        while self.current() != Some(&Token::RightBracket) {
+            expressions.push(self.expression()?);
+
+            if self.current() == Some(&Token::Comma) {
+                self.advance();
+            }
+        }
+
+        self.chomp(Token::RightBracket, "')' after argument list")?;
+        Ok(Expression::Array(expressions))
     }
 
     fn binary(&mut self, left: Expression) -> Result<Expression> {

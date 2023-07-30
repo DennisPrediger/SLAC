@@ -6,8 +6,10 @@ use crate::value::Value;
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Token {
   // Single-character tokens
-  LeftParen, RightParen, Comma,
+  LeftParen, RightParen, 
+  LeftBracket, RightBracket, 
   Plus, Minus, Star, Slash, 
+  Comma,
   // One or two character tokens
   Greater, GreaterEqual,
   Less, LessEqual,

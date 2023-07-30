@@ -61,6 +61,8 @@ impl<'a> Scanner<'a> {
             '\'' => self.string(),
             '(' => Ok(Token::LeftParen),
             ')' => Ok(Token::RightParen),
+            '[' => Ok(Token::LeftBracket),
+            ']' => Ok(Token::RightBracket),
             ',' => Ok(Token::Comma),
             '+' => Ok(Token::Plus),
             '-' => Ok(Token::Minus),

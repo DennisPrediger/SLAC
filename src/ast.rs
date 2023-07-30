@@ -14,6 +14,8 @@ pub enum Expression {
         right: Box<Expression>,
         operator: Token,
     },
+    /// An list of [`Expression`] values.
+    Array(Vec<Expression>),
     /// A literal Value, represented by a single [`Token`].
     Literal(Value),
     /// A named external variable.

@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::{ast::Expression, environment::Environment, token::Token, value::Value};
 
 /// A tree walking interpreter which given an [`Environment`] and an [`AST`](Expression)
@@ -23,6 +25,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
                 right,
                 operator,
             } => self.binary(left, right, operator),
+            Expression::Array(expressions) => self.array(expressions),
             Expression::Literal(value) => value.clone(),
             Expression::Variable(name) => self.variable(name),
             Expression::Call(name, params) => self.call(name, params),
@@ -66,6 +69,16 @@ impl<'a> TreeWalkingInterpreter<'a> {
             },
             _ => Value::Boolean(false),
         }
+    }
+
+    fn array(&self, expressions: &Vec<Expression>) -> Value {
+        let mut values: Vec<Value> = vec![];
+
+        for expression in expressions {
+            values.push(self.expression(expression));
+        }
+
+        Value::Array(values)
     }
 
     fn variable(&self, name: &str) -> Value {
@@ -146,6 +159,33 @@ mod test {
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(false), value);
+    }
+
+    #[test]
+    fn array_plus_array() {
+        let ast = Expression::Binary {
+            left: Box::from(Expression::Array(vec![
+                Expression::Literal(Value::Number(10.0)),
+                Expression::Literal(Value::Number(20.0)),
+            ])),
+            right: Box::from(Expression::Array(vec![
+                Expression::Literal(Value::Number(30.0)),
+                Expression::Literal(Value::Number(40.0)),
+            ])),
+            operator: Token::Plus,
+        };
+        let env = Environment::default();
+        let value = TreeWalkingInterpreter::interprete(&env, &ast);
+
+        assert_eq!(
+            Value::Array(vec![
+                Value::Number(10.0),
+                Value::Number(20.0),
+                Value::Number(30.0),
+                Value::Number(40.0)
+            ]),
+            value
+        );
     }
 
     #[test]

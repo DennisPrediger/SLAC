@@ -25,6 +25,7 @@ pub fn validate_env(env: &Environment, expression: &Expression) -> ValidationRes
                 result = validate_env(env, right);
             }
         }
+        Expression::Array(expressions) => result = validate_expr_vec(env, expressions),
         Expression::Variable(name) => {
             if env.get_var(name).is_none() {
                 result = ValidationResult::MissingVariable(name.clone());

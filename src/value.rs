@@ -9,6 +9,7 @@ pub enum Value {
     Boolean(bool),
     String(String),
     Number(f64),
+    Array(Vec<Value>),
 }
 
 impl Neg for Value {
@@ -40,6 +41,7 @@ impl Add for Value {
         match (self, rhs) {
             (Value::String(lhs), Value::String(rhs)) => Value::String(lhs + &rhs),
             (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs + rhs),
+            (Value::Array(lhs), Value::Array(rhs)) => Value::Array([lhs, rhs].concat()),
             _ => Value::Nil,
         }
     }

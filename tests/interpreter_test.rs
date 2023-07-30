@@ -18,10 +18,10 @@ fn add_number() {
 
 #[test]
 fn add_string() {
-    assert_eq!(
-        Value::String("Hello World".to_string()),
-        execute("'Hello' + ' ' + 'World'")
-    );
+    let expected = Value::String("Hello World".to_string());
+    assert_eq!(expected, execute("'Hello World'"));
+    assert_eq!(expected, execute("'Hello' + ' ' + 'World'"));
+    assert_eq!(expected, execute("'Hello ' + '' + 'World'"));
 }
 
 #[test]
@@ -56,4 +56,21 @@ fn number_arithmetics() {
     assert_eq!(Value::Number(2.0), execute("5 div 2"));
     assert_eq!(Value::Number(1.0), execute("5 mod 2"));
     assert_eq!(Value::Number(2.0), execute("50 div 20 mod 3"));
+}
+
+#[test]
+fn array_combination() {
+    let expected = Value::Array(vec![
+        Value::Number(10.0),
+        Value::Number(20.0),
+        Value::Number(30.0),
+        Value::Number(40.0),
+    ]);
+
+    assert_eq!(expected, execute("[10, 20, 30, 40]"));
+    assert_eq!(expected, execute("[10, 20] + [30, 40]"));
+    assert_eq!(expected, execute("[10] + [20] + [30] + [40]"));
+    assert_eq!(expected, execute("[10, 20] + [] + [30, 40]"));
+
+    assert_eq!(Value::Array(vec![]), execute("[]"));
 }

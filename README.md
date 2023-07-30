@@ -75,6 +75,10 @@ True and not False
 (40 + 1) * 2
 // > 82
 
+// arrays
+[1, 2, 3] + ['Four']
+// > [1, 2, 3, 'Four']
+
 // application defined external functions
 someFunc(true)
 // > depends on the definition of 'someFunc'
@@ -89,7 +93,7 @@ SOME_VAR + -10
 
 The minimum required Rust toolchain version for SLAC is **1.70.0** or higher. 
 
-Use `cargo add` to install the library from [crates.io](https://crates.io/crates/slac) as a dependency in your application.
+Use `cargo add slac` to install the library from [crates.io](https://crates.io/crates/slac) as a dependency in your application.
 
 # License
 
