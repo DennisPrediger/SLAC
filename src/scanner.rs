@@ -8,6 +8,7 @@ pub struct Scanner<'a> {
     source: &'a str,
     start: usize,
     current: usize,
+    end: usize,
 }
 
 impl<'a> Scanner<'a> {
@@ -29,6 +30,7 @@ impl<'a> Scanner<'a> {
             source,
             start: 0,
             current: 0,
+            end: source.chars().count(),
         };
 
         let mut tokens: Vec<Token> = vec![];
@@ -77,7 +79,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current == self.source.len()
+        self.current == self.end
     }
 
     fn advance(&mut self) {
@@ -117,14 +119,7 @@ impl<'a> Scanner<'a> {
         let from = self.start + trim_by;
         let to = self.current - trim_by;
 
-        let content = self
-            .source
-            .get(from..to)
-            .ok_or(SyntaxError::from("invalid content length"))?
-            .chars()
-            .collect::<String>();
-
-        Ok(content)
+        Ok(self.source.chars().take(to).skip(from).collect())
     }
 
     fn is_identifier_start(character: char) -> bool {

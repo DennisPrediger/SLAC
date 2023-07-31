@@ -25,6 +25,13 @@ fn add_string() {
 }
 
 #[test]
+fn add_unicode_string() {
+    let expected = Value::String("мир приветствий".to_string());
+
+    assert_eq!(expected, execute("'мир' + ' ' + 'приветствий'"));
+}
+
+#[test]
 fn boolean_and() {
     assert_eq!(Value::Boolean(false), execute("true and false"));
     assert_eq!(Value::Boolean(true), execute("true and true"));
