@@ -80,40 +80,10 @@ impl Compiler {
         }
     }
 
-    fn arguments(&mut self) -> Result<Vec<Expression>> {
-        let mut arguments: Vec<Expression> = vec![];
-
-        if self.current() != Some(&Token::RightParen) {
-            loop {
-                arguments.push(self.expression()?);
-
-                if self.current() == Some(&Token::Comma) {
-                    self.advance();
-                } else {
-                    break;
-                }
-            }
-
-            self.chomp(Token::RightParen, "')' after argument list")?;
-        } else {
-            self.advance(); // chomp the ')'
-        }
-
-        Ok(arguments)
-    }
-
-    fn call(&mut self, left: Expression) -> Result<Expression> {
-        if let Expression::Variable(name) = left {
-            Ok(Expression::Call(name.to_lowercase(), self.arguments()?))
-        } else {
-            Err(SyntaxError::expected("some identifier", self.previous()))
-        }
-    }
-
-    fn array(&mut self) -> Result<Expression> {
+    fn expression_list(&mut self, end_token: Token) -> Result<Vec<Expression>> {
         let mut expressions: Vec<Expression> = vec![];
 
-        while self.current() != Some(&Token::RightBracket) {
+        while self.current().is_some_and(|t| t != &end_token) {
             expressions.push(self.expression()?);
 
             if self.current() == Some(&Token::Comma) {
@@ -121,8 +91,26 @@ impl Compiler {
             }
         }
 
-        self.chomp(Token::RightBracket, "')' after argument list")?;
-        Ok(Expression::Array(expressions))
+        self.chomp(end_token)?;
+
+        Ok(expressions)
+    }
+
+    fn call(&mut self, left: Expression) -> Result<Expression> {
+        if let Expression::Variable(name) = left {
+            Ok(Expression::Call(
+                name.to_lowercase(),
+                self.expression_list(Token::RightParen)?,
+            ))
+        } else {
+            Err(SyntaxError::expected("some identifier", self.previous()))
+        }
+    }
+
+    fn array(&mut self) -> Result<Expression> {
+        Ok(Expression::Array(
+            self.expression_list(Token::RightBracket)?,
+        ))
     }
 
     fn binary(&mut self, left: Expression) -> Result<Expression> {
@@ -148,7 +136,7 @@ impl Compiler {
 
     fn grouping(&mut self) -> Result<Expression> {
         let expression = self.expression()?;
-        self.chomp(Token::RightParen, "')' after group expression")?;
+        self.chomp(Token::RightParen)?;
 
         Ok(expression)
     }
@@ -169,19 +157,26 @@ impl Compiler {
             .expect("expected some token")
     }
 
-    fn chomp(&mut self, token: Token, message: &str) -> Result<()> {
+    fn chomp(&mut self, token: Token) -> Result<()> {
         if self.current() == Some(&token) {
             self.advance();
             Ok(())
         } else {
-            Err(SyntaxError::expected(message, &token))
+            match self.current() {
+                Some(current) => Err(SyntaxError(format!(
+                    "Expected {token:?} encountered {current:?}"
+                ))),
+                None => Err(SyntaxError(format!(
+                    "Expected {token:?} encountered end of file"
+                ))),
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{ast::Expression, token::Token, value::Value};
+    use crate::{ast::Expression, error::SyntaxError, token::Token, value::Value};
 
     use super::Compiler;
 
@@ -369,5 +364,32 @@ mod test {
         );
 
         assert_eq!(ast, Ok(expected));
+    }
+
+    #[test]
+    fn err_open_function_call() {
+        let ast =
+            Compiler::compile_ast(vec![Token::Identifier("max".to_string()), Token::LeftParen]);
+
+        let expected = SyntaxError("Expected RightParen encountered end of file".to_string());
+
+        assert_eq!(ast, Err(expected));
+    }
+
+    #[test]
+    fn err_open_array() {
+        let ast = Compiler::compile_ast(vec![Token::LeftBracket, Token::Literal(Value::Nil)]);
+
+        let expected = SyntaxError("Expected RightBracket encountered end of file".to_string());
+        assert_eq!(ast, Err(expected));
+    }
+
+    #[test]
+    fn err_array_empty_expressions() {
+        let ast =
+            Compiler::compile_ast(vec![Token::LeftBracket, Token::Comma, Token::RightBracket]);
+
+        let expected = SyntaxError("Expected left side of expression got \"Comma\"".to_string());
+        assert_eq!(ast, Err(expected));
     }
 }
