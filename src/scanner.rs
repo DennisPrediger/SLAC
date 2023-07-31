@@ -35,8 +35,11 @@ impl<'a> Scanner<'a> {
 
         let mut tokens: Vec<Token> = vec![];
 
+        scanner.skip_whitespace();
+
         while !scanner.is_at_end() {
             tokens.push(scanner.next_token()?);
+            scanner.skip_whitespace();
         }
 
         if tokens.is_empty() {
@@ -47,7 +50,6 @@ impl<'a> Scanner<'a> {
     }
 
     fn next_token(&mut self) -> Result<Token> {
-        self.skip_whitespace();
         self.start = self.current;
         let next = self.next_char().unwrap();
 

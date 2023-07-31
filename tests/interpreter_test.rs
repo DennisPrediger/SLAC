@@ -12,6 +12,8 @@ fn execute(script: &str) -> Value {
 
 #[test]
 fn add_number() {
+    assert_eq!(Value::Number(2.0), execute("1 + 1 "));
+    assert_eq!(Value::Number(2.0), execute(" 1 + 1 "));
     assert_eq!(Value::Number(100.0), execute("99 + 1"));
     assert_eq!(Value::Number(100.5), execute("99.2 + 1.3"));
 }
