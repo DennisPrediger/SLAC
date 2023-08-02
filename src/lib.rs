@@ -17,6 +17,7 @@ pub mod compiler;
 pub mod environment;
 pub mod error;
 pub mod interpreter;
+pub mod operator;
 pub mod scanner;
 pub mod token;
 pub mod validate;
@@ -26,17 +27,17 @@ pub mod value;
 ///
 /// # Examples
 /// ```
-/// use slac::{ast::Expression, compile, token::Token, value::Value};
+/// use slac::{ast::Expression, compile, token::Token, operator::Operator, value::Value};
 ///
 /// let ast = compile("10 + 20 >= 30");
 /// let expected = Expression::Binary {
 ///     left: Box::new(Expression::Binary {
 ///         left: Box::new(Expression::Literal(Value::Number(10.0))),
 ///         right: Box::new(Expression::Literal(Value::Number(20.0))),
-///         operator: Token::Plus,
+///         operator: Operator::Plus,
 ///     }),
 ///     right: Box::new(Expression::Literal(Value::Number(30.0))),
-///     operator: Token::GreaterEqual,
+///     operator: Operator::GreaterEqual,
 /// };
 ///
 /// assert_eq!(ast, Ok(expected));

@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::{ast::Expression, environment::Environment, token::Token, value::Value};
+use crate::{ast::Expression, environment::Environment, operator::Operator, value::Value};
 
 /// A tree walking interpreter which given an [`Environment`] and an [`AST`](Expression)
 /// recursivly walks the tree and computes a single [`Value`].
@@ -32,38 +32,38 @@ impl<'a> TreeWalkingInterpreter<'a> {
         }
     }
 
-    fn unary(&self, right: &Expression, operator: &Token) -> Value {
+    fn unary(&self, right: &Expression, operator: &Operator) -> Value {
         let right = self.expression(right);
 
         match operator {
-            Token::Minus => -right,
-            Token::Not => !right,
+            Operator::Minus => -right,
+            Operator::Not => !right,
             _ => Value::Boolean(false),
         }
     }
 
-    fn binary(&self, left: &Expression, right: &Expression, operator: &Token) -> Value {
+    fn binary(&self, left: &Expression, right: &Expression, operator: &Operator) -> Value {
         let left = self.expression(left);
         let right = self.expression(right);
 
         match operator {
-            Token::Plus => left + right,
-            Token::Minus => left - right,
-            Token::Star => left * right,
-            Token::Slash => left / right,
-            Token::Div => left.div_int(right),
-            Token::Mod => left % right,
-            Token::Greater => Value::Boolean(left > right),
-            Token::GreaterEqual => Value::Boolean(left >= right),
-            Token::Less => Value::Boolean(left < right),
-            Token::LessEqual => Value::Boolean(left <= right),
-            Token::Equal => Value::Boolean(left == right),
-            Token::NotEqual => Value::Boolean(left != right),
-            Token::And => match (left, right) {
+            Operator::Plus => left + right,
+            Operator::Minus => left - right,
+            Operator::Star => left * right,
+            Operator::Slash => left / right,
+            Operator::Div => left.div_int(right),
+            Operator::Mod => left % right,
+            Operator::Greater => Value::Boolean(left > right),
+            Operator::GreaterEqual => Value::Boolean(left >= right),
+            Operator::Less => Value::Boolean(left < right),
+            Operator::LessEqual => Value::Boolean(left <= right),
+            Operator::Equal => Value::Boolean(left == right),
+            Operator::NotEqual => Value::Boolean(left != right),
+            Operator::And => match (left, right) {
                 (Value::Boolean(lhs), Value::Boolean(rhs)) => Value::Boolean(lhs && rhs),
                 _ => Value::Boolean(false),
             },
-            Token::Or => match (left, right) {
+            Operator::Or => match (left, right) {
                 (Value::Boolean(lhs), Value::Boolean(rhs)) => Value::Boolean(lhs || rhs),
                 _ => Value::Boolean(false),
             },
@@ -107,7 +107,9 @@ impl<'a> TreeWalkingInterpreter<'a> {
 mod test {
     use std::cmp::Ordering;
 
-    use crate::{ast::Expression, interpreter::TreeWalkingInterpreter, token::Token, value::Value};
+    use crate::{
+        ast::Expression, interpreter::TreeWalkingInterpreter, operator::Operator, value::Value,
+    };
 
     use super::Environment;
 
@@ -115,7 +117,7 @@ mod test {
     fn bool_not() {
         let ast = Expression::Unary {
             right: Box::from(Expression::Literal(Value::Boolean(false))),
-            operator: Token::Not,
+            operator: Operator::Not,
         };
         let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
@@ -127,7 +129,7 @@ mod test {
     fn number_minus() {
         let ast = Expression::Unary {
             right: Box::from(Expression::Literal(Value::Number(42.0))),
-            operator: Token::Minus,
+            operator: Operator::Minus,
         };
         let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
@@ -140,7 +142,7 @@ mod test {
         let ast = Expression::Binary {
             left: Box::from(Expression::Literal(Value::Boolean(true))),
             right: Box::from(Expression::Literal(Value::Boolean(true))),
-            operator: Token::And,
+            operator: Operator::And,
         };
         let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
@@ -153,7 +155,7 @@ mod test {
         let ast = Expression::Binary {
             left: Box::from(Expression::Literal(Value::Boolean(true))),
             right: Box::from(Expression::Literal(Value::Boolean(false))),
-            operator: Token::And,
+            operator: Operator::And,
         };
         let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
@@ -172,7 +174,7 @@ mod test {
                 Expression::Literal(Value::Number(30.0)),
                 Expression::Literal(Value::Number(40.0)),
             ])),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         };
         let env = Environment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);

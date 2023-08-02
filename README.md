@@ -18,10 +18,10 @@ fn main() {
         left: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(1.0))),
             right: Box::new(Expression::Literal(Value::Number(2.0))),
-            operator: Token::Star,
+            operator: Operator::Star,
         }),
         right: Box::new(Expression::Literal(Value::Number(3.0))),
-        operator: Token::Plus,
+        operator: Operator::Plus,
     };
 
     assert_eq!(result, Ok(expected));

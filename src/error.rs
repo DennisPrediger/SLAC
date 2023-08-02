@@ -22,6 +22,12 @@ impl From<&str> for SyntaxError {
     }
 }
 
+impl From<String> for SyntaxError {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
 impl SyntaxError {
     pub fn expected(expected: &str, recieved: &Token) -> Self {
         Self(format!("Expected {expected} got \"{recieved:?}\""))

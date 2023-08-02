@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::{error::Result, operator::Operator};
 use std::vec;
 
 use crate::{
@@ -114,8 +114,8 @@ impl Compiler {
     }
 
     fn binary(&mut self, left: Expression) -> Result<Expression> {
-        let operator = self.previous().clone();
-        let right = self.parse_precedence(Precedence::from(&operator).next())?;
+        let operator = Operator::try_from(self.previous())?;
+        let right = self.parse_precedence(Precedence::from(self.previous()).next())?;
 
         Ok(Expression::Binary {
             left: Box::new(left),
@@ -125,7 +125,7 @@ impl Compiler {
     }
 
     fn unary(&mut self) -> Result<Expression> {
-        let operator = self.previous().clone();
+        let operator = Operator::try_from(self.previous())?;
         let right = self.parse_precedence(Precedence::Unary)?;
 
         Ok(Expression::Unary {
@@ -176,7 +176,9 @@ impl Compiler {
 
 #[cfg(test)]
 mod test {
-    use crate::{ast::Expression, error::SyntaxError, token::Token, value::Value};
+    use crate::{
+        ast::Expression, error::SyntaxError, operator::Operator, token::Token, value::Value,
+    };
 
     use super::Compiler;
 
@@ -213,7 +215,7 @@ mod test {
         let ast = Compiler::compile_ast(vec![Token::Minus, Token::Literal(Value::Number(42.0))]);
         let expected = Expression::Unary {
             right: Box::new(Expression::Literal(Value::Number(42.0))),
-            operator: Token::Minus,
+            operator: Operator::Minus,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -229,7 +231,7 @@ mod test {
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(3.0))),
             right: Box::new(Expression::Literal(Value::Number(2.0))),
-            operator: Token::Star,
+            operator: Operator::Star,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -245,7 +247,7 @@ mod test {
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(3.0))),
             right: Box::new(Expression::Literal(Value::Number(2.0))),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -265,9 +267,9 @@ mod test {
             right: Box::new(Expression::Binary {
                 left: Box::new(Expression::Literal(Value::Number(2.0))),
                 right: Box::new(Expression::Literal(Value::Number(3.0))),
-                operator: Token::Star,
+                operator: Operator::Star,
             }),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -283,7 +285,7 @@ mod test {
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(5.0))),
             right: Box::new(Expression::Literal(Value::Number(7.0))),
-            operator: Token::Equal,
+            operator: Operator::Equal,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -299,7 +301,7 @@ mod test {
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Boolean(true))),
             right: Box::new(Expression::Literal(Value::Boolean(false))),
-            operator: Token::And,
+            operator: Operator::And,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -320,10 +322,10 @@ mod test {
             left: Box::new(Expression::Binary {
                 left: Box::new(Expression::Literal(Value::Number(5.0))),
                 right: Box::new(Expression::Variable(String::from("some_var"))),
-                operator: Token::Plus,
+                operator: Operator::Plus,
             }),
             right: Box::new(Expression::Literal(Value::Number(4.0))),
-            operator: Token::Star,
+            operator: Operator::Star,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -339,7 +341,7 @@ mod test {
         let expected = Expression::Binary {
             left: Box::new(Expression::Variable(String::from("some_var"))),
             right: Box::new(Expression::Literal(Value::Number(4.0))),
-            operator: Token::Star,
+            operator: Operator::Star,
         };
 
         assert_eq!(ast, Ok(expected));

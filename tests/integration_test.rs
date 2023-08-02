@@ -1,4 +1,4 @@
-use slac::{ast::Expression, compile, token::Token, value::Value};
+use slac::{ast::Expression, compile, operator::Operator, value::Value};
 
 #[test]
 fn single_boolean_true() {
@@ -30,7 +30,7 @@ fn simple_addition() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Number(1.0))),
         right: Box::new(Expression::Literal(Value::Number(2.0))),
-        operator: Token::Plus,
+        operator: Operator::Plus,
     };
 
     assert_eq!(result, Ok(expected));
@@ -43,10 +43,10 @@ fn multiply_addition() {
         left: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(1.0))),
             right: Box::new(Expression::Literal(Value::Number(2.0))),
-            operator: Token::Star,
+            operator: Operator::Star,
         }),
         right: Box::new(Expression::Literal(Value::Number(3.0))),
-        operator: Token::Plus,
+        operator: Operator::Plus,
     };
 
     assert_eq!(result, Ok(expected));
@@ -60,9 +60,9 @@ fn addition_multiply() {
         right: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(2.0))),
             right: Box::new(Expression::Literal(Value::Number(3.0))),
-            operator: Token::Star,
+            operator: Operator::Star,
         }),
-        operator: Token::Plus,
+        operator: Operator::Plus,
     };
 
     assert_eq!(result, Ok(expected));
@@ -75,10 +75,10 @@ fn group_addition_multiply() {
         left: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(1.0))),
             right: Box::new(Expression::Literal(Value::Number(2.0))),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         }),
         right: Box::new(Expression::Literal(Value::Number(3.0))),
-        operator: Token::Star,
+        operator: Operator::Star,
     };
 
     assert_eq!(result, Ok(expected));
@@ -90,7 +90,7 @@ fn and() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Boolean(true))),
         right: Box::new(Expression::Literal(Value::Boolean(false))),
-        operator: Token::And,
+        operator: Operator::And,
     };
 
     assert_eq!(result, Ok(expected));
@@ -102,7 +102,7 @@ fn or() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Boolean(true))),
         right: Box::new(Expression::Literal(Value::Boolean(false))),
-        operator: Token::Or,
+        operator: Operator::Or,
     };
 
     assert_eq!(result, Ok(expected));
@@ -115,10 +115,10 @@ fn and_or() {
         left: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Boolean(false))),
             right: Box::new(Expression::Literal(Value::Boolean(true))),
-            operator: Token::And,
+            operator: Operator::And,
         }),
         right: Box::new(Expression::Literal(Value::Boolean(false))),
-        operator: Token::Or,
+        operator: Operator::Or,
     };
 
     assert_eq!(result, Ok(expected));
@@ -132,9 +132,9 @@ fn or_and() {
         right: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Boolean(true))),
             right: Box::new(Expression::Literal(Value::Boolean(false))),
-            operator: Token::And,
+            operator: Operator::And,
         }),
-        operator: Token::Or,
+        operator: Operator::Or,
     };
 
     assert_eq!(result, Ok(expected));
@@ -145,7 +145,7 @@ fn unary_not() {
     let result = compile("not False");
     let expected = Expression::Unary {
         right: Box::new(Expression::Literal(Value::Boolean(false))),
-        operator: Token::Not,
+        operator: Operator::Not,
     };
 
     assert_eq!(result, Ok(expected));
@@ -157,10 +157,10 @@ fn unary_not_and() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
             right: Box::new(Expression::Literal(Value::Boolean(false))),
-            operator: Token::Not,
+            operator: Operator::Not,
         }),
         right: Box::new(Expression::Literal(Value::Boolean(true))),
-        operator: Token::Or,
+        operator: Operator::Or,
     };
 
     assert_eq!(result, Ok(expected));
@@ -172,7 +172,7 @@ fn equals() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Number(1.0))),
         right: Box::new(Expression::Literal(Value::Number(3.0))),
-        operator: Token::Equal,
+        operator: Operator::Equal,
     };
 
     assert_eq!(result, Ok(expected));
@@ -184,7 +184,7 @@ fn not_equals() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Literal(Value::Number(1.0))),
         right: Box::new(Expression::Literal(Value::Number(3.0))),
-        operator: Token::NotEqual,
+        operator: Operator::NotEqual,
     };
 
     assert_eq!(result, Ok(expected));
@@ -196,13 +196,13 @@ fn not_equals_unary() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Unary {
             right: Box::new(Expression::Literal(Value::Boolean(true))),
-            operator: Token::Not,
+            operator: Operator::Not,
         }),
         right: Box::new(Expression::Unary {
             right: Box::new(Expression::Literal(Value::Boolean(false))),
-            operator: Token::Not,
+            operator: Operator::Not,
         }),
-        operator: Token::NotEqual,
+        operator: Operator::NotEqual,
     };
 
     assert_eq!(result, Ok(expected));
@@ -216,14 +216,14 @@ fn add_equals() {
         left: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(1.0))),
             right: Box::new(Expression::Literal(Value::Number(2.0))),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         }),
         right: Box::new(Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(10.0))),
             right: Box::new(Expression::Literal(Value::Number(7.0))),
-            operator: Token::Minus,
+            operator: Operator::Minus,
         }),
-        operator: Token::Equal,
+        operator: Operator::Equal,
     };
 
     assert_eq!(result, Ok(expected));
@@ -239,16 +239,16 @@ fn add_add_add() {
                 left: Box::new(Expression::Binary {
                     left: Box::new(Expression::Literal(Value::Number(1.0))),
                     right: Box::new(Expression::Literal(Value::Number(2.0))),
-                    operator: Token::Plus,
+                    operator: Operator::Plus,
                 }),
                 right: Box::new(Expression::Literal(Value::Number(3.0))),
-                operator: Token::Plus,
+                operator: Operator::Plus,
             }),
             right: Box::new(Expression::Literal(Value::Number(4.0))),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         }),
         right: Box::new(Expression::Literal(Value::Number(5.0))),
-        operator: Token::Plus,
+        operator: Operator::Plus,
     };
 
     assert_eq!(result, Ok(expected));
@@ -265,13 +265,13 @@ fn function_call() {
                 Expression::Binary {
                     left: Box::new(Expression::Literal(Value::Number(1.0))),
                     right: Box::new(Expression::Literal(Value::Number(5.0))),
-                    operator: Token::Plus,
+                    operator: Operator::Plus,
                 },
                 Expression::Literal(Value::Number(3.0)),
             ],
         )),
         right: Box::new(Expression::Literal(Value::Number(2.0))),
-        operator: Token::Greater,
+        operator: Operator::Greater,
     };
 
     assert_eq!(result, Ok(expected));
@@ -284,7 +284,7 @@ fn function_call_no_params() {
     let expected = Expression::Binary {
         left: Box::new(Expression::Call("now".to_string(), vec![])),
         right: Box::new(Expression::Variable("current_date".to_string())),
-        operator: Token::Greater,
+        operator: Operator::Greater,
     };
 
     assert_eq!(result, Ok(expected));

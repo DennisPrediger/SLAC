@@ -1,4 +1,4 @@
-use crate::{ast::Expression, environment::Environment, token::Token, value::Value};
+use crate::{ast::Expression, environment::Environment, operator::Operator, value::Value};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ValidationResult {
@@ -72,12 +72,12 @@ fn validate_expr_vec(env: &Environment, expressions: &Vec<Expression>) -> Valida
 /// use slac::validate::{validate_boolean_result, ValidationResult};
 /// use slac::ast::Expression;
 /// use slac::value::Value;
-/// use slac::token::Token;
+/// use slac::operator::Operator;
 ///
 /// let ast = Expression::Binary {
 ///     left: Box::new(Expression::Literal(Value::Boolean(true))),
 ///     right: Box::new(Expression::Literal(Value::Boolean(false))),
-///     operator: Token::And,
+///     operator: Operator::And,
 /// };
 ///
 /// assert_eq!(validate_boolean_result(&ast), ValidationResult::Valid);
@@ -85,7 +85,7 @@ fn validate_expr_vec(env: &Environment, expressions: &Vec<Expression>) -> Valida
 pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
     match ast {
         Expression::Unary { right: _, operator } => match operator {
-            Token::Not => ValidationResult::Valid,
+            Operator::Not => ValidationResult::Valid,
             _ => ValidationResult::InvalidOperator(operator.to_string()),
         },
         Expression::Binary {
@@ -93,14 +93,14 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
             right: _,
             operator,
         } => match operator {
-            Token::Greater
-            | Token::GreaterEqual
-            | Token::Less
-            | Token::LessEqual
-            | Token::Equal
-            | Token::NotEqual
-            | Token::And
-            | Token::Or => ValidationResult::Valid,
+            Operator::Greater
+            | Operator::GreaterEqual
+            | Operator::Less
+            | Operator::LessEqual
+            | Operator::Equal
+            | Operator::NotEqual
+            | Operator::And
+            | Operator::Or => ValidationResult::Valid,
             _ => ValidationResult::InvalidOperator(operator.to_string()),
         },
         Expression::Array(_) => ValidationResult::LiteralNotBoolean,
@@ -116,7 +116,7 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, environment::Environment, token::Token, validate::ValidationResult,
+        ast::Expression, environment::Environment, operator::Operator, validate::ValidationResult,
         value::Value,
     };
 
@@ -127,7 +127,7 @@ mod test {
         let ast = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(10.0))),
             right: Box::new(Expression::Literal(Value::Number(10.0))),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         };
 
         let result = validate_env(&Environment::default(), &ast);
@@ -140,7 +140,7 @@ mod test {
         let ast = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(10.0))),
             right: Box::new(Expression::Variable("VAR_NAME".to_string())),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         };
 
         let result = validate_env(&Environment::default(), &ast);
@@ -156,7 +156,7 @@ mod test {
         let ast = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(10.0))),
             right: Box::new(Expression::Call("max".to_string(), vec![])),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         };
 
         let result = validate_env(&Environment::default(), &ast);
@@ -173,7 +173,7 @@ mod test {
         let ast = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(10.0))),
             right: Box::new(Expression::Call("max".to_string(), vec![])),
-            operator: Token::Plus,
+            operator: Operator::Plus,
         };
 
         let mut env = Environment::default();

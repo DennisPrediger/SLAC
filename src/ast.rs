@@ -3,7 +3,8 @@ use serde;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{token::Token, value::Value};
+use crate::operator::Operator;
+use crate::value::Value;
 
 /// An expression represents an entity which can be evaluated to a value.
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -13,20 +14,20 @@ use crate::{token::Token, value::Value};
 )]
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum Expression {
-    /// An operation on a single [`Expression`] operand with a [`Token`] operator.
+    /// An operation on a single [`Expression`] operand with an [`Operator`]
     Unary {
         right: Box<Expression>,
-        operator: Token,
+        operator: Operator,
     },
-    /// An operation on two [`Expression`] operands with a [`Token`] operator.
+    /// An operation on two [`Expression`] operands with a an [`Operator`].
     Binary {
         left: Box<Expression>,
         right: Box<Expression>,
-        operator: Token,
+        operator: Operator,
     },
     /// An list of [`Expression`] values.
     Array(Vec<Expression>),
-    /// A literal Value, represented by a single [`Token`].
+    /// A [`Value`] literal.
     Literal(Value),
     /// A named external variable.
     Variable(String),
