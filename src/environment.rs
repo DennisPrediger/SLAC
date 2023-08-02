@@ -2,6 +2,14 @@ use std::collections::HashMap;
 
 use crate::value::Value;
 
+pub trait Environment {
+    /// Search for a [Value] in the Environment.
+    fn variable(&self, name: &str) -> Option<&Value>;
+
+    /// Search for a [Function] in the Environment.
+    fn function(&self, name: &str) -> Option<&Function>;
+}
+
 /// A function pointer used by the [`Interpreter`](crate::interpreter::TreeWalkingInterpreter).
 /// All parameters to the function are inside a single Vec<[`Value`]>.
 pub type NativeFunction = fn(Vec<Value>) -> Result<Value, String>;
@@ -12,12 +20,12 @@ pub struct Function {
 }
 
 #[derive(Default)]
-pub struct Environment {
+pub struct StaticEnvironment {
     variables: HashMap<String, Value>,
     functions: HashMap<String, Function>,
 }
 
-impl Environment {
+impl StaticEnvironment {
     /// Add or update a variable to the Environment.
     /// Note: All variable names are *case-insensitive*.
     pub fn add_var(&mut self, name: &str, value: Value) {
@@ -31,18 +39,14 @@ impl Environment {
         let name = name.to_lowercase();
         self.functions.insert(name, Function { func, arity });
     }
+}
 
-    pub fn get_var(&self, name: &str) -> Option<&Value> {
+impl Environment for StaticEnvironment {
+    fn variable(&self, name: &str) -> Option<&Value> {
         self.variables.get(name)
     }
 
-    pub fn get_function(&self, name: &str) -> Option<&Function> {
+    fn function(&self, name: &str) -> Option<&Function> {
         self.functions.get(name)
-    }
-
-    pub fn get_func(&self, name: &str, param_count: usize) -> Option<&NativeFunction> {
-        self.get_function(name)
-            .filter(|f| f.arity == param_count)
-            .map(|f| &f.func)
     }
 }

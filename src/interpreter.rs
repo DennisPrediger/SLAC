@@ -5,15 +5,15 @@ use crate::{ast::Expression, environment::Environment, operator::Operator, value
 /// A tree walking interpreter which given an [`Environment`] and an [`AST`](Expression)
 /// recursivly walks the tree and computes a single [`Value`].
 pub struct TreeWalkingInterpreter<'a> {
-    environment: &'a Environment,
+    environment: &'a dyn Environment,
 }
 
 impl<'a> TreeWalkingInterpreter<'a> {
-    pub fn new(environment: &'a Environment) -> Self {
+    pub fn new(environment: &'a dyn Environment) -> Self {
         Self { environment }
     }
 
-    pub fn interprete(env: &Environment, expression: &Expression) -> Value {
+    pub fn interprete(env: &dyn Environment, expression: &Expression) -> Value {
         TreeWalkingInterpreter::new(env).expression(expression)
     }
 
@@ -83,22 +83,23 @@ impl<'a> TreeWalkingInterpreter<'a> {
 
     fn variable(&self, name: &str) -> Value {
         self.environment
-            .get_var(name)
+            .variable(name)
             .unwrap_or(&Value::Boolean(false))
             .clone()
     }
 
     fn call(&self, name: &str, params: &Vec<Expression>) -> Value {
-        match self.environment.get_func(name, params.len()) {
-            Some(func) => {
+        match self.environment.function(name) {
+            Some(function) if function.arity == params.len() => {
+                let func = function.func;
                 let params = params
                     .iter()
                     .map(|expression| self.expression(expression))
                     .collect();
 
-                func(params).unwrap_or(Value::Boolean(false))
+                func(params).unwrap_or(Value::Nil)
             }
-            None => Value::Boolean(false),
+            _ => Value::Nil,
         }
     }
 }
@@ -108,10 +109,9 @@ mod test {
     use std::cmp::Ordering;
 
     use crate::{
-        ast::Expression, interpreter::TreeWalkingInterpreter, operator::Operator, value::Value,
+        ast::Expression, environment::StaticEnvironment, interpreter::TreeWalkingInterpreter,
+        operator::Operator, value::Value,
     };
-
-    use super::Environment;
 
     #[test]
     fn bool_not() {
@@ -119,7 +119,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Boolean(false))),
             operator: Operator::Not,
         };
-        let env = Environment::default();
+        let env = StaticEnvironment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(true), value);
@@ -131,7 +131,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Number(42.0))),
             operator: Operator::Minus,
         };
-        let env = Environment::default();
+        let env = StaticEnvironment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Number(-42.0), value);
@@ -144,7 +144,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Boolean(true))),
             operator: Operator::And,
         };
-        let env = Environment::default();
+        let env = StaticEnvironment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(true), value);
@@ -157,7 +157,7 @@ mod test {
             right: Box::from(Expression::Literal(Value::Boolean(false))),
             operator: Operator::And,
         };
-        let env = Environment::default();
+        let env = StaticEnvironment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(Value::Boolean(false), value);
@@ -176,7 +176,7 @@ mod test {
             ])),
             operator: Operator::Plus,
         };
-        let env = Environment::default();
+        let env = StaticEnvironment::default();
         let value = TreeWalkingInterpreter::interprete(&env, &ast);
 
         assert_eq!(
@@ -193,7 +193,7 @@ mod test {
     #[test]
     fn variable_access() {
         let ast = Expression::Variable("test".to_string());
-        let mut env = Environment::default();
+        let mut env = StaticEnvironment::default();
 
         env.add_var("test", Value::Number(42.0));
         let result = TreeWalkingInterpreter::interprete(&env, &ast);
@@ -230,7 +230,7 @@ mod test {
             ],
         );
 
-        let mut env = Environment::default();
+        let mut env = StaticEnvironment::default();
         env.add_native_func("max", 2, max);
 
         let result = TreeWalkingInterpreter::interprete(&env, &ast);

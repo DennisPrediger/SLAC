@@ -12,7 +12,7 @@ pub enum ValidationResult {
 
 /// Validates `Variable` and `Call` [`Expressions`](crate::ast::Expression) by walking
 /// the tree and returning a [`ValidationResult`] on the first error.
-pub fn validate_env(env: &Environment, expression: &Expression) -> ValidationResult {
+pub fn validate_env(env: &dyn Environment, expression: &Expression) -> ValidationResult {
     let mut result = ValidationResult::Valid;
 
     match expression {
@@ -29,11 +29,11 @@ pub fn validate_env(env: &Environment, expression: &Expression) -> ValidationRes
         }
         Expression::Array(expressions) => result = validate_expr_vec(env, expressions),
         Expression::Variable(name) => {
-            if env.get_var(name).is_none() {
+            if env.variable(name).is_none() {
                 result = ValidationResult::MissingVariable(name.clone());
             }
         }
-        Expression::Call(name, params) => match env.get_function(name) {
+        Expression::Call(name, params) => match env.function(name) {
             Some(function) => {
                 if function.arity != params.len() {
                     result = ValidationResult::ParamCountMismatch(function.arity, params.len());
@@ -49,7 +49,7 @@ pub fn validate_env(env: &Environment, expression: &Expression) -> ValidationRes
     result
 }
 
-fn validate_expr_vec(env: &Environment, expressions: &Vec<Expression>) -> ValidationResult {
+fn validate_expr_vec(env: &dyn Environment, expressions: &Vec<Expression>) -> ValidationResult {
     let mut result = ValidationResult::Valid;
 
     for expr in expressions {
@@ -116,8 +116,8 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, environment::Environment, operator::Operator, validate::ValidationResult,
-        value::Value,
+        ast::Expression, environment::StaticEnvironment, operator::Operator,
+        validate::ValidationResult, value::Value,
     };
 
     use super::validate_env;
@@ -130,7 +130,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let result = validate_env(&Environment::default(), &ast);
+        let result = validate_env(&StaticEnvironment::default(), &ast);
 
         assert_eq!(ValidationResult::Valid, result);
     }
@@ -143,7 +143,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let result = validate_env(&Environment::default(), &ast);
+        let result = validate_env(&StaticEnvironment::default(), &ast);
 
         assert_eq!(
             ValidationResult::MissingVariable("VAR_NAME".to_string()),
@@ -159,7 +159,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let result = validate_env(&Environment::default(), &ast);
+        let result = validate_env(&StaticEnvironment::default(), &ast);
 
         assert_eq!(ValidationResult::MissingFunction("max".to_string()), result);
     }
@@ -176,7 +176,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let mut env = Environment::default();
+        let mut env = StaticEnvironment::default();
         env.add_native_func("max", 2, dummy_function);
 
         let result = validate_env(&env, &ast);
@@ -191,7 +191,7 @@ mod test {
             vec![Expression::Variable("not_found".to_string())],
         );
 
-        let mut env = Environment::default();
+        let mut env = StaticEnvironment::default();
         env.add_native_func("func", 1, dummy_function);
 
         let result = validate_env(&env, &ast);
