@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
@@ -25,36 +27,42 @@ pub enum Token {
   Identifier(String)
 }
 
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::LeftParen => write!(f, "("),
+            Token::RightParen => write!(f, ")"),
+            Token::LeftBracket => write!(f, "["),
+            Token::RightBracket => write!(f, "]"),
+            Token::Plus => write!(f, "+"),
+            Token::Minus => write!(f, "-"),
+            Token::Star => write!(f, "*"),
+            Token::Slash => write!(f, "/"),
+            Token::Comma => write!(f, ","),
+            Token::Greater => write!(f, ">"),
+            Token::GreaterEqual => write!(f, ">="),
+            Token::Less => write!(f, "<"),
+            Token::LessEqual => write!(f, "<="),
+            Token::Equal => write!(f, "="),
+            Token::NotEqual => write!(f, "<>"),
+            Token::And => write!(f, "and"),
+            Token::Or => write!(f, "or"),
+            Token::Not => write!(f, "not"),
+            Token::Div => write!(f, "div"),
+            Token::Mod => write!(f, "mod"),
+            Token::Literal(name) => write!(f, "{}", name),
+            Token::Identifier(name) => write!(f, "{}", name),
+        }
+    }
+}
+
 #[cfg(feature = "serde")]
 impl Serialize for Token {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        match self {
-            Token::LeftParen => serializer.serialize_char('('),
-            Token::RightParen => serializer.serialize_char(')'),
-            Token::LeftBracket => serializer.serialize_char('['),
-            Token::RightBracket => serializer.serialize_char(']'),
-            Token::Plus => serializer.serialize_char('+'),
-            Token::Minus => serializer.serialize_char('-'),
-            Token::Star => serializer.serialize_char('*'),
-            Token::Slash => serializer.serialize_char('/'),
-            Token::Comma => serializer.serialize_char(','),
-            Token::Greater => serializer.serialize_char('>'),
-            Token::GreaterEqual => serializer.serialize_str(">="),
-            Token::Less => serializer.serialize_char('<'),
-            Token::LessEqual => serializer.serialize_str("<="),
-            Token::Equal => serializer.serialize_char('='),
-            Token::NotEqual => serializer.serialize_str("<>"),
-            Token::And => serializer.serialize_str("and"),
-            Token::Or => serializer.serialize_str("or"),
-            Token::Not => serializer.serialize_str("not"),
-            Token::Div => serializer.serialize_str("div"),
-            Token::Mod => serializer.serialize_str("mod"),
-            Token::Identifier(name) => serializer.serialize_str(name),
-            Token::Literal(value) => value.serialize(serializer),
-        }
+        serializer.serialize_str(&self.to_string())
     }
 }
 

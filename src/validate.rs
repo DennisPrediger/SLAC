@@ -1,4 +1,4 @@
-use crate::{ast::Expression, environment::Environment};
+use crate::{ast::Expression, environment::Environment, token::Token, value::Value};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ValidationResult {
@@ -6,6 +6,8 @@ pub enum ValidationResult {
     MissingVariable(String),
     MissingFunction(String),
     ParamCountMismatch(usize, usize),
+    InvalidOperator(String),
+    LiteralNotBoolean,
 }
 
 /// Validates `Variable` and `Call` [`Expressions`](crate::ast::Expression) by walking
@@ -60,6 +62,55 @@ fn validate_expr_vec(env: &Environment, expressions: &Vec<Expression>) -> Valida
     }
 
     result
+}
+
+/// Checks if the top level [`Expression`] produces a [`Value::Boolean`] result.
+///
+/// # Examples
+///
+/// ```
+/// use slac::validate::{validate_boolean_result, ValidationResult};
+/// use slac::ast::Expression;
+/// use slac::value::Value;
+/// use slac::token::Token;
+///
+/// let ast = Expression::Binary {
+///     left: Box::new(Expression::Literal(Value::Boolean(true))),
+///     right: Box::new(Expression::Literal(Value::Boolean(false))),
+///     operator: Token::And,
+/// };
+///
+/// assert_eq!(validate_boolean_result(&ast), ValidationResult::Valid);
+/// ```
+pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
+    match ast {
+        Expression::Unary { right: _, operator } => match operator {
+            Token::Not => ValidationResult::Valid,
+            _ => ValidationResult::InvalidOperator(operator.to_string()),
+        },
+        Expression::Binary {
+            left: _,
+            right: _,
+            operator,
+        } => match operator {
+            Token::Greater
+            | Token::GreaterEqual
+            | Token::Less
+            | Token::LessEqual
+            | Token::Equal
+            | Token::NotEqual
+            | Token::And
+            | Token::Or => ValidationResult::Valid,
+            _ => ValidationResult::InvalidOperator(operator.to_string()),
+        },
+        Expression::Array(_) => ValidationResult::LiteralNotBoolean,
+        Expression::Literal(v) => match v {
+            Value::Boolean(_) => ValidationResult::Valid,
+            _ => ValidationResult::LiteralNotBoolean,
+        },
+        Expression::Variable(_) => ValidationResult::Valid, // Type not known
+        Expression::Call(_, _) => ValidationResult::Valid,  // Type not known
+    }
 }
 
 #[cfg(test)]

@@ -5,7 +5,10 @@ use serde::Serialize;
 #[cfg(feature = "serde")]
 use serde_json::json;
 
-use std::ops::{Add, Div, Mul, Neg, Not, Rem, Sub};
+use std::{
+    fmt::Display,
+    ops::{Add, Div, Mul, Neg, Not, Rem, Sub},
+};
 
 /// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -96,6 +99,18 @@ impl Rem for Value {
         match (self, rhs) {
             (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs % rhs),
             _ => Value::Nil,
+        }
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::Nil => write!(f, "Nil"),
+            Value::Boolean(v) => write!(f, "{}", v),
+            Value::String(v) => write!(f, "{}", v),
+            Value::Number(v) => write!(f, "{}", v),
+            Value::Array(v) => write!(f, "{:?}", v),
         }
     }
 }
