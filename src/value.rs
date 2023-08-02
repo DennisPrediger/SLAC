@@ -2,6 +2,8 @@
 use serde;
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "serde")]
+use serde_json::json;
 
 use std::ops::{Add, Div, Mul, Neg, Not, Rem, Sub};
 
@@ -99,10 +101,54 @@ impl Rem for Value {
 }
 
 impl Value {
+    /// Integer division between two operands. Returns the whole number quotient,
+    /// discarding any fractional part.
+    ///
+    /// # Examples
+    /// ```
+    /// use slac::value::Value;
+    ///
+    /// let a = Value::Number(10.0);
+    /// let b = Value::Number(3.0);
+    ///
+    /// assert_eq!(Value::Number(3.0), a.div_int(b));
+    /// ```
     pub fn div_int(self, rhs: Self) -> Self {
         match (self, rhs) {
             (Value::Number(lhs), Value::Number(rhs)) => Value::Number((lhs / rhs).trunc()),
             _ => Value::Nil,
+        }
+    }
+
+    /// Converts a [`Value`] into a [`serde_json::Value`].
+    #[cfg(feature = "serde")]
+    pub fn as_json(self) -> serde_json::Value {
+        match self {
+            Value::Nil => json!(null),
+            Value::Boolean(v) => json!(v),
+            Value::String(v) => json!(v),
+            Value::Number(v) => json!(v),
+            Value::Array(v) => {
+                json!(v
+                    .into_iter()
+                    .map(Value::as_json)
+                    .collect::<Vec<serde_json::Value>>())
+            }
+        }
+    }
+}
+
+/// Converts a [`serde_json::Value`] into a [`Value`].
+#[cfg(feature = "serde")]
+impl From<serde_json::Value> for Value {
+    fn from(value: serde_json::Value) -> Self {
+        match value {
+            serde_json::Value::Null => Value::Nil,
+            serde_json::Value::Bool(v) => Value::Boolean(v),
+            serde_json::Value::Number(v) => Value::Number(v.as_f64().unwrap_or(0.0)),
+            serde_json::Value::String(v) => Value::String(v),
+            serde_json::Value::Array(v) => Value::Array(v.into_iter().map(Value::from).collect()),
+            serde_json::Value::Object(_) => Value::Nil,
         }
     }
 }
@@ -156,5 +202,28 @@ mod test {
         assert_eq!(Value::Number(2.0), test_mod_int(8.0));
         assert_eq!(Value::Number(1.0), test_mod_int(9.0));
         assert_eq!(Value::Number(0.0), test_mod_int(10.0));
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod test_serde_json {
+    use serde_json::json;
+
+    use crate::value::Value;
+
+    #[test]
+    fn convert_from_json() {
+        assert_eq!(Value::Nil, Value::from(json!(null)));
+        assert_eq!(Value::Boolean(true), Value::from(json!(true)));
+        assert_eq!(Value::String("abc".to_string()), Value::from(json!("abc")));
+        assert_eq!(Value::Number(19.9), Value::from(json!(19.9)));
+    }
+
+    #[test]
+    fn convert_to_json() {
+        assert_eq!(json!(null), Value::Nil.as_json());
+        assert_eq!(json!(true), Value::Boolean(true).as_json());
+        assert_eq!(json!("abc"), Value::String("abc".to_string()).as_json());
+        assert_eq!(json!(19.9), Value::Number(19.9).as_json());
     }
 }
