@@ -1,12 +1,12 @@
 #[cfg(feature = "serde")]
 use serde;
 #[cfg(feature = "serde")]
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{token::Token, value::Value};
 
 /// An expression represents an entity which can be evaluated to a value.
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(
     feature = "serde",
     serde(tag = "type", content = "value", rename_all = "camelCase")

@@ -1,7 +1,8 @@
 use std::fmt::Display;
 
+use serde::de::Visitor;
 #[cfg(feature = "serde")]
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 
 use crate::value::Value;
 
@@ -63,6 +64,57 @@ impl Serialize for Token {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "serde")]
+struct TokenVisitor;
+
+#[cfg(feature = "serde")]
+impl<'de> Visitor<'de> for TokenVisitor {
+    type Value = Token;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(formatter, "a Token String")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match v {
+            "(" => Ok(Token::LeftParen),
+            ")" => Ok(Token::RightParen),
+            "[" => Ok(Token::LeftBracket),
+            "]" => Ok(Token::RightBracket),
+            "+" => Ok(Token::Plus),
+            "-" => Ok(Token::Minus),
+            "*" => Ok(Token::Star),
+            "/" => Ok(Token::Slash),
+            "," => Ok(Token::Comma),
+            ">" => Ok(Token::Greater),
+            ">=" => Ok(Token::GreaterEqual),
+            "<" => Ok(Token::Less),
+            "<=" => Ok(Token::LessEqual),
+            "=" => Ok(Token::Equal),
+            "<>" => Ok(Token::NotEqual),
+            "and" => Ok(Token::And),
+            "or" => Ok(Token::Or),
+            "not" => Ok(Token::Not),
+            "div" => Ok(Token::Div),
+            "mod" => Ok(Token::Mod),
+            _ => Err(serde::de::Error::custom(format!("unknown token {}", v))),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Token {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(TokenVisitor)
     }
 }
 

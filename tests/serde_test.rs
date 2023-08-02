@@ -2,7 +2,7 @@
 mod test {
 
     use minify::json::minify;
-    use slac::compile;
+    use slac::{ast::Expression, compile};
 
     fn test_serialize(script: &str, expected: &str) {
         let ast = compile(script).unwrap();
@@ -72,5 +72,14 @@ mod test {
     }"#;
 
         test_serialize("max(10, 20) > 5", expected);
+    }
+
+    #[test]
+    fn ser_de_round_trip() {
+        let input = compile("1 + 2").unwrap();
+        let json = serde_json::to_value(&input).unwrap();
+        let output = serde_json::from_value::<Expression>(json).unwrap();
+
+        assert_eq!(input, output);
     }
 }

@@ -1,7 +1,7 @@
 #[cfg(feature = "serde")]
 use serde;
 #[cfg(feature = "serde")]
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde")]
 use serde_json::json;
 
@@ -11,7 +11,7 @@ use std::{
 };
 
 /// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Value {
