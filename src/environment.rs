@@ -1,13 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::value::Value;
 
 pub trait Environment {
     /// Search for a [Value] in the Environment.
-    fn variable(&self, name: &str) -> Option<&Value>;
+    fn variable(&self, name: &str) -> Option<Rc<Value>>;
 
     /// Search for a [Function] in the Environment.
-    fn function(&self, name: &str) -> Option<&Function>;
+    fn function(&self, name: &str) -> Option<Rc<Function>>;
 }
 
 /// A function pointer used by the [`Interpreter`](crate::interpreter::TreeWalkingInterpreter).
@@ -21,8 +21,8 @@ pub struct Function {
 
 #[derive(Default)]
 pub struct StaticEnvironment {
-    variables: HashMap<String, Value>,
-    functions: HashMap<String, Function>,
+    variables: HashMap<String, Rc<Value>>,
+    functions: HashMap<String, Rc<Function>>,
 }
 
 impl StaticEnvironment {
@@ -30,6 +30,8 @@ impl StaticEnvironment {
     /// Note: All variable names are *case-insensitive*.
     pub fn add_var(&mut self, name: &str, value: Value) {
         let name = name.to_lowercase();
+        let value = Rc::new(value);
+
         self.variables.insert(name, value);
     }
 
@@ -37,16 +39,18 @@ impl StaticEnvironment {
     /// Note: All function names are *case-insensitive*.
     pub fn add_native_func(&mut self, name: &str, arity: usize, func: NativeFunction) {
         let name = name.to_lowercase();
-        self.functions.insert(name, Function { func, arity });
+        let value = Rc::new(Function { func, arity });
+
+        self.functions.insert(name, value);
     }
 }
 
 impl Environment for StaticEnvironment {
-    fn variable(&self, name: &str) -> Option<&Value> {
-        self.variables.get(name)
+    fn variable(&self, name: &str) -> Option<Rc<Value>> {
+        self.variables.get(name).cloned()
     }
 
-    fn function(&self, name: &str) -> Option<&Function> {
-        self.functions.get(name)
+    fn function(&self, name: &str) -> Option<Rc<Function>> {
+        self.functions.get(name).cloned()
     }
 }
