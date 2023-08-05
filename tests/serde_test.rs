@@ -325,4 +325,38 @@ mod test {
         }"#;
         test_json(script, expected);
     }
+
+    #[test]
+    fn nested_json() {
+        let expected = r#"
+        {
+          "type": "array",
+          "expressions": [
+            {
+              "type": "array",
+              "expressions": [
+                {
+                  "type": "literal",
+                  "value": {
+                    "number": 1.0
+                  }
+                },
+                {
+                  "type": "literal",
+                  "value": {
+                    "number": 2.0
+                  }
+                }
+              ]
+            },
+            {
+              "type": "literal",
+              "value": {
+                "number": 3.0
+              }
+            }
+          ]
+        }"#;
+        test_json("[[1, 2], 3]", expected)
+    }
 }
