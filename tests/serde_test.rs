@@ -2,7 +2,12 @@
 mod test {
 
     use minify::json::minify;
-    use slac::{ast::Expression, compile};
+    use slac::{
+        ast::Expression,
+        compile,
+        environment::StaticEnvironment,
+        validate::{validate_env, ValidationResult},
+    };
 
     fn test_serialize(script: &str, expected: &str) {
         let ast = compile(script).unwrap();
@@ -18,7 +23,22 @@ mod test {
         assert_eq!(input, output);
     }
 
+    fn dummy_func(_params: Vec<slac::value::Value>) -> Result<slac::value::Value, String> {
+        Ok(slac::value::Value::Nil)
+    }
+
+    fn test_validate(script: &str) {
+        let input = compile(script).unwrap();
+        let mut env = StaticEnvironment::default();
+        env.add_native_func("max", 2, dummy_func);
+        env.add_native_func("some_func", 1, dummy_func);
+        env.add_var("some_var", slac::value::Value::Nil);
+
+        assert_eq!(ValidationResult::Valid, validate_env(&env, &input));
+    }
+
     fn test_json(script: &str, expected: &str) {
+        test_validate(script);
         test_serialize(script, expected);
         test_roundtrip(script);
     }

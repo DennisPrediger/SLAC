@@ -83,3 +83,13 @@ fn array_combination() {
 
     assert_eq!(Value::Array(vec![]), execute("[]"));
 }
+
+#[test]
+fn invalid_operations() {
+    assert_eq!(Value::Nil, execute("1 + 'some_string'"));
+    assert_eq!(Value::Nil, execute("1 - 'some_string'"));
+    assert_eq!(Value::Nil, execute("1 * 'some_string'"));
+    assert_eq!(Value::Nil, execute("1 / 'some_string'"));
+    assert_eq!(Value::Nil, execute("1 mod 'some_string'"));
+    assert_eq!(Value::Nil, execute("1 div 'some_string'"));
+}

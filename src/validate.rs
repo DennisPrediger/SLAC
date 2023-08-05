@@ -145,6 +145,26 @@ mod test {
     }
 
     #[test]
+    fn valid_nested() {
+        let ast = Expression::Binary {
+            left: Box::new(Expression::Literal {
+                value: Value::Number(10.0),
+            }),
+            right: Box::new(Expression::Unary {
+                right: Box::new(Expression::Literal {
+                    value: Value::Number(10.0),
+                }),
+                operator: Operator::Minus,
+            }),
+            operator: Operator::Plus,
+        };
+
+        let result = validate_env(&StaticEnvironment::default(), &ast);
+
+        assert_eq!(ValidationResult::Valid, result);
+    }
+
+    #[test]
     fn err_missing_variable() {
         let ast = Expression::Binary {
             left: Box::new(Expression::Literal {
