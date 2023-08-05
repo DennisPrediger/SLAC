@@ -50,8 +50,12 @@ impl Compiler {
     fn do_prefix(&mut self) -> Result<Expression> {
         let previous = self.previous();
         match previous {
-            Token::Literal(value) => Ok(Expression::Literal(value.clone())),
-            Token::Identifier(name) => Ok(Expression::Variable(name.to_lowercase())),
+            Token::Literal(value) => Ok(Expression::Literal {
+                value: value.clone(),
+            }),
+            Token::Identifier(name) => Ok(Expression::Variable {
+                name: name.to_lowercase(),
+            }),
             Token::LeftParen => self.grouping(),
             Token::LeftBracket => self.array(),
             Token::Not | Token::Minus => self.unary(),
@@ -97,7 +101,7 @@ impl Compiler {
     }
 
     fn call(&mut self, left: Expression) -> Result<Expression> {
-        if let Expression::Variable(name) = left {
+        if let Expression::Variable { name } = left {
             Ok(Expression::Call {
                 name: name.to_lowercase(),
                 params: self.expression_list(Token::RightParen)?,
@@ -108,9 +112,9 @@ impl Compiler {
     }
 
     fn array(&mut self) -> Result<Expression> {
-        Ok(Expression::Array(
-            self.expression_list(Token::RightBracket)?,
-        ))
+        Ok(Expression::Array {
+            expressions: self.expression_list(Token::RightBracket)?,
+        })
     }
 
     fn binary(&mut self, left: Expression) -> Result<Expression> {
@@ -185,7 +189,9 @@ mod test {
     #[test]
     fn single_literal() {
         let ast = Compiler::compile_ast(vec![Token::Literal(Value::Boolean(true))]);
-        let expected = Expression::Literal(Value::Boolean(true));
+        let expected = Expression::Literal {
+            value: Value::Boolean(true),
+        };
 
         assert_eq!(ast, Ok(expected));
     }
@@ -193,7 +199,9 @@ mod test {
     #[test]
     fn single_variable() {
         let ast = Compiler::compile_ast(vec![Token::Identifier(String::from("test"))]);
-        let expected = Expression::Variable(String::from("test"));
+        let expected = Expression::Variable {
+            name: String::from("test"),
+        };
 
         assert_eq!(ast, Ok(expected));
     }
@@ -205,7 +213,9 @@ mod test {
             Token::Literal(Value::Boolean(true)),
             Token::RightParen,
         ]);
-        let expected = Expression::Literal(Value::Boolean(true));
+        let expected = Expression::Literal {
+            value: Value::Boolean(true),
+        };
 
         assert_eq!(ast, Ok(expected));
     }
@@ -214,7 +224,9 @@ mod test {
     fn unary_literal() {
         let ast = Compiler::compile_ast(vec![Token::Minus, Token::Literal(Value::Number(42.0))]);
         let expected = Expression::Unary {
-            right: Box::new(Expression::Literal(Value::Number(42.0))),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(42.0),
+            }),
             operator: Operator::Minus,
         };
 
@@ -229,8 +241,12 @@ mod test {
             Token::Literal(Value::Number(2.0)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(3.0))),
-            right: Box::new(Expression::Literal(Value::Number(2.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(3.0),
+            }),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(2.0),
+            }),
             operator: Operator::Star,
         };
 
@@ -245,8 +261,12 @@ mod test {
             Token::Literal(Value::Number(2.0)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(3.0))),
-            right: Box::new(Expression::Literal(Value::Number(2.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(3.0),
+            }),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(2.0),
+            }),
             operator: Operator::Plus,
         };
 
@@ -263,10 +283,16 @@ mod test {
             Token::Literal(Value::Number(3.0)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(1.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(1.0),
+            }),
             right: Box::new(Expression::Binary {
-                left: Box::new(Expression::Literal(Value::Number(2.0))),
-                right: Box::new(Expression::Literal(Value::Number(3.0))),
+                left: Box::new(Expression::Literal {
+                    value: Value::Number(2.0),
+                }),
+                right: Box::new(Expression::Literal {
+                    value: Value::Number(3.0),
+                }),
                 operator: Operator::Star,
             }),
             operator: Operator::Plus,
@@ -283,8 +309,12 @@ mod test {
             Token::Literal(Value::Number(7.0)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(5.0))),
-            right: Box::new(Expression::Literal(Value::Number(7.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(5.0),
+            }),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(7.0),
+            }),
             operator: Operator::Equal,
         };
 
@@ -299,8 +329,12 @@ mod test {
             Token::Literal(Value::Boolean(false)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Boolean(true))),
-            right: Box::new(Expression::Literal(Value::Boolean(false))),
+            left: Box::new(Expression::Literal {
+                value: Value::Boolean(true),
+            }),
+            right: Box::new(Expression::Literal {
+                value: Value::Boolean(false),
+            }),
             operator: Operator::And,
         };
 
@@ -320,11 +354,17 @@ mod test {
         ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Binary {
-                left: Box::new(Expression::Literal(Value::Number(5.0))),
-                right: Box::new(Expression::Variable(String::from("some_var"))),
+                left: Box::new(Expression::Literal {
+                    value: Value::Number(5.0),
+                }),
+                right: Box::new(Expression::Variable {
+                    name: String::from("some_var"),
+                }),
                 operator: Operator::Plus,
             }),
-            right: Box::new(Expression::Literal(Value::Number(4.0))),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(4.0),
+            }),
             operator: Operator::Star,
         };
 
@@ -339,8 +379,12 @@ mod test {
             Token::Literal(Value::Number(4.0)),
         ]);
         let expected = Expression::Binary {
-            left: Box::new(Expression::Variable(String::from("some_var"))),
-            right: Box::new(Expression::Literal(Value::Number(4.0))),
+            left: Box::new(Expression::Variable {
+                name: String::from("some_var"),
+            }),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(4.0),
+            }),
             operator: Operator::Star,
         };
 
@@ -360,8 +404,12 @@ mod test {
         let expected = Expression::Call {
             name: String::from("max"),
             params: vec![
-                Expression::Literal(Value::Number(1.0)),
-                Expression::Literal(Value::Number(2.0)),
+                Expression::Literal {
+                    value: Value::Number(1.0),
+                },
+                Expression::Literal {
+                    value: Value::Number(2.0),
+                },
             ],
         };
 

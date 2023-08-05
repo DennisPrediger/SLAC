@@ -27,8 +27,10 @@ pub fn validate_env(env: &dyn Environment, expression: &Expression) -> Validatio
                 result = validate_env(env, right);
             }
         }
-        Expression::Array(expressions) => result = validate_expr_vec(env, expressions),
-        Expression::Variable(name) => {
+        Expression::Array {
+            expressions: values,
+        } => result = validate_expr_vec(env, values),
+        Expression::Variable { name } => {
             if env.variable(name).is_none() {
                 result = ValidationResult::MissingVariable(name.clone());
             }
@@ -43,7 +45,7 @@ pub fn validate_env(env: &dyn Environment, expression: &Expression) -> Validatio
             }
             None => result = ValidationResult::MissingFunction(name.clone()),
         },
-        Expression::Literal(_) => (),
+        Expression::Literal { value: _ } => (),
     };
 
     result
@@ -75,8 +77,8 @@ fn validate_expr_vec(env: &dyn Environment, expressions: &Vec<Expression>) -> Va
 /// use slac::operator::Operator;
 ///
 /// let ast = Expression::Binary {
-///     left: Box::new(Expression::Literal(Value::Boolean(true))),
-///     right: Box::new(Expression::Literal(Value::Boolean(false))),
+///     left: Box::new(Expression::Literal{value: Value::Boolean(true)}),
+///     right: Box::new(Expression::Literal{value: Value::Boolean(true)}),
 ///     operator: Operator::And,
 /// };
 ///
@@ -103,12 +105,12 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
             | Operator::Or => ValidationResult::Valid,
             _ => ValidationResult::InvalidOperator(operator.to_string()),
         },
-        Expression::Array(_) => ValidationResult::LiteralNotBoolean,
-        Expression::Literal(v) => match v {
+        Expression::Array { expressions: _ } => ValidationResult::LiteralNotBoolean,
+        Expression::Literal { value } => match value {
             Value::Boolean(_) => ValidationResult::Valid,
             _ => ValidationResult::LiteralNotBoolean,
         },
-        Expression::Variable(_) => ValidationResult::Valid, // Type not known
+        Expression::Variable { name: _ } => ValidationResult::Valid, // Type not known
         Expression::Call { name: _, params: _ } => ValidationResult::Valid, // Type not known
     }
 }
@@ -125,8 +127,12 @@ mod test {
     #[test]
     fn valid() {
         let ast = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(10.0))),
-            right: Box::new(Expression::Literal(Value::Number(10.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(10.0),
+            }),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(10.0),
+            }),
             operator: Operator::Plus,
         };
 
@@ -138,8 +144,12 @@ mod test {
     #[test]
     fn err_missing_variable() {
         let ast = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(10.0))),
-            right: Box::new(Expression::Variable("VAR_NAME".to_string())),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(10.0),
+            }),
+            right: Box::new(Expression::Variable {
+                name: "VAR_NAME".to_string(),
+            }),
             operator: Operator::Plus,
         };
 
@@ -154,7 +164,9 @@ mod test {
     #[test]
     fn err_function_missing() {
         let ast = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(10.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(10.0),
+            }),
             right: Box::new(Expression::Call {
                 name: "max".to_string(),
                 params: vec![],
@@ -174,7 +186,9 @@ mod test {
     #[test]
     fn err_function_params_mismatch() {
         let ast = Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(10.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(10.0),
+            }),
             right: Box::new(Expression::Call {
                 name: "max".to_string(),
                 params: vec![],
@@ -194,7 +208,9 @@ mod test {
     fn err_function_nested_params() {
         let ast = Expression::Call {
             name: "func".to_string(),
-            params: vec![Expression::Variable("not_found".to_string())],
+            params: vec![Expression::Variable {
+                name: "not_found".to_string(),
+            }],
         };
 
         let mut env = StaticEnvironment::default();

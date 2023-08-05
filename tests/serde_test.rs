@@ -13,24 +13,22 @@ mod test {
     #[test]
     fn serialize_simple() {
         let expected = r#"
-    {
-      "type": "binary",
-      "value": {
-        "left": {
-          "type": "literal",
-          "value": {
-            "number": 1.0
-          }
-        },
-        "right": {
-          "type": "literal",
-          "value": {
-            "number": 2.0
-          }
-        },
-        "operator": "+"
-      }
-    }"#;
+        {
+          "type": "binary",
+          "left": {
+            "type": "literal",
+            "value": {
+              "number": 1.0
+            }
+          },
+          "right": {
+            "type": "literal",
+            "value": {
+              "number": 2.0
+            }
+          },
+          "operator": "+"
+        }"#;
 
         test_serialize("1+ 2", expected);
     }
@@ -40,35 +38,31 @@ mod test {
         let expected = r#"
         {
           "type": "binary",
-          "value": {
-            "left": {
-              "type": "call",
-              "value": {
-                "name": "max",
-                "params": [
-                  {
-                    "type": "literal",
-                    "value": {
-                      "number": 10.0
-                    }
-                  },
-                  {
-                    "type": "literal",
-                    "value": {
-                      "number": 20.0
-                    }
-                  }
-                ]
+          "left": {
+            "type": "call",
+            "name": "max",
+            "params": [
+              {
+                "type": "literal",
+                "value": {
+                  "number": 10.0
+                }
+              },
+              {
+                "type": "literal",
+                "value": {
+                  "number": 20.0
+                }
               }
-            },
-            "right": {
-              "type": "literal",
-              "value": {
-                "number": 5.0
-              }
-            },
-            "operator": ">"
-          }
+            ]
+          },
+          "right": {
+            "type": "literal",
+            "value": {
+              "number": 5.0
+            }
+          },
+          "operator": ">"
         }
         "#;
 

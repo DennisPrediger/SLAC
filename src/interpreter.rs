@@ -25,9 +25,9 @@ impl<'a> TreeWalkingInterpreter<'a> {
                 right,
                 operator,
             } => self.binary(left, right, operator),
-            Expression::Array(expressions) => self.array(expressions),
-            Expression::Literal(value) => value.clone(),
-            Expression::Variable(name) => self.variable(name),
+            Expression::Array { expressions } => self.array(expressions),
+            Expression::Literal { value } => value.clone(),
+            Expression::Variable { name } => self.variable(name),
             Expression::Call { name, params } => self.call(name, params),
         }
     }
@@ -116,7 +116,9 @@ mod test {
     #[test]
     fn bool_not() {
         let ast = Expression::Unary {
-            right: Box::from(Expression::Literal(Value::Boolean(false))),
+            right: Box::from(Expression::Literal {
+                value: Value::Boolean(false),
+            }),
             operator: Operator::Not,
         };
         let env = StaticEnvironment::default();
@@ -128,7 +130,9 @@ mod test {
     #[test]
     fn number_minus() {
         let ast = Expression::Unary {
-            right: Box::from(Expression::Literal(Value::Number(42.0))),
+            right: Box::from(Expression::Literal {
+                value: Value::Number(42.0),
+            }),
             operator: Operator::Minus,
         };
         let env = StaticEnvironment::default();
@@ -140,8 +144,12 @@ mod test {
     #[test]
     fn bool_and_true() {
         let ast = Expression::Binary {
-            left: Box::from(Expression::Literal(Value::Boolean(true))),
-            right: Box::from(Expression::Literal(Value::Boolean(true))),
+            left: Box::from(Expression::Literal {
+                value: Value::Boolean(true),
+            }),
+            right: Box::from(Expression::Literal {
+                value: Value::Boolean(true),
+            }),
             operator: Operator::And,
         };
         let env = StaticEnvironment::default();
@@ -153,8 +161,12 @@ mod test {
     #[test]
     fn bool_and_false() {
         let ast = Expression::Binary {
-            left: Box::from(Expression::Literal(Value::Boolean(true))),
-            right: Box::from(Expression::Literal(Value::Boolean(false))),
+            left: Box::from(Expression::Literal {
+                value: Value::Boolean(true),
+            }),
+            right: Box::from(Expression::Literal {
+                value: Value::Boolean(false),
+            }),
             operator: Operator::And,
         };
         let env = StaticEnvironment::default();
@@ -166,14 +178,26 @@ mod test {
     #[test]
     fn array_plus_array() {
         let ast = Expression::Binary {
-            left: Box::from(Expression::Array(vec![
-                Expression::Literal(Value::Number(10.0)),
-                Expression::Literal(Value::Number(20.0)),
-            ])),
-            right: Box::from(Expression::Array(vec![
-                Expression::Literal(Value::Number(30.0)),
-                Expression::Literal(Value::Number(40.0)),
-            ])),
+            left: Box::from(Expression::Array {
+                expressions: vec![
+                    Expression::Literal {
+                        value: Value::Number(10.0),
+                    },
+                    Expression::Literal {
+                        value: Value::Number(20.0),
+                    },
+                ],
+            }),
+            right: Box::from(Expression::Array {
+                expressions: vec![
+                    Expression::Literal {
+                        value: Value::Number(30.0),
+                    },
+                    Expression::Literal {
+                        value: Value::Number(40.0),
+                    },
+                ],
+            }),
             operator: Operator::Plus,
         };
         let env = StaticEnvironment::default();
@@ -192,7 +216,9 @@ mod test {
 
     #[test]
     fn variable_access() {
-        let ast = Expression::Variable("test".to_string());
+        let ast = Expression::Variable {
+            name: "test".to_string(),
+        };
         let mut env = StaticEnvironment::default();
 
         env.add_var("test", Value::Number(42.0));
@@ -225,8 +251,12 @@ mod test {
         let ast = Expression::Call {
             name: String::from("max"),
             params: vec![
-                Expression::Literal(Value::Number(10.0)),
-                Expression::Literal(Value::Number(20.0)),
+                Expression::Literal {
+                    value: Value::Number(10.0),
+                },
+                Expression::Literal {
+                    value: Value::Number(20.0),
+                },
             ],
         };
 

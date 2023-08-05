@@ -32,11 +32,17 @@ pub mod value;
 /// let ast = compile("10 + 20 >= 30");
 /// let expected = Expression::Binary {
 ///     left: Box::new(Expression::Binary {
-///         left: Box::new(Expression::Literal(Value::Number(10.0))),
-///         right: Box::new(Expression::Literal(Value::Number(20.0))),
+///         left: Box::new(Expression::Literal {
+///             value : Value::Number(10.0)
+///         }),
+///         right: Box::new(Expression::Literal {
+///             value : Value::Number(20.0)
+///         }),
 ///         operator: Operator::Plus,
 ///     }),
-///     right: Box::new(Expression::Literal(Value::Number(30.0))),
+///     right: Box::new(Expression::Literal {
+///         value : Value::Number(30.0)
+///     }),
 ///     operator: Operator::GreaterEqual,
 /// };
 ///
