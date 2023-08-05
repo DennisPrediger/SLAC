@@ -112,8 +112,9 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
             Value::Boolean(_) => ValidationResult::Valid,
             _ => ValidationResult::LiteralNotBoolean,
         },
-        Expression::Variable { name: _ } => ValidationResult::Valid, // Type not known
-        Expression::Call { name: _, params: _ } => ValidationResult::Valid, // Type not known
+        Expression::Variable { name: _ } | Expression::Call { name: _, params: _ } => {
+            ValidationResult::Valid // Type not known
+        }
     }
 }
 

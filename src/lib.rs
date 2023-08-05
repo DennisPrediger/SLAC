@@ -23,7 +23,10 @@ pub mod token;
 pub mod validate;
 pub mod value;
 
-/// Compiles a string into an [`ast::Expression`] tree or an [`error::SyntaxError`].
+/// Compiles a string into an [`ast::Expression`] tree.
+///
+/// # Errors
+/// Returns a [`error::SyntaxError`] when encountering invalid Input.
 ///
 /// # Examples
 /// ```

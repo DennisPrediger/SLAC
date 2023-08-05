@@ -14,6 +14,8 @@ pub struct Compiler {
 
 impl Compiler {
     /// From a series of [`Tokens`](Token) compiles a structured [`Expression`] tree.
+    /// # Errors
+    /// Returns a [`SyntaxError`] when encountering invalid input.
     pub fn compile_ast(tokens: Vec<Token>) -> Result<Expression> {
         let mut compiler = Compiler { tokens, current: 0 };
         compiler.compile()
@@ -95,7 +97,7 @@ impl Compiler {
             }
         }
 
-        self.chomp(end_token)?;
+        self.chomp(&end_token)?;
 
         Ok(expressions)
     }
@@ -140,7 +142,7 @@ impl Compiler {
 
     fn grouping(&mut self) -> Result<Expression> {
         let expression = self.expression()?;
-        self.chomp(Token::RightParen)?;
+        self.chomp(&Token::RightParen)?;
 
         Ok(expression)
     }
@@ -161,8 +163,8 @@ impl Compiler {
             .expect("expected some token")
     }
 
-    fn chomp(&mut self, token: Token) -> Result<()> {
-        if self.current() == Some(&token) {
+    fn chomp(&mut self, token: &Token) -> Result<()> {
+        if self.current() == Some(token) {
             self.advance();
             Ok(())
         } else {

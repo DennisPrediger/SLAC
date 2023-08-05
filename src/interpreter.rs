@@ -84,8 +84,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
     fn variable(&self, name: &str) -> Value {
         self.environment
             .variable(name)
-            .map(|v| (*v).clone())
-            .unwrap_or(Value::Nil)
+            .map_or(Value::Nil, |v| (*v).clone())
     }
 
     fn call(&self, name: &str, params: &[Expression]) -> Value {

@@ -13,7 +13,6 @@ pub struct Scanner<'a> {
 
 impl<'a> Scanner<'a> {
     /// Converts an input string into a series of [`Tokens`](Token).
-    /// Returns a [`SyntaxError`] when encountering an error.
     ///
     /// # Examples
     /// ```
@@ -25,6 +24,8 @@ impl<'a> Scanner<'a> {
     ///
     /// assert_eq!(tokens, expected);
     /// ```
+    /// # Errors
+    /// Returns a [`SyntaxError`] when encountering invalid input.
     pub fn tokenize(source: &'a str) -> Result<Vec<Token>> {
         let mut scanner = Scanner {
             source,
@@ -54,7 +55,7 @@ impl<'a> Scanner<'a> {
         let next = self.next_char().unwrap();
 
         if Scanner::is_identifier_start(next) {
-            return self.identifier();
+            return Ok(self.identifier());
         }
 
         if char::is_numeric(next) {
@@ -63,6 +64,7 @@ impl<'a> Scanner<'a> {
 
         match next {
             '\'' => self.string(),
+            '.' => self.number(), // interprete .1 as 0.1
             '(' => Ok(Token::LeftParen),
             ')' => Ok(Token::RightParen),
             '[' => Ok(Token::LeftBracket),
@@ -75,7 +77,6 @@ impl<'a> Scanner<'a> {
             '=' => Ok(Token::Equal),
             '>' => Ok(self.greater()),
             '<' => Ok(self.lesser()),
-            '.' => self.number(), // interprete .1 as 0.1
             _ => Err(SyntaxError(format!("invalid token: {next}"))),
         }
     }
@@ -117,11 +118,11 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn get_content(&self, trim_by: usize) -> Result<String> {
+    fn get_content(&self, trim_by: usize) -> String {
         let from = self.start + trim_by;
         let to = self.current - trim_by;
 
-        Ok(self.source.chars().take(to).skip(from).collect())
+        self.source.chars().take(to).skip(from).collect()
     }
 
     fn is_identifier_start(character: char) -> bool {
@@ -132,14 +133,14 @@ impl<'a> Scanner<'a> {
         character.is_alphanumeric() || character == '_' || character == '-'
     }
 
-    fn identifier(&mut self) -> Result<Token> {
+    fn identifier(&mut self) -> Token {
         while self.peek().is_some_and(Scanner::is_identifier) {
             self.advance();
         }
 
-        let ident = self.get_content(0)?;
+        let ident = self.get_content(0);
 
-        let token = match ident.to_lowercase().as_str() {
+        match ident.to_lowercase().as_str() {
             "true" => Token::Literal(Value::Boolean(true)),
             "false" => Token::Literal(Value::Boolean(false)),
             "and" => Token::And,
@@ -148,9 +149,7 @@ impl<'a> Scanner<'a> {
             "div" => Token::Div,
             "mod" => Token::Mod,
             _ => Token::Identifier(ident),
-        };
-
-        Ok(token)
+        }
     }
 
     fn extract_number(content: &str) -> Result<f64> {
@@ -172,7 +171,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let content = self.get_content(0)?;
+        let content = self.get_content(0);
         let number = Scanner::extract_number(content.as_str())?;
 
         Ok(Token::Literal(Value::Number(number)))
@@ -189,7 +188,7 @@ impl<'a> Scanner<'a> {
         };
 
         self.advance();
-        let content = self.get_content(1)?;
+        let content = self.get_content(1);
 
         Ok(Token::Literal(Value::String(content)))
     }

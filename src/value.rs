@@ -107,10 +107,10 @@ impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Value::Nil => write!(f, "Nil"),
-            Value::Boolean(v) => write!(f, "{}", v),
-            Value::String(v) => write!(f, "{}", v),
-            Value::Number(v) => write!(f, "{}", v),
-            Value::Array(v) => write!(f, "{:?}", v),
+            Value::Boolean(v) => write!(f, "{v}"),
+            Value::String(v) => write!(f, "{v}"),
+            Value::Number(v) => write!(f, "{v}"),
+            Value::Array(v) => write!(f, "{v:?}"),
         }
     }
 }
@@ -158,12 +158,11 @@ impl Value {
 impl From<serde_json::Value> for Value {
     fn from(value: serde_json::Value) -> Self {
         match value {
-            serde_json::Value::Null => Value::Nil,
+            serde_json::Value::Null | serde_json::Value::Object(_) => Value::Nil,
             serde_json::Value::Bool(v) => Value::Boolean(v),
             serde_json::Value::Number(v) => Value::Number(v.as_f64().unwrap_or(0.0)),
             serde_json::Value::String(v) => Value::String(v),
             serde_json::Value::Array(v) => Value::Array(v.into_iter().map(Value::from).collect()),
-            serde_json::Value::Object(_) => Value::Nil,
         }
     }
 }

@@ -25,7 +25,7 @@ pub enum Token {
 /// The precedences used to order the operators evaluated in the
 /// [Pratt-Parser](https://en.wikipedia.org/wiki/Operator-precedence_parser#Pratt_parsing)
 /// when building the [`Expression`](crate::ast::Expression) tree.
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Precedence {
     None,
     Or,         // or

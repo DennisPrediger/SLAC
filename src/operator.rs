@@ -59,7 +59,7 @@ impl TryFrom<&Token> for Operator {
             Token::Not => Ok(Operator::Not),
             Token::Div => Ok(Operator::Div),
             Token::Mod => Ok(Operator::Mod),
-            _ => Err(format!("unknown Token {:?}", value)),
+            _ => Err(format!("unknown Token {value:?}")),
         }
     }
 }
@@ -115,7 +115,7 @@ impl<'de> Visitor<'de> for OperatorVisitor {
             "not" => Ok(Operator::Not),
             "div" => Ok(Operator::Div),
             "mod" => Ok(Operator::Mod),
-            _ => Err(serde::de::Error::custom(format!("unknown Operator {}", v))),
+            _ => Err(serde::de::Error::custom(format!("unknown Operator {v}"))),
         }
     }
 }
