@@ -2,15 +2,24 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::value::Value;
 
-pub trait Environment {
-    /// Search for a [Value] in the Environment.
-    fn variable(&self, name: &str) -> Option<Rc<Value>>;
-
-    /// Search for a [Function] in the Environment.
-    fn function(&self, name: &str) -> Option<Rc<Function>>;
+pub enum FunctionResult {
+    Exists,
+    NotFound,
+    WrongArity,
 }
 
-/// A function pointer used by the [`Interpreter`](crate::interpreter::TreeWalkingInterpreter).
+pub trait Environment {
+    /// Get a variable [`Value`] from the Environment.
+    fn variable(&self, name: &str) -> Option<Rc<Value>>;
+
+    /// Call a [`Function`] and return a [`Value`].
+    fn call(&self, name: &str, params: Vec<Value>) -> Option<Value>;
+
+    /// Check if a [`Function`] exists.
+    fn function(&self, name: &str, arity: usize) -> FunctionResult;
+}
+
+/// A function pointer used to execute native Rust functions.
 /// All parameters to the function are inside a single Vec<[`Value`]>.
 pub type NativeFunction = fn(Vec<Value>) -> Result<Value, String>;
 
@@ -50,7 +59,23 @@ impl Environment for StaticEnvironment {
         self.variables.get(name).cloned()
     }
 
-    fn function(&self, name: &str) -> Option<Rc<Function>> {
-        self.functions.get(name).cloned()
+    fn call(&self, name: &str, params: Vec<Value>) -> Option<Value> {
+        let function = self.functions.get(name)?;
+        let call = function.func;
+
+        call(params).ok()
+    }
+
+    fn function(&self, name: &str, arity: usize) -> FunctionResult {
+        match self.functions.get(name) {
+            Some(function) => {
+                if function.arity == arity {
+                    FunctionResult::Exists
+                } else {
+                    FunctionResult::WrongArity
+                }
+            }
+            None => FunctionResult::NotFound,
+        }
     }
 }

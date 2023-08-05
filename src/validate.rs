@@ -1,11 +1,16 @@
-use crate::{ast::Expression, environment::Environment, operator::Operator, value::Value};
+use crate::{
+    ast::Expression,
+    environment::{Environment, FunctionResult},
+    operator::Operator,
+    value::Value,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ValidationResult {
     Valid,
     MissingVariable(String),
     MissingFunction(String),
-    ParamCountMismatch(usize, usize),
+    ParamCountMismatch(usize),
     InvalidOperator(String),
     LiteralNotBoolean,
 }
@@ -35,16 +40,13 @@ pub fn validate_env(env: &dyn Environment, expression: &Expression) -> Validatio
                 result = ValidationResult::MissingVariable(name.clone());
             }
         }
-        Expression::Call { name, params } => match env.function(name) {
-            Some(function) => {
-                if function.arity != params.len() {
-                    result = ValidationResult::ParamCountMismatch(function.arity, params.len());
-                } else {
-                    result = validate_expr_vec(env, params);
-                }
+        Expression::Call { name, params } => {
+            result = match env.function(name, params.len()) {
+                FunctionResult::Exists => validate_expr_vec(env, params),
+                FunctionResult::NotFound => ValidationResult::MissingFunction(name.clone()),
+                FunctionResult::WrongArity => ValidationResult::ParamCountMismatch(params.len()),
             }
-            None => result = ValidationResult::MissingFunction(name.clone()),
-        },
+        }
         Expression::Literal { value: _ } => (),
     };
 
@@ -201,7 +203,7 @@ mod test {
 
         let result = validate_env(&env, &ast);
 
-        assert_eq!(ValidationResult::ParamCountMismatch(2, 0), result);
+        assert_eq!(ValidationResult::ParamCountMismatch(0), result);
     }
 
     #[test]

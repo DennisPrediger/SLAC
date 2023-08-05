@@ -88,19 +88,13 @@ impl<'a> TreeWalkingInterpreter<'a> {
             .unwrap_or(Value::Nil)
     }
 
-    fn call(&self, name: &str, params: &Vec<Expression>) -> Value {
-        match self.environment.function(name) {
-            Some(function) if function.arity == params.len() => {
-                let func = function.func;
-                let params = params
-                    .iter()
-                    .map(|expression| self.expression(expression))
-                    .collect();
+    fn call(&self, name: &str, params: &[Expression]) -> Value {
+        let params = params
+            .iter()
+            .map(|expression| self.expression(expression))
+            .collect();
 
-                func(params).unwrap_or(Value::Nil)
-            }
-            _ => Value::Nil,
-        }
+        self.environment.call(name, params).unwrap_or(Value::Nil)
     }
 }
 
