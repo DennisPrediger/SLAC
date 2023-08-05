@@ -137,7 +137,7 @@ impl Value {
 
     /// Converts a [`Value`] into a [`serde_json::Value`].
     #[cfg(feature = "serde")]
-    pub fn as_json(self) -> serde_json::Value {
+    pub fn as_json(&self) -> serde_json::Value {
         match self {
             Value::Nil => json!(null),
             Value::Boolean(v) => json!(v),
@@ -145,7 +145,7 @@ impl Value {
             Value::Number(v) => json!(v),
             Value::Array(v) => {
                 json!(v
-                    .into_iter()
+                    .iter()
                     .map(Value::as_json)
                     .collect::<Vec<serde_json::Value>>())
             }
