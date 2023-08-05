@@ -38,38 +38,39 @@ mod test {
     #[test]
     fn serialize_function() {
         let expected = r#"
-    {
-      "type": "binary",
-      "value": {
-        "left": {
-          "type": "call",
-          "value": [
-            "max",
-            [
-              {
-                "type": "literal",
-                "value": {
-                  "number": 10.0
-                }
-              },
-              {
-                "type": "literal",
-                "value": {
-                  "number": 20.0
-                }
-              }
-            ]
-          ]
-        },
-        "right": {
-          "type": "literal",
+        {
+          "type": "binary",
           "value": {
-            "number": 5.0
+            "left": {
+              "type": "call",
+              "value": {
+                "name": "max",
+                "params": [
+                  {
+                    "type": "literal",
+                    "value": {
+                      "number": 10.0
+                    }
+                  },
+                  {
+                    "type": "literal",
+                    "value": {
+                      "number": 20.0
+                    }
+                  }
+                ]
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": {
+                "number": 5.0
+              }
+            },
+            "operator": ">"
           }
-        },
-        "operator": ">"
-      }
-    }"#;
+        }
+        "#;
 
         test_serialize("max(10, 20) > 5", expected);
     }

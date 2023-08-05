@@ -32,5 +32,8 @@ pub enum Expression {
     /// A named external variable.
     Variable(String),
     /// A call to an external function with a list of [`Expression`] parameters.
-    Call(String, Vec<Expression>),
+    Call {
+        name: String,
+        params: Vec<Expression>,
+    },
 }

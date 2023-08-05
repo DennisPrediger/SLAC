@@ -33,7 +33,7 @@ pub fn validate_env(env: &dyn Environment, expression: &Expression) -> Validatio
                 result = ValidationResult::MissingVariable(name.clone());
             }
         }
-        Expression::Call(name, params) => match env.function(name) {
+        Expression::Call { name, params } => match env.function(name) {
             Some(function) => {
                 if function.arity != params.len() {
                     result = ValidationResult::ParamCountMismatch(function.arity, params.len());
@@ -109,7 +109,7 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
             _ => ValidationResult::LiteralNotBoolean,
         },
         Expression::Variable(_) => ValidationResult::Valid, // Type not known
-        Expression::Call(_, _) => ValidationResult::Valid,  // Type not known
+        Expression::Call { name: _, params: _ } => ValidationResult::Valid, // Type not known
     }
 }
 
@@ -155,7 +155,10 @@ mod test {
     fn err_function_missing() {
         let ast = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(10.0))),
-            right: Box::new(Expression::Call("max".to_string(), vec![])),
+            right: Box::new(Expression::Call {
+                name: "max".to_string(),
+                params: vec![],
+            }),
             operator: Operator::Plus,
         };
 
@@ -172,7 +175,10 @@ mod test {
     fn err_function_params_mismatch() {
         let ast = Expression::Binary {
             left: Box::new(Expression::Literal(Value::Number(10.0))),
-            right: Box::new(Expression::Call("max".to_string(), vec![])),
+            right: Box::new(Expression::Call {
+                name: "max".to_string(),
+                params: vec![],
+            }),
             operator: Operator::Plus,
         };
 
@@ -186,10 +192,10 @@ mod test {
 
     #[test]
     fn err_function_nested_params() {
-        let ast = Expression::Call(
-            "func".to_string(),
-            vec![Expression::Variable("not_found".to_string())],
-        );
+        let ast = Expression::Call {
+            name: "func".to_string(),
+            params: vec![Expression::Variable("not_found".to_string())],
+        };
 
         let mut env = StaticEnvironment::default();
         env.add_native_func("func", 1, dummy_function);

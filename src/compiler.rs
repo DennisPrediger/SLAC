@@ -98,10 +98,10 @@ impl Compiler {
 
     fn call(&mut self, left: Expression) -> Result<Expression> {
         if let Expression::Variable(name) = left {
-            Ok(Expression::Call(
-                name.to_lowercase(),
-                self.expression_list(Token::RightParen)?,
-            ))
+            Ok(Expression::Call {
+                name: name.to_lowercase(),
+                params: self.expression_list(Token::RightParen)?,
+            })
         } else {
             Err(SyntaxError::expected("some identifier", self.previous()))
         }
@@ -357,13 +357,13 @@ mod test {
             Token::Literal(Value::Number(2.0)),
             Token::RightParen,
         ]);
-        let expected = Expression::Call(
-            String::from("max"),
-            vec![
+        let expected = Expression::Call {
+            name: String::from("max"),
+            params: vec![
                 Expression::Literal(Value::Number(1.0)),
                 Expression::Literal(Value::Number(2.0)),
             ],
-        );
+        };
 
         assert_eq!(ast, Ok(expected));
     }

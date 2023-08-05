@@ -259,9 +259,9 @@ fn function_call() {
     let result = compile("max(1 + 5, 3) > 2");
 
     let expected = Expression::Binary {
-        left: Box::new(Expression::Call(
-            "max".to_string(),
-            vec![
+        left: Box::new(Expression::Call {
+            name: "max".to_string(),
+            params: vec![
                 Expression::Binary {
                     left: Box::new(Expression::Literal(Value::Number(1.0))),
                     right: Box::new(Expression::Literal(Value::Number(5.0))),
@@ -269,7 +269,7 @@ fn function_call() {
                 },
                 Expression::Literal(Value::Number(3.0)),
             ],
-        )),
+        }),
         right: Box::new(Expression::Literal(Value::Number(2.0))),
         operator: Operator::Greater,
     };
@@ -282,7 +282,10 @@ fn function_call_no_params() {
     let result = compile("Now() > current_date");
 
     let expected = Expression::Binary {
-        left: Box::new(Expression::Call("now".to_string(), vec![])),
+        left: Box::new(Expression::Call {
+            name: "now".to_string(),
+            params: vec![],
+        }),
         right: Box::new(Expression::Variable("current_date".to_string())),
         operator: Operator::Greater,
     };

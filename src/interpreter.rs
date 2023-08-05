@@ -28,7 +28,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
             Expression::Array(expressions) => self.array(expressions),
             Expression::Literal(value) => value.clone(),
             Expression::Variable(name) => self.variable(name),
-            Expression::Call(name, params) => self.call(name, params),
+            Expression::Call { name, params } => self.call(name, params),
         }
     }
 
@@ -222,13 +222,13 @@ mod test {
 
     #[test]
     fn func_access() {
-        let ast = Expression::Call(
-            String::from("max"),
-            vec![
+        let ast = Expression::Call {
+            name: String::from("max"),
+            params: vec![
                 Expression::Literal(Value::Number(10.0)),
                 Expression::Literal(Value::Number(20.0)),
             ],
-        );
+        };
 
         let mut env = StaticEnvironment::default();
         env.add_native_func("max", 2, max);
