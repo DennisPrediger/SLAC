@@ -38,7 +38,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
         match operator {
             Operator::Minus => -right,
             Operator::Not => !right,
-            _ => Value::Boolean(false),
+            _ => Value::Nil,
         }
     }
 
@@ -67,7 +67,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
                 (Value::Boolean(lhs), Value::Boolean(rhs)) => Value::Boolean(lhs || rhs),
                 _ => Value::Boolean(false),
             },
-            _ => Value::Boolean(false),
+            _ => Value::Nil,
         }
     }
 
