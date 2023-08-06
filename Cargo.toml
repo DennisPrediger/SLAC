@@ -8,6 +8,7 @@ description = "The \"Simple Logic & Arithmetic Compiler\" (SLAC) transforms a si
 categories = ["compilers", "parsing"]
 license = "Apache-2.0"
 repository = "https://github.com/DennisPrediger/SLAC"
+readme = "README.md"
 
 
 [features]

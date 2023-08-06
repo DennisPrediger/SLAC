@@ -1,47 +1,54 @@
-# SLAC: Simple Logic & Arithmetic Compiler
+# SLAC: The Simple Logic & Arithmetic Compiler
 
-SLAC is a small and simple compiler which converts a single expression statement into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
+SLAC is a small and simple compiler which converts a single expression statement into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree). You can use SLAC to implement a [business rules engine](https://en.wikipedia.org/wiki/Business_rules_engine) isolated from you application code at runtime.
 
-It is written in Rust and as such compiles easily as an executable, wasm module, or standalone DLL.
+It is written in Rust, and as such compiles easily as an **executable, wasm module, or standalone DLL**.
 
 # Examples
 
 ## Library usage
 
 ```rust
-use slac::{ast::Expression, compile};
+use slac::{ast::Expression, compile, operator::Operator, value::Value};
 
 fn main() {
     let ast = compile("1 * 2 + 3");
 
     let expected = Expression::Binary {
         left: Box::new(Expression::Binary {
-            left: Box::new(Expression::Literal(Value::Number(1.0))),
-            right: Box::new(Expression::Literal(Value::Number(2.0))),
+            left: Box::new(Expression::Literal {
+                value: Value::Number(1.0),
+            }),
+            right: Box::new(Expression::Literal {
+                value: Value::Number(2.0),
+            }),
             operator: Operator::Star,
         }),
-        right: Box::new(Expression::Literal(Value::Number(3.0))),
+        right: Box::new(Expression::Literal {
+            value: Value::Number(3.0),
+        }),
         operator: Operator::Plus,
     };
 
-    assert_eq!(result, Ok(expected));
+    assert_eq!(ast, Ok(expected));
 }
 ```
 
 ## Interpreter
 
 SLAC features a built-in [tree walk interpreter](https://en.wikipedia.org/wiki/Interpreter_(computing)#Abstract_syntax_tree_interpreters).
-Create an `Environment` which houses the variables and user defined functions. Then use the `TreeWalkingInterpreter` class to execute the AST against the environment.
+Create an `Environment` which houses the variables and user defined functions. Then use the `TreeWalkingInterpreter` class to execute the AST against the environment. Optional use `add_stdlib` to add some common functions.
 
 ```rust
-use slac::compile;
-use slac::environment::Environment;
-use slac::interpreter::TreeWalkingInterpreter;
-use slac::value::Value;
+use slac::{
+    compile, environment::StaticEnvironment, interpreter::TreeWalkingInterpreter,
+    stdlib::add_stdlib, value::Value,
+};
 
 fn main() {
     let ast = compile("some_var > 5").unwrap();
-    let mut env = Environment::default();
+    let mut env = StaticEnvironment::default();
+    add_stdlib(&mut env);
     env.add_var("some_var", Value::Number(42.0));
 
     let result = TreeWalkingInterpreter::interprete(&env, &ast);
@@ -80,18 +87,43 @@ True and not False
 // > [1, 2, 3, 'Four']
 
 // application defined external functions
-someFunc(true)
-// > depends on the definition of 'someFunc'
+max(10, 20)
+// > 20
 
 // application defined variables
-SOME_VAR + -10
-// > depends on the definition of 'SOME_VAR'
+pi + -10
+// > -31,4
+```
 
+# Serialization
+
+By using the `serde` **feature flag**, the `Expression` can be (de)serialized to various formats, most notably JSON. This can be useful to separate the compilation and validation in the backend from the execution in the frontend.
+
+```rust
+use slac::{
+    ast::Expression, compile, environment::StaticEnvironment,
+    interpreter::TreeWalkingInterpreter, value::Value,
+};
+
+fn main() {
+    let input = compile("50 * 3 > 149").unwrap();
+    let json = serde_json::to_value(&input).unwrap();
+
+    // > Store the JSON in a database and load it on the client
+
+    let output = serde_json::from_value::<Expression>(json).unwrap();
+    let env = StaticEnvironment::default();
+
+    let result = TreeWalkingInterpreter::interprete(&env, &output);
+
+    assert_eq!(input, output);
+    assert_eq!(result, Value::Boolean(true));
+}
 ```
 
 # Installation
 
-The minimum required Rust toolchain version for SLAC is **1.70.0** or higher. 
+The minimum required Rust toolchain version is **1.70.0**. 
 
 Use `cargo add slac` to install the library from [crates.io](https://crates.io/crates/slac) as a dependency in your application.
 
