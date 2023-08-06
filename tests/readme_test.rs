@@ -46,6 +46,7 @@ mod interpreter {
     }
 }
 
+#[cfg(feature = "serde")]
 mod serialisation {
     use slac::{
         ast::Expression, compile, environment::StaticEnvironment,

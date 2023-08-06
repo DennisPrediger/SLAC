@@ -50,15 +50,11 @@ mod test {
           "type": "binary",
           "left": {
             "type": "literal",
-            "value": {
-              "number": 1.0
-            }
+            "value": 1.0
           },
           "right": {
             "type": "literal",
-            "value": {
-              "number": 2.0
-            }
+            "value": 2.0
           },
           "operator": "+"
         }"#;
@@ -77,23 +73,17 @@ mod test {
             "params": [
               {
                 "type": "literal",
-                "value": {
-                  "number": 10.0
-                }
+                "value": 10.0
               },
               {
                 "type": "literal",
-                "value": {
-                  "number": 20.0
-                }
+                "value": 20.0
               }
             ]
           },
           "right": {
             "type": "literal",
-            "value": {
-              "number": 5.0
-            }
+            "value": 5.0
           },
           "operator": ">"
         }
@@ -107,7 +97,7 @@ mod test {
         let script = r#"true and not false and
                               10 + 20 - 30 < 50 * 5 / 25 and
                               10 div 3 <= 10 mod 3 or 
-                              some_func(['array', 1, true]) > some_var or 
+                              some_func(['hello', 1, true]) > some_var or 
                               7 >= 8 or  9 <> 10 and
                               'Apple' + 'Pen' = 'ApplePen'
                               "#;
@@ -126,17 +116,13 @@ mod test {
                     "type": "binary",
                     "left": {
                       "type": "literal",
-                      "value": {
-                        "boolean": true
-                      }
+                      "value": true
                     },
                     "right": {
                       "type": "unary",
                       "right": {
                         "type": "literal",
-                        "value": {
-                          "boolean": false
-                        }
+                        "value": false
                       },
                       "operator": "not"
                     },
@@ -150,23 +136,17 @@ mod test {
                         "type": "binary",
                         "left": {
                           "type": "literal",
-                          "value": {
-                            "number": 10.0
-                          }
+                          "value": 10.0
                         },
                         "right": {
                           "type": "literal",
-                          "value": {
-                            "number": 20.0
-                          }
+                          "value": 20.0
                         },
                         "operator": "+"
                       },
                       "right": {
                         "type": "literal",
-                        "value": {
-                          "number": 30.0
-                        }
+                        "value": 30.0
                       },
                       "operator": "-"
                     },
@@ -176,23 +156,17 @@ mod test {
                         "type": "binary",
                         "left": {
                           "type": "literal",
-                          "value": {
-                            "number": 50.0
-                          }
+                          "value": 50.0
                         },
                         "right": {
                           "type": "literal",
-                          "value": {
-                            "number": 5.0
-                          }
+                          "value": 5.0
                         },
                         "operator": "*"
                       },
                       "right": {
                         "type": "literal",
-                        "value": {
-                          "number": 25.0
-                        }
+                        "value": 25.0
                       },
                       "operator": "/"
                     },
@@ -206,15 +180,11 @@ mod test {
                     "type": "binary",
                     "left": {
                       "type": "literal",
-                      "value": {
-                        "number": 10.0
-                      }
+                      "value": 10.0
                     },
                     "right": {
                       "type": "literal",
-                      "value": {
-                        "number": 3.0
-                      }
+                      "value": 3.0
                     },
                     "operator": "div"
                   },
@@ -222,15 +192,11 @@ mod test {
                     "type": "binary",
                     "left": {
                       "type": "literal",
-                      "value": {
-                        "number": 10.0
-                      }
+                      "value": 10.0
                     },
                     "right": {
                       "type": "literal",
-                      "value": {
-                        "number": 3.0
-                      }
+                      "value": 3.0
                     },
                     "operator": "mod"
                   },
@@ -249,21 +215,15 @@ mod test {
                       "expressions": [
                         {
                           "type": "literal",
-                          "value": {
-                            "string": "array"
-                          }
+                          "value": "hello"
                         },
                         {
                           "type": "literal",
-                          "value": {
-                            "number": 1.0
-                          }
+                          "value": 1.0
                         },
                         {
                           "type": "literal",
-                          "value": {
-                            "boolean": true
-                          }
+                          "value": true
                         }
                       ]
                     }
@@ -281,15 +241,11 @@ mod test {
               "type": "binary",
               "left": {
                 "type": "literal",
-                "value": {
-                  "number": 7.0
-                }
+                "value": 7.0
               },
               "right": {
                 "type": "literal",
-                "value": {
-                  "number": 8.0
-                }
+                "value": 8.0
               },
               "operator": ">="
             },
@@ -301,15 +257,11 @@ mod test {
               "type": "binary",
               "left": {
                 "type": "literal",
-                "value": {
-                  "number": 9.0
-                }
+                "value": 9.0
               },
               "right": {
                 "type": "literal",
-                "value": {
-                  "number": 10.0
-                }
+                "value": 10.0
               },
               "operator": "<>"
             },
@@ -319,23 +271,17 @@ mod test {
                 "type": "binary",
                 "left": {
                   "type": "literal",
-                  "value": {
-                    "string": "Apple"
-                  }
+                  "value": "Apple"
                 },
                 "right": {
                   "type": "literal",
-                  "value": {
-                    "string": "Pen"
-                  }
+                  "value": "Pen"
                 },
                 "operator": "+"
               },
               "right": {
                 "type": "literal",
-                "value": {
-                  "string": "ApplePen"
-                }
+                "value": "ApplePen"
               },
               "operator": "="
             },
@@ -357,23 +303,17 @@ mod test {
               "expressions": [
                 {
                   "type": "literal",
-                  "value": {
-                    "number": 1.0
-                  }
+                  "value": 1.0
                 },
                 {
                   "type": "literal",
-                  "value": {
-                    "number": 2.0
-                  }
+                  "value": 2.0
                 }
               ]
             },
             {
               "type": "literal",
-              "value": {
-                "number": 3.0
-              }
+              "value": 3.0
             }
           ]
         }"#;

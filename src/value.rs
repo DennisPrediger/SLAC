@@ -1,9 +1,7 @@
 #[cfg(feature = "serde")]
 use serde;
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-#[cfg(feature = "serde")]
-use serde_json::json;
+use serde::{de::Visitor, ser::SerializeSeq, Deserialize, Serialize};
 
 use std::{
     fmt::Display,
@@ -11,8 +9,6 @@ use std::{
 };
 
 /// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Value {
     /// [`Value::Nil`] is only created by invalid operations and not from literals
@@ -135,23 +131,6 @@ impl Value {
         }
     }
 
-    /// Converts a [`Value`] into a [`serde_json::Value`].
-    #[cfg(feature = "serde")]
-    pub fn as_json(&self) -> serde_json::Value {
-        match self {
-            Value::Nil => json!(null),
-            Value::Boolean(v) => json!(v),
-            Value::String(v) => json!(v),
-            Value::Number(v) => json!(v),
-            Value::Array(v) => {
-                json!(v
-                    .iter()
-                    .map(Value::as_json)
-                    .collect::<Vec<serde_json::Value>>())
-            }
-        }
-    }
-
     pub fn len(&self) -> usize {
         match self {
             Value::String(v) => v.len(),
@@ -169,17 +148,87 @@ impl Value {
     }
 }
 
-/// Converts a [`serde_json::Value`] into a [`Value`].
 #[cfg(feature = "serde")]
-impl From<serde_json::Value> for Value {
-    fn from(value: serde_json::Value) -> Self {
-        match value {
-            serde_json::Value::Null | serde_json::Value::Object(_) => Value::Nil,
-            serde_json::Value::Bool(v) => Value::Boolean(v),
-            serde_json::Value::Number(v) => Value::Number(v.as_f64().unwrap_or(0.0)),
-            serde_json::Value::String(v) => Value::String(v),
-            serde_json::Value::Array(v) => Value::Array(v.into_iter().map(Value::from).collect()),
+impl Serialize for Value {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Value::Nil => serializer.serialize_unit(),
+            Value::Boolean(v) => serializer.serialize_bool(*v),
+            Value::String(v) => serializer.serialize_str(v),
+            Value::Number(v) => serializer.serialize_f64(*v),
+            Value::Array(v) => {
+                let mut seq = serializer.serialize_seq(Some(v.len()))?;
+                for element in v {
+                    seq.serialize_element(element)?;
+                }
+                seq.end()
+            }
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Value {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(ValueVisitor)
+    }
+}
+
+#[cfg(feature = "serde")]
+struct ValueVisitor;
+
+#[cfg(feature = "serde")]
+impl<'de> Visitor<'de> for ValueVisitor {
+    type Value = Value;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(formatter, "a primitive value or list")
+    }
+
+    fn visit_unit<E>(self) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Value::Nil)
+    }
+
+    fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Value::Boolean(v))
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Value::String(v))
+    }
+
+    fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Value::Number(v))
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::SeqAccess<'de>,
+    {
+        let mut values = vec![];
+        while let Some(value) = seq.next_element()? {
+            values.push(value)
+        }
+
+        Ok(Value::Array(values))
     }
 }
 
@@ -237,23 +286,38 @@ mod test {
 
 #[cfg(all(test, feature = "serde"))]
 mod test_serde_json {
+    use std::vec;
+
     use serde_json::json;
 
     use crate::value::Value;
 
     #[test]
     fn convert_from_json() {
-        assert_eq!(Value::Nil, Value::from(json!(null)));
-        assert_eq!(Value::Boolean(true), Value::from(json!(true)));
-        assert_eq!(Value::String("abc".to_string()), Value::from(json!("abc")));
-        assert_eq!(Value::Number(19.9), Value::from(json!(19.9)));
+        assert_eq!(Value::Nil, serde_json::from_value(json!(null)).unwrap());
+        assert_eq!(
+            Value::Boolean(true),
+            serde_json::from_value(json!(true)).unwrap()
+        );
+        assert_eq!(
+            Value::String("ab".to_string()),
+            serde_json::from_value(json!("ab")).unwrap()
+        );
+        assert_eq!(
+            Value::Number(19.9),
+            serde_json::from_value(json!(19.9)).unwrap()
+        );
+        assert_eq!(
+            Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
+            serde_json::from_value(json!(vec![true, false])).unwrap()
+        );
     }
 
     #[test]
     fn convert_to_json() {
-        assert_eq!(json!(null), Value::Nil.as_json());
-        assert_eq!(json!(true), Value::Boolean(true).as_json());
-        assert_eq!(json!("abc"), Value::String("abc".to_string()).as_json());
-        assert_eq!(json!(19.9), Value::Number(19.9).as_json());
+        assert_eq!(json!(null), json!(Value::Nil));
+        assert_eq!(json!(true), json!(Value::Boolean(true)));
+        assert_eq!(json!("ab"), json!(Value::String("ab".to_string())));
+        assert_eq!(json!(19.9), json!(Value::Number(19.9)));
     }
 }
