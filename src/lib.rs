@@ -19,6 +19,7 @@ pub mod error;
 pub mod interpreter;
 pub mod operator;
 pub mod scanner;
+pub mod stdlib;
 pub mod token;
 pub mod validate;
 pub mod value;

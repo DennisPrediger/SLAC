@@ -151,6 +151,22 @@ impl Value {
             }
         }
     }
+
+    pub fn len(&self) -> usize {
+        match self {
+            Value::String(v) => v.len(),
+            Value::Array(v) => v.len(),
+            _ => 0,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Value::String(v) => v.is_empty(),
+            Value::Array(v) => v.is_empty(),
+            _ => false,
+        }
+    }
 }
 
 /// Converts a [`serde_json::Value`] into a [`Value`].

@@ -1,6 +1,7 @@
 use slac::compile;
 use slac::environment::StaticEnvironment;
 use slac::interpreter::TreeWalkingInterpreter;
+use slac::stdlib::add_stdlib;
 use slac::value::Value;
 
 fn execute(script: &str) -> Value {
@@ -92,4 +93,67 @@ fn invalid_operations() {
     assert_eq!(Value::Nil, execute("1 / 'some_string'"));
     assert_eq!(Value::Nil, execute("1 mod 'some_string'"));
     assert_eq!(Value::Nil, execute("1 div 'some_string'"));
+}
+
+fn execute_with_stdlib(script: &str) -> Value {
+    let ast = compile(script).unwrap();
+    let mut env = StaticEnvironment::default();
+    add_stdlib(&mut env);
+
+    TreeWalkingInterpreter::interprete(&env, &ast)
+}
+
+#[test]
+fn std_lib_max_min() {
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib("max(10, 20) > min(50, 30, 10)")
+    );
+
+    assert_eq!(Value::Number(20.0), execute_with_stdlib("max(-30, 20)"));
+    assert_eq!(Value::Number(-20.0), execute_with_stdlib("min(-20, 30)"));
+}
+
+#[test]
+fn std_lib_contains() {
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib("contains([1,2,3], 1)")
+    );
+
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib("contains('something', 'thing')")
+    );
+
+    assert_eq!(
+        Value::Boolean(false),
+        execute_with_stdlib("contains('something', 'other')")
+    );
+}
+
+#[test]
+fn std_lib_lowercase_uppercase() {
+    assert_eq!(
+        Value::String("hello world 😀".to_string()),
+        execute_with_stdlib("lowercase('Hello World 😀')")
+    );
+
+    assert_eq!(
+        Value::String("HELLO WORLD 😀".to_string()),
+        execute_with_stdlib("uppercase('Hello World 😀')")
+    );
+}
+
+#[test]
+fn std_str() {
+    assert_eq!(
+        Value::String("99".to_string()),
+        execute_with_stdlib("str(99)")
+    );
+
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib("str(true) = 'true'")
+    );
 }
