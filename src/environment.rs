@@ -25,7 +25,7 @@ pub type NativeFunction = fn(Vec<Value>) -> Result<Value, String>;
 
 pub struct Function {
     pub func: NativeFunction,
-    pub arity: usize,
+    pub arity: Option<usize>,
 }
 
 #[derive(Default)]
@@ -46,7 +46,7 @@ impl StaticEnvironment {
 
     /// Add or update a native function to the Environment.
     /// Note: All function names are *case-insensitive*.
-    pub fn add_native_func(&mut self, name: &str, arity: usize, func: NativeFunction) {
+    pub fn add_native_func(&mut self, name: &str, arity: Option<usize>, func: NativeFunction) {
         let name = name.to_lowercase();
         let value = Rc::new(Function { func, arity });
 
@@ -69,7 +69,7 @@ impl Environment for StaticEnvironment {
     fn function(&self, name: &str, arity: usize) -> FunctionResult {
         match self.functions.get(name) {
             Some(function) => {
-                if function.arity == arity {
+                if function.arity.map_or(true, |a| a == arity) {
                     FunctionResult::Exists
                 } else {
                     FunctionResult::WrongArity

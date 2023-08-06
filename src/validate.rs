@@ -220,7 +220,7 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_native_func("max", 2, dummy_function);
+        env.add_native_func("max", Some(2), dummy_function);
 
         let result = validate_env(&env, &ast);
 
@@ -237,7 +237,7 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_native_func("func", 1, dummy_function);
+        env.add_native_func("func", None, dummy_function);
 
         let result = validate_env(&env, &ast);
 

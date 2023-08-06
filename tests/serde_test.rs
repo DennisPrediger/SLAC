@@ -30,8 +30,8 @@ mod test {
     fn test_validate(script: &str) {
         let input = compile(script).unwrap();
         let mut env = StaticEnvironment::default();
-        env.add_native_func("max", 2, dummy_func);
-        env.add_native_func("some_func", 1, dummy_func);
+        env.add_native_func("max", Some(2), dummy_func);
+        env.add_native_func("some_func", Some(1), dummy_func);
         env.add_var("some_var", slac::value::Value::Nil);
 
         assert_eq!(ValidationResult::Valid, validate_env(&env, &input));
