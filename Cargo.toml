@@ -1,15 +1,14 @@
 [package]
 name = "slac"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Dennis Prediger <dennis.prediger@gmail.com>"]
 edition = "2021"
 rust-version = "1.70.0"
-description = "The \"Simple Logic & Arithmetic Compiler\" (SLAC) transforms a single expression into an a abstract syntax tree."
+description = "The \"Simple Logic & Arithmetic Compiler\" transforms a single expression into an abstract syntax tree."
 categories = ["compilers", "parsing"]
 license = "Apache-2.0"
 repository = "https://github.com/DennisPrediger/SLAC"
 readme = "README.md"
-
 
 [features]
 default = ["serde"]
