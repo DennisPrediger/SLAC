@@ -88,12 +88,12 @@ impl<'a> TreeWalkingInterpreter<'a> {
     }
 
     fn call(&self, name: &str, params: &[Expression]) -> Value {
-        let params = params
+        let params: Vec<Value> = params
             .iter()
             .map(|expression| self.expression(expression))
             .collect();
 
-        self.environment.call(name, params).unwrap_or(Value::Nil)
+        self.environment.call(name, &params).unwrap_or(Value::Nil)
     }
 }
 
@@ -221,7 +221,7 @@ mod test {
         assert_eq!(expected, result);
     }
 
-    fn max(params: Vec<Value>) -> Result<Value, String> {
+    fn max(params: &[Value]) -> Result<Value, String> {
         let result = params
             .iter()
             .max_by(|a, b| {

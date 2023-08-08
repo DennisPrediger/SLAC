@@ -202,7 +202,7 @@ mod test {
         assert_eq!(ValidationResult::MissingFunction("max".to_string()), result);
     }
 
-    fn dummy_function(_params: Vec<Value>) -> Result<Value, String> {
+    fn dummy_function(_params: &[Value]) -> Result<Value, String> {
         Ok(Value::Boolean(true))
     }
 

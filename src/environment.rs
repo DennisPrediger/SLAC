@@ -13,7 +13,7 @@ pub trait Environment {
     fn variable(&self, name: &str) -> Option<Rc<Value>>;
 
     /// Call a [`Function`] and return a [`Value`].
-    fn call(&self, name: &str, params: Vec<Value>) -> Option<Value>;
+    fn call(&self, name: &str, params: &[Value]) -> Option<Value>;
 
     /// Check if a [`Function`] exists.
     fn function(&self, name: &str, arity: usize) -> FunctionResult;
@@ -21,7 +21,7 @@ pub trait Environment {
 
 /// A function pointer used to execute native Rust functions.
 /// All parameters to the function are inside a single Vec<[`Value`]>.
-pub type NativeFunction = fn(Vec<Value>) -> Result<Value, String>;
+pub type NativeFunction = fn(&[Value]) -> Result<Value, String>;
 
 pub struct Function {
     pub func: NativeFunction,
@@ -59,7 +59,7 @@ impl Environment for StaticEnvironment {
         self.variables.get(name).cloned()
     }
 
-    fn call(&self, name: &str, params: Vec<Value>) -> Option<Value> {
+    fn call(&self, name: &str, params: &[Value]) -> Option<Value> {
         let function = self.functions.get(name)?;
         let call = function.func;
 

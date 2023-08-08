@@ -23,7 +23,7 @@ mod test {
         assert_eq!(input, output);
     }
 
-    fn dummy_func(_params: Vec<slac::value::Value>) -> Result<slac::value::Value, String> {
+    fn dummy_func(_params: &[slac::value::Value]) -> Result<slac::value::Value, String> {
         Ok(slac::value::Value::Nil)
     }
 
