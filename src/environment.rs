@@ -56,18 +56,18 @@ impl StaticEnvironment {
 
 impl Environment for StaticEnvironment {
     fn variable(&self, name: &str) -> Option<Rc<Value>> {
-        self.variables.get(name).cloned()
+        self.variables.get(&name.to_lowercase()).cloned()
     }
 
     fn call(&self, name: &str, params: &[Value]) -> Option<Value> {
-        let function = self.functions.get(name)?;
+        let function = self.functions.get(&name.to_lowercase())?;
         let call = function.func;
 
         call(params).ok()
     }
 
     fn function(&self, name: &str, arity: usize) -> FunctionResult {
-        match self.functions.get(name) {
+        match self.functions.get(&name.to_lowercase()) {
             Some(function) => {
                 if function.arity.map_or(true, |a| a == arity) {
                     FunctionResult::Exists

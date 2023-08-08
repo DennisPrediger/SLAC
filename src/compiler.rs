@@ -55,9 +55,7 @@ impl Compiler {
             Token::Literal(value) => Ok(Expression::Literal {
                 value: value.clone(),
             }),
-            Token::Identifier(name) => Ok(Expression::Variable {
-                name: name.to_lowercase(),
-            }),
+            Token::Identifier(name) => Ok(Expression::Variable { name: name.clone() }),
             Token::LeftParen => self.grouping(),
             Token::LeftBracket => self.array(),
             Token::Not | Token::Minus => self.unary(),
@@ -105,7 +103,7 @@ impl Compiler {
     fn call(&mut self, left: Expression) -> Result<Expression> {
         if let Expression::Variable { name } = left {
             Ok(Expression::Call {
-                name: name.to_lowercase(),
+                name,
                 params: self.expression_list(Token::RightParen)?,
             })
         } else {
@@ -360,7 +358,7 @@ mod test {
                     value: Value::Number(5.0),
                 }),
                 right: Box::new(Expression::Variable {
-                    name: String::from("some_var"),
+                    name: String::from("SOME_VAR"),
                 }),
                 operator: Operator::Plus,
             }),
@@ -382,7 +380,7 @@ mod test {
         ]);
         let expected = Expression::Binary {
             left: Box::new(Expression::Variable {
-                name: String::from("some_var"),
+                name: String::from("SOME_VAR"),
             }),
             right: Box::new(Expression::Literal {
                 value: Value::Number(4.0),

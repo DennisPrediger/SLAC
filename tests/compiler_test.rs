@@ -24,7 +24,7 @@ fn single_boolean_false() {
 fn single_variable() {
     let result = compile("SOME_VAR");
     let expected = Expression::Variable {
-        name: "some_var".to_string(),
+        name: "SOME_VAR".to_string(),
     };
 
     assert_eq!(result, Ok(expected));
@@ -375,7 +375,7 @@ fn function_call_no_params() {
 
     let expected = Expression::Binary {
         left: Box::new(Expression::Call {
-            name: "now".to_string(),
+            name: "Now".to_string(),
             params: vec![],
         }),
         right: Box::new(Expression::Variable {
