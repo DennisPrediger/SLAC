@@ -157,3 +157,22 @@ fn std_str() {
         execute_with_stdlib("str(true) = 'true'")
     );
 }
+
+fn expensive_func(_params: &[Value]) -> Result<Value, String> {
+    assert!(false);
+    Ok(Value::Nil)
+}
+
+#[test]
+fn short_circuit_bool() {
+    let mut env = StaticEnvironment::default();
+    env.add_native_func("expensive", None, expensive_func);
+
+    let ast = compile("false and expensive()").unwrap();
+    let result = TreeWalkingInterpreter::interprete(&env, &ast);
+    assert_eq!(Value::Boolean(false), result);
+
+    let ast = compile("true or expensive()").unwrap();
+    let result = TreeWalkingInterpreter::interprete(&env, &ast);
+    assert_eq!(Value::Boolean(true), result);
+}

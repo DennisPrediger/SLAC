@@ -44,29 +44,44 @@ impl<'a> TreeWalkingInterpreter<'a> {
 
     fn binary(&self, left: &Expression, right: &Expression, operator: &Operator) -> Value {
         let left = self.expression(left);
-        let right = self.expression(right);
 
         match operator {
-            Operator::Plus => left + right,
-            Operator::Minus => left - right,
-            Operator::Star => left * right,
-            Operator::Slash => left / right,
-            Operator::Div => left.div_int(right),
-            Operator::Mod => left % right,
-            Operator::Greater => Value::Boolean(left > right),
-            Operator::GreaterEqual => Value::Boolean(left >= right),
-            Operator::Less => Value::Boolean(left < right),
-            Operator::LessEqual => Value::Boolean(left <= right),
-            Operator::Equal => Value::Boolean(left == right),
-            Operator::NotEqual => Value::Boolean(left != right),
-            Operator::And => match (left, right) {
-                (Value::Boolean(lhs), Value::Boolean(rhs)) => Value::Boolean(lhs && rhs),
-                _ => Value::Boolean(false),
-            },
-            Operator::Or => match (left, right) {
-                (Value::Boolean(lhs), Value::Boolean(rhs)) => Value::Boolean(lhs || rhs),
-                _ => Value::Boolean(false),
-            },
+            Operator::And => self.boolean(left, right, true),
+            Operator::Or => self.boolean(left, right, false),
+            _ => {
+                let right = self.expression(right);
+                match operator {
+                    Operator::Plus => left + right,
+                    Operator::Minus => left - right,
+                    Operator::Star => left * right,
+                    Operator::Slash => left / right,
+                    Operator::Div => left.div_int(right),
+                    Operator::Mod => left % right,
+                    Operator::Greater => Value::Boolean(left > right),
+                    Operator::GreaterEqual => Value::Boolean(left >= right),
+                    Operator::Less => Value::Boolean(left < right),
+                    Operator::LessEqual => Value::Boolean(left <= right),
+                    Operator::Equal => Value::Boolean(left == right),
+                    Operator::NotEqual => Value::Boolean(left != right),
+                    _ => Value::Nil,
+                }
+            }
+        }
+    }
+
+    fn boolean(&self, left: Value, right: &Expression, full_evaluate_on: bool) -> Value {
+        match left {
+            Value::Boolean(left) => {
+                if left == full_evaluate_on {
+                    // if `left` is not the result we need, evaluate `right`
+                    match self.expression(right) {
+                        Value::Boolean(right) => Value::Boolean(right),
+                        _ => Value::Nil,
+                    }
+                } else {
+                    Value::Boolean(left) // short circuit
+                }
+            }
             _ => Value::Nil,
         }
     }
