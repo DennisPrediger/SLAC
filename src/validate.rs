@@ -1,6 +1,6 @@
 use crate::{
     ast::Expression,
-    environment::{Environment, FunctionResult},
+    environment::{FunctionResult, ValidateEnvironment},
     operator::Operator,
     value::Value,
 };
@@ -10,14 +10,14 @@ pub enum ValidationResult {
     Valid,
     MissingVariable(String),
     MissingFunction(String),
-    ParamCountMismatch(usize),
+    ParamCountMismatch(usize, usize),
     InvalidOperator(String),
     LiteralNotBoolean,
 }
 
 /// Validates `Variable` and `Call` [`Expressions`](crate::ast::Expression) by walking
 /// the tree and returning a [`ValidationResult`] on the first error.
-pub fn validate_env(env: &dyn Environment, expression: &Expression) -> ValidationResult {
+pub fn validate_env(env: &dyn ValidateEnvironment, expression: &Expression) -> ValidationResult {
     let mut result = ValidationResult::Valid;
 
     match expression {
@@ -36,15 +36,17 @@ pub fn validate_env(env: &dyn Environment, expression: &Expression) -> Validatio
             expressions: values,
         } => result = validate_expr_vec(env, values),
         Expression::Variable { name } => {
-            if env.variable(name).is_none() {
+            if !env.variable_exists(name) {
                 result = ValidationResult::MissingVariable(name.clone());
             }
         }
         Expression::Call { name, params } => {
-            result = match env.function(name, params.len()) {
+            result = match env.function_exists(name, params.len()) {
                 FunctionResult::Exists => validate_expr_vec(env, params),
                 FunctionResult::NotFound => ValidationResult::MissingFunction(name.clone()),
-                FunctionResult::WrongArity => ValidationResult::ParamCountMismatch(params.len()),
+                FunctionResult::WrongArity(expected) => {
+                    ValidationResult::ParamCountMismatch(params.len(), expected)
+                }
             }
         }
         Expression::Literal { value: _ } => (),
@@ -53,17 +55,17 @@ pub fn validate_env(env: &dyn Environment, expression: &Expression) -> Validatio
     result
 }
 
-fn validate_expr_vec(env: &dyn Environment, expressions: &Vec<Expression>) -> ValidationResult {
+fn validate_expr_vec(
+    env: &dyn ValidateEnvironment,
+    expressions: &[Expression],
+) -> ValidationResult {
     let mut result = ValidationResult::Valid;
 
-    for expr in expressions {
-        result = validate_env(env, expr);
-        if let ValidationResult::Valid = result {
-            // do nothing
-        } else {
-            break;
-        }
-    }
+    expressions.iter().all(|expression| {
+        result = validate_env(env, expression);
+
+        result == ValidationResult::Valid
+    });
 
     result
 }
@@ -224,7 +226,7 @@ mod test {
 
         let result = validate_env(&env, &ast);
 
-        assert_eq!(ValidationResult::ParamCountMismatch(0), result);
+        assert_eq!(ValidationResult::ParamCountMismatch(0, 2), result);
     }
 
     #[test]
