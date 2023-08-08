@@ -57,6 +57,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
                     Operator::Slash => left / right,
                     Operator::Div => left.div_int(right),
                     Operator::Mod => left % right,
+                    Operator::Xor => left ^ right,
                     Operator::Greater => Value::Boolean(left > right),
                     Operator::GreaterEqual => Value::Boolean(left >= right),
                     Operator::Less => Value::Boolean(left < right),

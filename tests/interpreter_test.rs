@@ -45,9 +45,18 @@ fn boolean_and() {
 
 #[test]
 fn boolean_or() {
+    assert_eq!(Value::Boolean(true), execute("false or true"));
     assert_eq!(Value::Boolean(true), execute("true or false"));
     assert_eq!(Value::Boolean(true), execute("true or true"));
     assert_eq!(Value::Boolean(false), execute("false or false"));
+}
+
+#[test]
+fn boolean_xor() {
+    assert_eq!(Value::Boolean(true), execute("true xor false"));
+    assert_eq!(Value::Boolean(true), execute("false xor true"));
+    assert_eq!(Value::Boolean(false), execute("true xor true"));
+    assert_eq!(Value::Boolean(false), execute("false xor false"));
 }
 
 #[test]

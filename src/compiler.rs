@@ -78,7 +78,8 @@ impl Compiler {
             | Token::Less
             | Token::LessEqual
             | Token::And
-            | Token::Or => self.binary(left),
+            | Token::Or
+            | Token::Xor => self.binary(left),
             Token::LeftParen => self.call(left),
             _ => unreachable!(),
         }

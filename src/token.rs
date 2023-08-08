@@ -16,7 +16,7 @@ pub enum Token {
   // Equality
   Equal, NotEqual,
   // Keywords
-  And, Or, Not, Div, Mod,
+  And, Or, Xor, Not, Div, Mod,
   // Literal Values
   Literal(Value),
   Identifier(String)
@@ -30,11 +30,12 @@ pub enum Precedence {
     None,
     Or,         // or
     And,        // and
+    Xor,        // xor
     Equality,   // = <>
     Comparison, // < > <= >=
     Term,       // + -
-    Factor,     // * /
-    Unary,      // ! -
+    Factor,     // * / div mod
+    Unary,      // not -
     Call,       // ()
     Primary,    // Literals
 }
@@ -49,6 +50,7 @@ impl From<&Token> for Precedence {
             Token::Greater | Token::GreaterEqual | Token::Less | Token::LessEqual => Precedence::Comparison,
             Token::And => Precedence::And,
             Token::Or => Precedence::Or,
+            Token::Xor => Precedence::Xor, 
             Token::LeftParen => Precedence::Call,
             _ => Precedence::None,
         }
@@ -60,7 +62,8 @@ impl Precedence {
         match self {
             Precedence::None => Precedence::Or,
             Precedence::Or => Precedence::And,
-            Precedence::And => Precedence::Equality,
+            Precedence::And => Precedence::Xor,
+            Precedence::Xor => Precedence::Equality,
             Precedence::Equality => Precedence::Comparison,
             Precedence::Comparison => Precedence::Term,
             Precedence::Term => Precedence::Factor,

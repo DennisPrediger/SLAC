@@ -145,6 +145,7 @@ impl<'a> Scanner<'a> {
             "false" => Token::Literal(Value::Boolean(false)),
             "and" => Token::And,
             "or" => Token::Or,
+            "xor" => Token::Xor,
             "not" => Token::Not,
             "div" => Token::Div,
             "mod" => Token::Mod,

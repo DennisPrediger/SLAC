@@ -5,7 +5,7 @@ use serde::{de::Visitor, ser::SerializeSeq, Deserialize, Serialize};
 
 use std::{
     fmt::Display,
-    ops::{Add, Div, Mul, Neg, Not, Rem, Sub},
+    ops::{Add, BitXor, Div, Mul, Neg, Not, Rem, Sub},
 };
 
 /// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
@@ -94,6 +94,17 @@ impl Rem for Value {
     fn rem(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs % rhs),
+            _ => Value::Nil,
+        }
+    }
+}
+
+impl BitXor for Value {
+    type Output = Value;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Value::Boolean(lhs), Value::Boolean(rhs)) => Value::Boolean(lhs ^ rhs),
             _ => Value::Nil,
         }
     }

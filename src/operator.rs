@@ -13,7 +13,7 @@ pub enum Operator {
     Greater, GreaterEqual,
     Less, LessEqual,
     Equal, NotEqual,
-    And, Or, Not, 
+    And, Or, Xor, Not, 
     Div, Mod,
 }
 
@@ -32,6 +32,7 @@ impl Display for Operator {
             Operator::NotEqual => write!(f, "<>"),
             Operator::And => write!(f, "and"),
             Operator::Or => write!(f, "or"),
+            Operator::Xor => write!(f, "xor"),
             Operator::Not => write!(f, "not"),
             Operator::Div => write!(f, "div"),
             Operator::Mod => write!(f, "mod"),
@@ -56,6 +57,7 @@ impl TryFrom<&Token> for Operator {
             Token::NotEqual => Ok(Operator::NotEqual),
             Token::And => Ok(Operator::And),
             Token::Or => Ok(Operator::Or),
+            Token::Xor => Ok(Operator::Xor),
             Token::Not => Ok(Operator::Not),
             Token::Div => Ok(Operator::Div),
             Token::Mod => Ok(Operator::Mod),
@@ -112,6 +114,7 @@ impl<'de> Visitor<'de> for OperatorVisitor {
             "<>" => Ok(Operator::NotEqual),
             "and" => Ok(Operator::And),
             "or" => Ok(Operator::Or),
+            "xor" => Ok(Operator::Xor),
             "not" => Ok(Operator::Not),
             "div" => Ok(Operator::Div),
             "mod" => Ok(Operator::Mod),
