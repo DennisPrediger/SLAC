@@ -205,6 +205,13 @@ impl<'de> Visitor<'de> for ValueVisitor {
         Ok(Value::Boolean(v))
     }
 
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Value::String(v.to_string()))
+    }
+
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
