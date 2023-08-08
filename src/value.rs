@@ -232,7 +232,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
     {
         let mut values = vec![];
         while let Some(value) = seq.next_element()? {
-            values.push(value)
+            values.push(value);
         }
 
         Ok(Value::Array(values))

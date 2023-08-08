@@ -84,10 +84,10 @@ impl Compiler {
         }
     }
 
-    fn expression_list(&mut self, end_token: Token) -> Result<Vec<Expression>> {
+    fn expression_list(&mut self, end_token: &Token) -> Result<Vec<Expression>> {
         let mut expressions: Vec<Expression> = vec![];
 
-        while self.current().is_some_and(|t| t != &end_token) {
+        while self.current().is_some_and(|t| t != end_token) {
             expressions.push(self.expression()?);
 
             if self.current() == Some(&Token::Comma) {
@@ -95,7 +95,7 @@ impl Compiler {
             }
         }
 
-        self.chomp(&end_token)?;
+        self.chomp(end_token)?;
 
         Ok(expressions)
     }
@@ -104,7 +104,7 @@ impl Compiler {
         if let Expression::Variable { name } = left {
             Ok(Expression::Call {
                 name,
-                params: self.expression_list(Token::RightParen)?,
+                params: self.expression_list(&Token::RightParen)?,
             })
         } else {
             Err(SyntaxError::expected("some identifier", self.previous()))
@@ -113,7 +113,7 @@ impl Compiler {
 
     fn array(&mut self) -> Result<Expression> {
         Ok(Expression::Array {
-            expressions: self.expression_list(Token::RightBracket)?,
+            expressions: self.expression_list(&Token::RightBracket)?,
         })
     }
 
