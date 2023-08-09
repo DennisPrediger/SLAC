@@ -19,6 +19,7 @@ pub fn add_stdlib(env: &mut StaticEnvironment) {
     env.add_native_func("pow", None, pow);
     env.add_native_func("round", Some(1), round);
     env.add_native_func("str", Some(1), str);
+    env.add_native_func("trim", Some(1), trim);
 
     env.add_var("pi", Value::Number(std::f64::consts::PI));
     env.add_var("e", Value::Number(std::f64::consts::E));
@@ -26,7 +27,7 @@ pub fn add_stdlib(env: &mut StaticEnvironment) {
 }
 
 fn smart_vec(params: &[Value]) -> &[Value] {
-    match params.get(0) {
+    match params.first() {
         Some(Value::Array(v)) if (params.len() == 1) => v, // only one Array parameter
         _ => params,                                       // all varadic params
     }
@@ -118,7 +119,7 @@ pub fn length(params: &[Value]) -> Result<Value, String> {
 }
 
 pub fn lowercase(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.get(0) {
+    if let Some(Value::String(value)) = params.first() {
         Ok(Value::String(value.to_lowercase()))
     } else {
         Err("no param supplied".to_string())
@@ -126,7 +127,7 @@ pub fn lowercase(params: &[Value]) -> Result<Value, String> {
 }
 
 pub fn uppercase(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.get(0) {
+    if let Some(Value::String(value)) = params.first() {
         Ok(Value::String(value.to_uppercase()))
     } else {
         Err("no parameter supplied".to_string())
@@ -198,14 +199,22 @@ pub fn str(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+pub fn trim(params: &[Value]) -> Result<Value, String> {
+    if let Some(Value::String(value)) = params.first() {
+        Ok(Value::String(value.trim().to_string()))
+    } else {
+        Err("no parameter supplied".to_string())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::vec;
 
     use crate::{
         stdlib::{
-            self, abs, all, any, bool, contains, empty, float, int, lowercase, max, min, pow,
-            round, uppercase,
+            abs, all, any, bool, contains, empty, float, int, length, lowercase, max, min, pow,
+            round, str, trim, uppercase,
         },
         value::Value,
     };
@@ -414,26 +423,18 @@ mod test {
 
     #[test]
     fn std_length() {
-        assert_eq!(Ok(Value::Number(0.0)), stdlib::length(&vec![Value::Nil]));
-
-        assert_eq!(
-            Ok(Value::Number(0.0)),
-            stdlib::length(&vec![Value::Boolean(true)])
-        );
-
-        assert_eq!(
-            Ok(Value::Number(0.0)),
-            stdlib::length(&vec![Value::Number(100.0)])
-        );
+        assert_eq!(Ok(Value::Number(0.0)), length(&vec![Value::Nil]));
+        assert_eq!(Ok(Value::Number(0.0)), length(&vec![Value::Boolean(true)]));
+        assert_eq!(Ok(Value::Number(0.0)), length(&vec![Value::Number(100.0)]));
 
         assert_eq!(
             Ok(Value::Number(5.0)),
-            stdlib::length(&vec![Value::String("Hello".to_string())])
+            length(&vec![Value::String("Hello".to_string())])
         );
 
         assert_eq!(
             Ok(Value::Number(2.0)),
-            stdlib::length(&vec![Value::Array(vec![
+            length(&vec![Value::Array(vec![
                 Value::Boolean(true),
                 Value::Boolean(false)
             ])])
@@ -506,17 +507,25 @@ mod test {
     fn std_str() {
         assert_eq!(
             Ok(Value::String("123".to_string())),
-            stdlib::str(&vec![Value::String("123".to_string())])
+            str(&vec![Value::String("123".to_string())])
         );
 
         assert_eq!(
             Ok(Value::String("123".to_string())),
-            stdlib::str(&vec![Value::Number(123.0)])
+            str(&vec![Value::Number(123.0)])
         );
 
         assert_eq!(
             Ok(Value::String("true".to_string())),
-            stdlib::str(&vec![Value::Boolean(true)])
+            str(&vec![Value::Boolean(true)])
+        );
+    }
+
+    #[test]
+    fn std_trim() {
+        assert_eq!(
+            Ok(Value::String("Hello World".to_string())),
+            trim(&vec![Value::String("  Hello World       ".to_string())])
         );
     }
 }
