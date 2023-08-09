@@ -220,7 +220,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
     where
         E: serde::de::Error,
     {
-        Ok(Value::String(v.to_string()))
+        self.visit_string(v.to_string())
     }
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
@@ -228,6 +228,20 @@ impl<'de> Visitor<'de> for ValueVisitor {
         E: serde::de::Error,
     {
         Ok(Value::String(v))
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        self.visit_f64(v as f64)
+    }
+
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        self.visit_f64(v as f64)
     }
 
     fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>

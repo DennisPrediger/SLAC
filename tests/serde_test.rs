@@ -6,6 +6,7 @@ mod test {
         ast::Expression,
         compile,
         environment::StaticEnvironment,
+        operator::Operator,
         validate::{validate_env, ValidationResult},
     };
 
@@ -318,5 +319,35 @@ mod test {
           ]
         }"#;
         test_json("[[1, 2], 3]", expected)
+    }
+
+    #[test]
+    fn zero_value() {
+        let json = r#"{
+          "type": "binary",
+          "left": {
+            "type": "literal",
+            "value": 1
+          },
+          "right": {
+            "type": "literal",
+            "value": 0
+          },
+          "operator": "-"
+        }"#;
+
+        let expected = Expression::Binary {
+            left: Box::new(Expression::Literal {
+                value: slac::value::Value::Number(1.0),
+            }),
+            right: Box::new(Expression::Literal {
+                value: slac::value::Value::Number(0.0),
+            }),
+            operator: Operator::Minus,
+        };
+
+        let ast = serde_json::from_str::<Expression>(json).unwrap();
+
+        assert_eq!(expected, ast);
     }
 }
