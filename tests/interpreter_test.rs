@@ -167,6 +167,32 @@ fn std_str() {
     );
 }
 
+#[test]
+fn std_lib_full() {
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib(
+            "(abs(-11.2) = 11.2) and 
+             all([true, true]) and 
+             any([true, false]) and
+             bool(1) and
+             contains('something', 'ome') and
+             empty([]) and
+             (float('3.14') = 3.14) and
+             (int(3.14) = 3) and
+             (length('hello') = 5) and
+             (lowercase('BIG WORDS') = 'big words') and
+             (uppercase('small words') = 'SMALL WORDS') and
+             (max(-10, 5) = 5) and
+             (min(-10, 5) = -10) and
+             (pow(10, 2) = 100) and
+             (round(3.4) = round(2.5)) and
+             (str(-10) = '-10') and
+             (trim('  space   ') = 'space')"
+        )
+    );
+}
+
 fn expensive_func(_params: &[Value]) -> Result<Value, String> {
     assert!(false);
     Ok(Value::Nil)
