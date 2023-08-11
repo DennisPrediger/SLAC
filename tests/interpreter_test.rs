@@ -193,6 +193,23 @@ fn std_lib_full() {
     );
 }
 
+#[test]
+fn operators_full() {
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib(
+            "(true and not false) and
+             (false or true) and
+             (true xor false) and
+             (10 + 20 - 30 < 50 * 5 / 25) and
+             (10 mod 3 <= 10 div 3) and
+             (round(2.5) > 2) and
+             (7 >= 8 or 9 <> 10) and
+             ('Apple' + 'Pen' = 'ApplePen')"
+        )
+    );
+}
+
 fn expensive_func(_params: &[Value]) -> Result<Value, String> {
     assert!(false);
     Ok(Value::Nil)
