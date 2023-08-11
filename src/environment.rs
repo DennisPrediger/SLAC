@@ -83,10 +83,10 @@ impl ValidateEnvironment for StaticEnvironment {
     fn function_exists(&self, name: &str, arity: usize) -> FunctionResult {
         match self.functions.get(&name.to_lowercase()) {
             Some(function) => {
-                if function.arity.map_or(true, |a| a == arity) {
-                    FunctionResult::Exists
-                } else {
-                    FunctionResult::WrongArity(function.arity.unwrap())
+                match function.arity {
+                    Some(function_arity) if function_arity == arity => FunctionResult::Exists,
+                    None => FunctionResult::Exists, // variadic
+                    Some(expected) => FunctionResult::WrongArity(expected),
                 }
             }
             None => FunctionResult::NotFound,

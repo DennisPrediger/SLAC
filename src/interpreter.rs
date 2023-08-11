@@ -115,11 +115,9 @@ impl<'a> TreeWalkingInterpreter<'a> {
 
 #[cfg(test)]
 mod test {
-    use std::cmp::Ordering;
-
     use crate::{
         ast::Expression, environment::StaticEnvironment, interpreter::TreeWalkingInterpreter,
-        operator::Operator, value::Value,
+        operator::Operator, stdlib::max, value::Value,
     };
 
     #[test]
@@ -235,24 +233,6 @@ mod test {
         let expected = Value::Number(42.0);
 
         assert_eq!(expected, result);
-    }
-
-    fn max(params: &[Value]) -> Result<Value, String> {
-        let result = params
-            .iter()
-            .max_by(|a, b| {
-                if a > b {
-                    Ordering::Greater
-                } else if a < b {
-                    Ordering::Less
-                } else {
-                    Ordering::Equal
-                }
-            })
-            .unwrap()
-            .clone();
-
-        Ok(result)
     }
 
     #[test]

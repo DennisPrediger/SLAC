@@ -50,7 +50,7 @@ impl Compiler {
     }
 
     fn do_prefix(&mut self) -> Result<Expression> {
-        let previous = self.previous();
+        let previous = self.previous()?;
         match previous {
             Token::Literal(value) => Ok(Expression::Literal {
                 value: value.clone(),
@@ -64,7 +64,7 @@ impl Compiler {
     }
 
     fn do_infix(&mut self, left: Expression) -> Result<Expression> {
-        match self.previous() {
+        match self.previous()? {
             Token::Minus
             | Token::Plus
             | Token::Star
@@ -81,7 +81,7 @@ impl Compiler {
             | Token::Or
             | Token::Xor => self.binary(left),
             Token::LeftParen => self.call(left),
-            _ => unreachable!(),
+            _ => Err(SyntaxError("invalid infix Token".to_string())),
         }
     }
 
@@ -108,7 +108,7 @@ impl Compiler {
                 params: self.expression_list(&Token::RightParen)?,
             })
         } else {
-            Err(SyntaxError::expected("some identifier", self.previous()))
+            Err(SyntaxError::expected("some identifier", self.previous()?))
         }
     }
 
@@ -119,8 +119,8 @@ impl Compiler {
     }
 
     fn binary(&mut self, left: Expression) -> Result<Expression> {
-        let operator = Operator::try_from(self.previous())?;
-        let right = self.parse_precedence(Precedence::from(self.previous()).next())?;
+        let operator = Operator::try_from(self.previous()?)?;
+        let right = self.parse_precedence(Precedence::from(self.previous()?).next())?;
 
         Ok(Expression::Binary {
             left: Box::new(left),
@@ -130,7 +130,7 @@ impl Compiler {
     }
 
     fn unary(&mut self) -> Result<Expression> {
-        let operator = Operator::try_from(self.previous())?;
+        let operator = Operator::try_from(self.previous()?)?;
         let right = self.parse_precedence(Precedence::Unary)?;
 
         Ok(Expression::Unary {
@@ -156,10 +156,10 @@ impl Compiler {
         self.tokens.get(self.current)
     }
 
-    fn previous(&self) -> &Token {
+    fn previous(&self) -> Result<&Token> {
         self.tokens
             .get(self.current - 1)
-            .expect("expected some token")
+            .ok_or(SyntaxError("expected some token".to_string()))
     }
 
     fn chomp(&mut self, token: &Token) -> Result<()> {
