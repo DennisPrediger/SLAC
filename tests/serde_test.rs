@@ -57,7 +57,7 @@ mod test {
             "type": "literal",
             "value": 2.0
           },
-          "operator": "+"
+          "operator": "plus"
         }"#;
 
         test_json("1+ 2", expected);
@@ -86,7 +86,7 @@ mod test {
             "type": "literal",
             "value": 5.0
           },
-          "operator": ">"
+          "operator": "greater"
         }
         "#;
 
@@ -143,13 +143,13 @@ mod test {
                           "type": "literal",
                           "value": 20.0
                         },
-                        "operator": "+"
+                        "operator": "plus"
                       },
                       "right": {
                         "type": "literal",
                         "value": 30.0
                       },
-                      "operator": "-"
+                      "operator": "minus"
                     },
                     "right": {
                       "type": "binary",
@@ -163,15 +163,15 @@ mod test {
                           "type": "literal",
                           "value": 5.0
                         },
-                        "operator": "*"
+                        "operator": "star"
                       },
                       "right": {
                         "type": "literal",
                         "value": 25.0
                       },
-                      "operator": "/"
+                      "operator": "slash"
                     },
-                    "operator": "<"
+                    "operator": "less"
                   },
                   "operator": "and"
                 },
@@ -201,7 +201,7 @@ mod test {
                     },
                     "operator": "mod"
                   },
-                  "operator": "<="
+                  "operator": "lessEqual"
                 },
                 "operator": "and"
               },
@@ -234,7 +234,7 @@ mod test {
                   "type": "variable",
                   "name": "some_var"
                 },
-                "operator": ">"
+                "operator": "greater"
               },
               "operator": "or"
             },
@@ -248,7 +248,7 @@ mod test {
                 "type": "literal",
                 "value": 8.0
               },
-              "operator": ">="
+              "operator": "greaterEqual"
             },
             "operator": "or"
           },
@@ -264,7 +264,7 @@ mod test {
                 "type": "literal",
                 "value": 10.0
               },
-              "operator": "<>"
+              "operator": "notEqual"
             },
             "right": {
               "type": "binary",
@@ -278,13 +278,13 @@ mod test {
                   "type": "literal",
                   "value": "Pen"
                 },
-                "operator": "+"
+                "operator": "plus"
               },
               "right": {
                 "type": "literal",
                 "value": "ApplePen"
               },
-              "operator": "="
+              "operator": "equal"
             },
             "operator": "and"
           },
@@ -333,7 +333,7 @@ mod test {
             "type": "literal",
             "value": 0
           },
-          "operator": "-"
+          "operator": "minus"
         }"#;
 
         let expected = Expression::Binary {

@@ -1,12 +1,14 @@
 use std::fmt::Display;
 
 #[cfg(feature = "serde")]
-use serde::{de::Visitor, Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::token::Token;
 
 /// A binary or arithemtic operator.
 #[derive(Debug, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[rustfmt::skip]
 pub enum Operator {
     Plus, Minus,  Star, Slash,
@@ -62,63 +64,6 @@ impl TryFrom<&Token> for Operator {
             Token::Div => Ok(Operator::Div),
             Token::Mod => Ok(Operator::Mod),
             _ => Err(format!("unknown Token {value:?}")),
-        }
-    }
-}
-
-#[cfg(feature = "serde")]
-impl Serialize for Operator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for Operator {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(OperatorVisitor)
-    }
-}
-
-#[cfg(feature = "serde")]
-struct OperatorVisitor;
-
-#[cfg(feature = "serde")]
-impl<'de> Visitor<'de> for OperatorVisitor {
-    type Value = Operator;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "a Operator String")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        match v {
-            "+" => Ok(Operator::Plus),
-            "-" => Ok(Operator::Minus),
-            "*" => Ok(Operator::Star),
-            "/" => Ok(Operator::Slash),
-            ">" => Ok(Operator::Greater),
-            ">=" => Ok(Operator::GreaterEqual),
-            "<" => Ok(Operator::Less),
-            "<=" => Ok(Operator::LessEqual),
-            "=" => Ok(Operator::Equal),
-            "<>" => Ok(Operator::NotEqual),
-            "and" => Ok(Operator::And),
-            "or" => Ok(Operator::Or),
-            "xor" => Ok(Operator::Xor),
-            "not" => Ok(Operator::Not),
-            "div" => Ok(Operator::Div),
-            "mod" => Ok(Operator::Mod),
-            _ => Err(serde::de::Error::custom(format!("unknown Operator {v}"))),
         }
     }
 }
