@@ -9,7 +9,7 @@ use std::{
 };
 
 /// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialOrd, Clone)]
 pub enum Value {
     /// [`Value::Nil`] is only created by invalid operations and not from literals
     /// in the AST.
@@ -18,6 +18,22 @@ pub enum Value {
     String(String),
     Number(f64),
     Array(Vec<Value>),
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::Number(l0), Self::Number(r0)) => l0 == r0,
+            (Self::Array(l0), Self::Array(r0)) => l0 == r0,
+            (Self::Nil, Self::Boolean(r0)) => r0 == &false,
+            (Self::Nil, Self::String(r0)) => r0.is_empty(),
+            (Self::Nil, Self::Number(r0)) => r0 == &0.0,
+            (Self::Nil, Self::Array(r0)) => r0.is_empty(),
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
 }
 
 impl Neg for Value {
@@ -313,6 +329,24 @@ mod test {
         assert_eq!(Value::Number(2.0), test_mod_int(8.0));
         assert_eq!(Value::Number(1.0), test_mod_int(9.0));
         assert_eq!(Value::Number(0.0), test_mod_int(10.0));
+    }
+
+    #[test]
+    fn compare_empty_values() {
+        assert_eq!(Value::Nil, Value::Boolean(false));
+        assert_ne!(Value::Nil, Value::Boolean(true));
+
+        assert_eq!(Value::Nil, Value::String("".to_string()));
+        assert_ne!(Value::Nil, Value::String("0".to_string()));
+        assert_ne!(Value::Nil, Value::String("123".to_string()));
+
+        assert_eq!(Value::Nil, Value::Number(0.0));
+        assert_eq!(Value::Nil, Value::Number(-0.0));
+        assert_ne!(Value::Nil, Value::Number(1.0));
+        assert_ne!(Value::Nil, Value::Number(-100.0));
+
+        assert_eq!(Value::Nil, Value::Array(vec![]));
+        assert_ne!(Value::Nil, Value::Array(vec![Value::Nil]));
     }
 }
 

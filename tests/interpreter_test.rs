@@ -211,3 +211,9 @@ fn short_circuit_bool() {
     let result = TreeWalkingInterpreter::interprete(&env, &ast);
     assert_eq!(Value::Boolean(true), result);
 }
+
+#[test]
+fn empty_var_comparison() {
+    assert_eq!(Value::Boolean(true), execute("does_not_exist = ''"));
+    assert_eq!(Value::Boolean(false), execute("does_not_exist <> ''"));
+}
