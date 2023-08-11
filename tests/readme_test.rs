@@ -15,7 +15,7 @@ mod usage {
                 right: Box::new(Expression::Literal {
                     value: Value::Number(2.0),
                 }),
-                operator: Operator::Star,
+                operator: Operator::Multiply,
             }),
             right: Box::new(Expression::Literal {
                 value: Value::Number(3.0),

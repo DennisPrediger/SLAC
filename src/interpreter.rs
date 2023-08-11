@@ -53,8 +53,8 @@ impl<'a> TreeWalkingInterpreter<'a> {
                 match operator {
                     Operator::Plus => left + right,
                     Operator::Minus => left - right,
-                    Operator::Star => left * right,
-                    Operator::Slash => left / right,
+                    Operator::Multiply => left * right,
+                    Operator::Divide => left / right,
                     Operator::Div => left.div_int(right),
                     Operator::Mod => left % right,
                     Operator::Xor => left ^ right,

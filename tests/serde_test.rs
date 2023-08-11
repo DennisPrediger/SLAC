@@ -163,13 +163,13 @@ mod test {
                           "type": "literal",
                           "value": 5.0
                         },
-                        "operator": "star"
+                        "operator": "multiply"
                       },
                       "right": {
                         "type": "literal",
                         "value": 25.0
                       },
-                      "operator": "slash"
+                      "operator": "divide"
                     },
                     "operator": "less"
                   },

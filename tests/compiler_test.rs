@@ -57,7 +57,7 @@ fn multiply_addition() {
             right: Box::new(Expression::Literal {
                 value: Value::Number(2.0),
             }),
-            operator: Operator::Star,
+            operator: Operator::Multiply,
         }),
         right: Box::new(Expression::Literal {
             value: Value::Number(3.0),
@@ -82,7 +82,7 @@ fn addition_multiply() {
             right: Box::new(Expression::Literal {
                 value: Value::Number(3.0),
             }),
-            operator: Operator::Star,
+            operator: Operator::Multiply,
         }),
         operator: Operator::Plus,
     };
@@ -106,7 +106,7 @@ fn group_addition_multiply() {
         right: Box::new(Expression::Literal {
             value: Value::Number(3.0),
         }),
-        operator: Operator::Star,
+        operator: Operator::Multiply,
     };
 
     assert_eq!(result, Ok(expected));

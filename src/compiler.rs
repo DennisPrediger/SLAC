@@ -248,7 +248,7 @@ mod test {
             right: Box::new(Expression::Literal {
                 value: Value::Number(2.0),
             }),
-            operator: Operator::Star,
+            operator: Operator::Multiply,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -294,7 +294,7 @@ mod test {
                 right: Box::new(Expression::Literal {
                     value: Value::Number(3.0),
                 }),
-                operator: Operator::Star,
+                operator: Operator::Multiply,
             }),
             operator: Operator::Plus,
         };
@@ -366,7 +366,7 @@ mod test {
             right: Box::new(Expression::Literal {
                 value: Value::Number(4.0),
             }),
-            operator: Operator::Star,
+            operator: Operator::Multiply,
         };
 
         assert_eq!(ast, Ok(expected));
@@ -386,7 +386,7 @@ mod test {
             right: Box::new(Expression::Literal {
                 value: Value::Number(4.0),
             }),
-            operator: Operator::Star,
+            operator: Operator::Multiply,
         };
 
         assert_eq!(ast, Ok(expected));

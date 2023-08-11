@@ -11,7 +11,7 @@ use crate::token::Token;
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[rustfmt::skip]
 pub enum Operator {
-    Plus, Minus,  Star, Slash,
+    Plus, Minus, Multiply, Divide,
     Greater, GreaterEqual,
     Less, LessEqual,
     Equal, NotEqual,
@@ -24,8 +24,8 @@ impl Display for Operator {
         match self {
             Operator::Plus => write!(f, "+"),
             Operator::Minus => write!(f, "-"),
-            Operator::Star => write!(f, "*"),
-            Operator::Slash => write!(f, "/"),
+            Operator::Multiply => write!(f, "*"),
+            Operator::Divide => write!(f, "/"),
             Operator::Greater => write!(f, ">"),
             Operator::GreaterEqual => write!(f, ">="),
             Operator::Less => write!(f, "<"),
@@ -49,8 +49,8 @@ impl TryFrom<&Token> for Operator {
         match value {
             Token::Plus => Ok(Operator::Plus),
             Token::Minus => Ok(Operator::Minus),
-            Token::Star => Ok(Operator::Star),
-            Token::Slash => Ok(Operator::Slash),
+            Token::Star => Ok(Operator::Multiply),
+            Token::Slash => Ok(Operator::Divide),
             Token::Greater => Ok(Operator::Greater),
             Token::GreaterEqual => Ok(Operator::GreaterEqual),
             Token::Less => Ok(Operator::Less),
