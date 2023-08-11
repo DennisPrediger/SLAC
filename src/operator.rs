@@ -1,12 +1,10 @@
-use std::fmt::Display;
-
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::token::Token;
 
 /// A binary or arithemtic operator.
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[rustfmt::skip]
@@ -17,29 +15,6 @@ pub enum Operator {
     Equal, NotEqual,
     And, Or, Xor, Not, 
     Div, Mod,
-}
-
-impl Display for Operator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Operator::Plus => write!(f, "+"),
-            Operator::Minus => write!(f, "-"),
-            Operator::Multiply => write!(f, "*"),
-            Operator::Divide => write!(f, "/"),
-            Operator::Greater => write!(f, ">"),
-            Operator::GreaterEqual => write!(f, ">="),
-            Operator::Less => write!(f, "<"),
-            Operator::LessEqual => write!(f, "<="),
-            Operator::Equal => write!(f, "="),
-            Operator::NotEqual => write!(f, "<>"),
-            Operator::And => write!(f, "and"),
-            Operator::Or => write!(f, "or"),
-            Operator::Xor => write!(f, "xor"),
-            Operator::Not => write!(f, "not"),
-            Operator::Div => write!(f, "div"),
-            Operator::Mod => write!(f, "mod"),
-        }
-    }
 }
 
 impl TryFrom<&Token> for Operator {

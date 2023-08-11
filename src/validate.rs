@@ -11,7 +11,7 @@ pub enum ValidationResult {
     MissingVariable(String),
     MissingFunction(String),
     ParamCountMismatch(usize, usize),
-    InvalidOperator(String),
+    InvalidOperator(Operator),
     LiteralNotBoolean,
 }
 
@@ -92,7 +92,7 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
     match ast {
         Expression::Unary { right: _, operator } => match operator {
             Operator::Not => ValidationResult::Valid,
-            _ => ValidationResult::InvalidOperator(operator.to_string()),
+            _ => ValidationResult::InvalidOperator(*operator),
         },
         Expression::Binary {
             left: _,
@@ -107,7 +107,7 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
             | Operator::NotEqual
             | Operator::And
             | Operator::Or => ValidationResult::Valid,
-            _ => ValidationResult::InvalidOperator(operator.to_string()),
+            _ => ValidationResult::InvalidOperator(*operator),
         },
         Expression::Array { expressions: _ } => ValidationResult::LiteralNotBoolean,
         Expression::Literal { value } => match value {
