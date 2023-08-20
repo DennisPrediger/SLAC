@@ -348,6 +348,51 @@ mod test {
         assert_eq!(Value::Nil, Value::Array(vec![]));
         assert_ne!(Value::Nil, Value::Array(vec![Value::Nil]));
     }
+
+    #[test]
+    fn is_empty() {
+        assert_eq!(false, Value::Nil.is_empty());
+        assert_eq!(false, Value::Boolean(false).is_empty());
+        assert_eq!(false, Value::Number(0.0).is_empty());
+
+        assert_eq!(true, Value::String(String::new()).is_empty());
+        assert_eq!(false, Value::String(String::from("something")).is_empty());
+
+        assert_eq!(true, Value::Array(vec![]).is_empty());
+        assert_eq!(false, Value::Array(vec![Value::Nil]).is_empty());
+    }
+
+    #[test]
+    fn invalid_operations() {
+        assert_eq!(Value::Nil, -Value::String("a string".to_string()));
+        assert_eq!(Value::Nil, !Value::String("a string".to_string()));
+
+        assert_eq!(
+            Value::Nil,
+            Value::Number(10.0) + Value::String("a string".to_string())
+        );
+        assert_eq!(
+            Value::Nil,
+            Value::Number(10.0) - Value::String("a string".to_string())
+        );
+        assert_eq!(
+            Value::Nil,
+            Value::Number(10.0) * Value::String("a string".to_string())
+        );
+        assert_eq!(
+            Value::Nil,
+            Value::Number(10.0) / Value::String("a string".to_string())
+        );
+        assert_eq!(
+            Value::Nil,
+            Value::Number(10.0) % Value::String("a string".to_string())
+        );
+        assert_eq!(
+            Value::Nil,
+            Value::Number(10.0).div_int(Value::Boolean(false))
+        );
+        assert_eq!(Value::Nil, Value::Number(10.0) ^ Value::Boolean(false));
+    }
 }
 
 #[cfg(all(test, feature = "serde"))]
@@ -385,5 +430,13 @@ mod test_serde_json {
         assert_eq!(json!(true), json!(Value::Boolean(true)));
         assert_eq!(json!("ab"), json!(Value::String("ab".to_string())));
         assert_eq!(json!(19.9), json!(Value::Number(19.9)));
+        assert_eq!(
+            json!(["hallo", 42.0, false]),
+            json!(Value::Array(vec![
+                Value::String("hallo".to_string()),
+                Value::Number(42.0),
+                Value::Boolean(false)
+            ]))
+        );
     }
 }
