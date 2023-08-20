@@ -97,7 +97,7 @@ pub fn float(params: &[Value]) -> Result<Value, String> {
                 Ok(Value::Number(float))
             }
             Value::Number(_) => Ok(value.clone()),
-            _ => Ok(Value::Nil),
+            _ => Err("value can not be converted to float".to_string()),
         },
         None => Err("not enough parameters".to_string()),
     }
@@ -225,6 +225,8 @@ mod test {
         assert_eq!(Ok(Value::Number(10.0)), abs(&vec![Value::Number(-10.0)]));
         assert_eq!(Ok(Value::Number(12.34)), abs(&vec![Value::Number(12.34)]));
         assert_eq!(Ok(Value::Number(12.34)), abs(&vec![Value::Number(-12.34)]));
+
+        assert!(abs(&vec![Value::String("-12.34".to_string())]).is_err());
     }
 
     #[test]
@@ -309,19 +311,8 @@ mod test {
             Value::Boolean(false),
             bool(&vec![Value::Array(vec![])]).unwrap()
         );
-    }
 
-    #[test]
-    fn std_max() {
-        let values = vec![Value::Number(10.0), Value::Number(20.0)];
-        assert_eq!(Value::Number(20.0), max(&values).unwrap());
-
-        let values = vec![
-            Value::Number(30.0),
-            Value::Number(10.0),
-            Value::Number(20.0),
-        ];
-        assert_eq!(Value::Number(30.0), max(&values).unwrap());
+        assert!(bool(&vec![]).is_err());
     }
 
     #[test]
@@ -341,6 +332,9 @@ mod test {
             Ok(Value::Boolean(false)),
             contains(&vec![Value::Array(values), Value::Number(11.0)])
         );
+
+        assert!(contains(&vec![Value::Boolean(true), Value::Boolean(false)]).is_err());
+        assert!(contains(&vec![]).is_err());
     }
 
     #[test]
@@ -360,6 +354,8 @@ mod test {
                 Value::String("WORLD".to_string())
             ])
         );
+
+        assert!(min(&vec![]).is_err());
     }
 
     #[test]
@@ -383,6 +379,8 @@ mod test {
             Value::Boolean(false),
             empty(&vec![Value::Array(vec![Value::Nil])]).unwrap()
         );
+
+        assert!(empty(&vec![]).is_err());
     }
 
     #[test]
@@ -401,6 +399,9 @@ mod test {
             Value::Number(0.123),
             float(&vec![Value::String(".123".to_string())]).unwrap()
         );
+
+        assert!(float(&vec![]).is_err());
+        assert!(float(&vec![Value::Boolean(false)]).is_err());
     }
 
     #[test]
@@ -419,6 +420,9 @@ mod test {
             Value::Number(0.0),
             int(&vec![Value::String(".123".to_string())]).unwrap()
         );
+
+        assert!(int(&vec![]).is_err());
+        assert!(int(&vec![Value::Boolean(false)]).is_err());
     }
 
     #[test]
@@ -439,6 +443,8 @@ mod test {
                 Value::Boolean(false)
             ])])
         );
+
+        assert!(length(&vec![]).is_err());
     }
 
     #[test]
@@ -447,6 +453,9 @@ mod test {
             Ok(Value::String("hello world".to_string())),
             lowercase(&vec![Value::String("Hello World".to_string())])
         );
+
+        assert!(lowercase(&vec![]).is_err());
+        assert!(lowercase(&vec![Value::Boolean(true)]).is_err());
     }
 
     #[test]
@@ -455,6 +464,31 @@ mod test {
             Ok(Value::String("HELLO WORLD".to_string())),
             uppercase(&vec![Value::String("Hello World".to_string())])
         );
+
+        assert!(uppercase(&vec![]).is_err());
+        assert!(uppercase(&vec![Value::Boolean(true)]).is_err());
+    }
+
+    #[test]
+    fn std_max() {
+        let values = vec![Value::Number(10.0), Value::Number(20.0)];
+        assert_eq!(Value::Number(20.0), max(&values).unwrap());
+
+        let values = vec![
+            Value::Number(30.0),
+            Value::Number(10.0),
+            Value::Number(20.0),
+        ];
+        assert_eq!(Value::Number(30.0), max(&values).unwrap());
+
+        let values = vec![
+            Value::Number(10.0),
+            Value::Number(10.0),
+            Value::Number(20.0),
+        ];
+        assert_eq!(Value::Number(20.0), max(&values).unwrap());
+
+        assert!(max(&vec![]).is_err());
     }
 
     #[test]
@@ -468,6 +502,15 @@ mod test {
             Value::Number(20.0),
         ];
         assert_eq!(Value::Number(10.0), min(&values).unwrap());
+
+        let values = vec![
+            Value::Number(10.0),
+            Value::Number(20.0),
+            Value::Number(20.0),
+        ];
+        assert_eq!(Value::Number(10.0), min(&values).unwrap());
+
+        assert!(min(&vec![]).is_err());
     }
 
     #[test]
@@ -481,6 +524,14 @@ mod test {
             Value::Number(0.001),
             pow(&vec![Value::Number(10.0), Value::Number(-3.0)]).unwrap()
         );
+
+        assert_eq!(
+            Value::Number(100.0),
+            pow(&vec![Value::Number(10.0), Value::Boolean(true)]).unwrap()
+        );
+
+        assert!(pow(&vec![]).is_err());
+        assert!(pow(&vec![Value::Boolean(true)]).is_err());
     }
 
     #[test]
@@ -501,6 +552,8 @@ mod test {
             Value::Number(-11.0),
             round(&vec![Value::Number(-10.5)]).unwrap()
         );
+
+        assert!(round(&vec![]).is_err());
     }
 
     #[test]
@@ -519,6 +572,10 @@ mod test {
             Ok(Value::String("true".to_string())),
             str(&vec![Value::Boolean(true)])
         );
+
+        assert_eq!(Ok(Value::Nil), str(&vec![Value::Nil]));
+
+        assert!(str(&vec![]).is_err());
     }
 
     #[test]
@@ -527,5 +584,8 @@ mod test {
             Ok(Value::String("Hello World".to_string())),
             trim(&vec![Value::String("  Hello World       ".to_string())])
         );
+
+        assert!(trim(&vec![]).is_err());
+        assert!(trim(&vec![Value::Boolean(true)]).is_err());
     }
 }
