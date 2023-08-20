@@ -1,7 +1,7 @@
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::token::Token;
+use crate::{error::Error, token::Token};
 
 /// A binary or arithemtic operator.
 #[derive(Debug, PartialEq, PartialOrd, Eq, Clone, Copy)]
@@ -18,7 +18,7 @@ pub enum Operator {
 }
 
 impl TryFrom<&Token> for Operator {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &Token) -> Result<Self, Self::Error> {
         match value {
@@ -38,7 +38,7 @@ impl TryFrom<&Token> for Operator {
             Token::Not => Ok(Operator::Not),
             Token::Div => Ok(Operator::Div),
             Token::Mod => Ok(Operator::Mod),
-            _ => Err(format!("unknown Token {value:?}")),
+            _ => Err(Error::TokenNotAnOperator(value.clone())),
         }
     }
 }

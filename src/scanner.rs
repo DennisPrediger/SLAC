@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::error::{Result, SyntaxError};
+use crate::error::{Error, Result};
 use crate::token::Token;
 use crate::value::Value;
 
@@ -44,7 +44,7 @@ impl<'a> Scanner<'a> {
         }
 
         if tokens.is_empty() {
-            Err(SyntaxError::from("empty String"))
+            Err(Error::Eof)
         } else {
             Ok(tokens)
         }
@@ -77,7 +77,7 @@ impl<'a> Scanner<'a> {
             '=' => Ok(Token::Equal),
             '>' => Ok(self.greater()),
             '<' => Ok(self.lesser()),
-            _ => Err(SyntaxError(format!("invalid token: {next}"))),
+            _ => Err(Error::InvalidCharacter(next)),
         }
     }
 
@@ -156,7 +156,7 @@ impl<'a> Scanner<'a> {
     fn extract_number(content: &str) -> Result<f64> {
         content
             .parse::<f64>()
-            .map_err(|o| SyntaxError(o.to_string()))
+            .map_err(|o| Error::InvalidNumber(o.to_string()))
     }
 
     fn number(&mut self) -> Result<Token> {
@@ -184,8 +184,7 @@ impl<'a> Scanner<'a> {
         }
 
         if self.is_at_end() {
-            let message = format!("Unterminated String at character {}", self.start);
-            return Err(SyntaxError(message));
+            return Err(Error::UnterminatedStringLiteral);
         };
 
         self.advance();
@@ -221,7 +220,7 @@ mod tests {
 
     use super::{Scanner, Token};
     use crate::{
-        error::{Result, SyntaxError},
+        error::{Error, Result},
         value::Value,
     };
 
@@ -321,7 +320,7 @@ mod tests {
     #[test]
     fn err_empty_input() {
         let tokens = Scanner::tokenize("");
-        let expected = Err(SyntaxError::from("empty String"));
+        let expected = Err(Error::Eof);
 
         assert_eq!(expected, tokens);
     }
@@ -329,7 +328,7 @@ mod tests {
     #[test]
     fn err_unknown_token_1() {
         let tokens = Scanner::tokenize("$");
-        let expected = Err(SyntaxError::from("invalid token: $"));
+        let expected = Err(Error::InvalidCharacter('$'));
 
         assert_eq!(expected, tokens);
     }
@@ -337,7 +336,7 @@ mod tests {
     #[test]
     fn err_unknown_token_2() {
         let tokens = Scanner::tokenize("$hello");
-        let expected = Err(SyntaxError::from("invalid token: $"));
+        let expected = Err(Error::InvalidCharacter('$'));
 
         assert_eq!(expected, tokens);
     }
@@ -345,7 +344,7 @@ mod tests {
     #[test]
     fn err_unterminated_string() {
         let tokens = Scanner::tokenize("'hello' + 'world");
-        let expected = Err(SyntaxError::from("Unterminated String at character 10"));
+        let expected = Err(Error::UnterminatedStringLiteral);
 
         assert_eq!(expected, tokens);
     }

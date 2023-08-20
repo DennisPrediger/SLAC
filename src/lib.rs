@@ -9,7 +9,7 @@
 
 use ast::Expression;
 use compiler::Compiler;
-use error::SyntaxError;
+use error::Result;
 use scanner::Scanner;
 
 pub mod ast;
@@ -52,7 +52,7 @@ pub mod value;
 ///
 /// assert_eq!(ast, Ok(expected));
 /// ```
-pub fn compile(source: &str) -> Result<Expression, SyntaxError> {
+pub fn compile(source: &str) -> Result<Expression> {
     let tokens = Scanner::tokenize(source)?;
     let ast = Compiler::compile_ast(tokens)?;
 

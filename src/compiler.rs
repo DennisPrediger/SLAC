@@ -3,7 +3,7 @@ use std::vec;
 
 use crate::{
     ast::Expression,
-    error::SyntaxError,
+    error::Error,
     token::{Precedence, Token},
 };
 
@@ -25,7 +25,7 @@ impl Compiler {
         let expression = self.expression()?;
 
         match self.current() {
-            Some(token) => Err(SyntaxError::expected("end of expresssion", token)),
+            Some(token) => Err(Error::MultipleExpressions(token.clone())),
             None => Ok(expression),
         }
     }
@@ -59,12 +59,13 @@ impl Compiler {
             Token::LeftParen => self.grouping(),
             Token::LeftBracket => self.array(),
             Token::Not | Token::Minus => self.unary(),
-            _ => Err(SyntaxError::expected("left side of expression", previous)),
+            _ => Err(Error::NoValidPrefixToken(previous.clone())),
         }
     }
 
     fn do_infix(&mut self, left: Expression) -> Result<Expression> {
-        match self.previous()? {
+        let previous = self.previous()?;
+        match previous {
             Token::Minus
             | Token::Plus
             | Token::Star
@@ -81,7 +82,7 @@ impl Compiler {
             | Token::Or
             | Token::Xor => self.binary(left),
             Token::LeftParen => self.call(left),
-            _ => Err(SyntaxError("invalid infix Token".to_string())),
+            _ => Err(Error::NoValidInfixToken(previous.clone())),
         }
     }
 
@@ -108,7 +109,7 @@ impl Compiler {
                 params: self.expression_list(&Token::RightParen)?,
             })
         } else {
-            Err(SyntaxError::expected("some identifier", self.previous()?))
+            Err(Error::CallNotOnVariable(self.previous()?.clone()))
         }
     }
 
@@ -159,7 +160,7 @@ impl Compiler {
     fn previous(&self) -> Result<&Token> {
         self.tokens
             .get(self.current - 1)
-            .ok_or(SyntaxError("expected some token".to_string()))
+            .ok_or(Error::PreviousTokenNotFound)
     }
 
     fn chomp(&mut self, token: &Token) -> Result<()> {
@@ -167,23 +168,16 @@ impl Compiler {
             self.advance();
             Ok(())
         } else {
-            match self.current() {
-                Some(current) => Err(SyntaxError(format!(
-                    "Expected {token:?} encountered {current:?}"
-                ))),
-                None => Err(SyntaxError(format!(
-                    "Expected {token:?} encountered end of file"
-                ))),
-            }
+            Err(self
+                .current()
+                .map_or(Error::Eof, |t| Error::InvalidToken(t.clone())))
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        ast::Expression, error::SyntaxError, operator::Operator, token::Token, value::Value,
-    };
+    use crate::{ast::Expression, error::Error, operator::Operator, token::Token, value::Value};
 
     use super::Compiler;
 
@@ -422,7 +416,7 @@ mod test {
         let ast =
             Compiler::compile_ast(vec![Token::Identifier("max".to_string()), Token::LeftParen]);
 
-        let expected = SyntaxError("Expected RightParen encountered end of file".to_string());
+        let expected = Error::Eof;
 
         assert_eq!(ast, Err(expected));
     }
@@ -431,7 +425,7 @@ mod test {
     fn err_open_array() {
         let ast = Compiler::compile_ast(vec![Token::LeftBracket, Token::Literal(Value::Nil)]);
 
-        let expected = SyntaxError("Expected RightBracket encountered end of file".to_string());
+        let expected = Error::Eof;
         assert_eq!(ast, Err(expected));
     }
 
@@ -440,7 +434,7 @@ mod test {
         let ast =
             Compiler::compile_ast(vec![Token::LeftBracket, Token::Comma, Token::RightBracket]);
 
-        let expected = SyntaxError("Expected left side of expression got \"Comma\"".to_string());
+        let expected = Error::NoValidPrefixToken(Token::Comma);
         assert_eq!(ast, Err(expected));
     }
 }

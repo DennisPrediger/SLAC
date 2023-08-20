@@ -1,73 +1,48 @@
 use crate::{
     ast::Expression,
     environment::{FunctionResult, ValidateEnvironment},
+    error::{Error, Result},
     operator::Operator,
     value::Value,
 };
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum ValidationResult {
-    Valid,
-    MissingVariable(String),
-    MissingFunction(String),
-    ParamCountMismatch(usize, usize),
-    InvalidOperator(Operator),
-    LiteralNotBoolean,
-}
-
 /// Validates `Variable` and `Call` [`Expressions`](crate::ast::Expression) by walking
-/// the tree and returning a [`ValidationResult`] on the first error.
-pub fn validate_env(env: &dyn ValidateEnvironment, expression: &Expression) -> ValidationResult {
-    let mut result = ValidationResult::Valid;
-
+/// the tree and returning a [`SlacError`] on the first error.
+pub fn validate_env(env: &dyn ValidateEnvironment, expression: &Expression) -> Result<()> {
     match expression {
-        Expression::Unary { right, operator: _ } => result = validate_env(env, right),
+        Expression::Unary { right, operator: _ } => validate_env(env, right),
         Expression::Binary {
             left,
             right,
             operator: _,
-        } => {
-            result = validate_env(env, left);
-            if let ValidationResult::Valid = result {
-                result = validate_env(env, right);
-            }
-        }
+        } => validate_env(env, left).and_then(|_| validate_env(env, right)),
         Expression::Array {
             expressions: values,
-        } => result = validate_expr_vec(env, values),
+        } => validate_expr_vec(env, values),
         Expression::Variable { name } => {
-            if !env.variable_exists(name) {
-                result = ValidationResult::MissingVariable(name.clone());
+            if env.variable_exists(name) {
+                Ok(())
+            } else {
+                Err(Error::MissingVariable(name.clone()))
             }
         }
-        Expression::Call { name, params } => {
-            result = match env.function_exists(name, params.len()) {
-                FunctionResult::Exists => validate_expr_vec(env, params),
-                FunctionResult::NotFound => ValidationResult::MissingFunction(name.clone()),
-                FunctionResult::WrongArity(expected) => {
-                    ValidationResult::ParamCountMismatch(params.len(), expected)
-                }
-            }
-        }
-        Expression::Literal { value: _ } => (),
-    };
-
-    result
+        Expression::Call { name, params } => match env.function_exists(name, params.len()) {
+            FunctionResult::Exists => validate_expr_vec(env, params),
+            FunctionResult::NotFound => Err(Error::MissingFunction(name.clone())),
+            FunctionResult::WrongArity(expected) => Err(Error::ParamCountMismatch(
+                name.clone(),
+                params.len(),
+                expected,
+            )),
+        },
+        Expression::Literal { value: _ } => Ok(()),
+    }
 }
 
-fn validate_expr_vec(
-    env: &dyn ValidateEnvironment,
-    expressions: &[Expression],
-) -> ValidationResult {
-    let mut result = ValidationResult::Valid;
-
-    expressions.iter().all(|expression| {
-        result = validate_env(env, expression);
-
-        result == ValidationResult::Valid
-    });
-
-    result
+fn validate_expr_vec(env: &dyn ValidateEnvironment, expressions: &[Expression]) -> Result<()> {
+    expressions
+        .iter()
+        .try_for_each(|expression| validate_env(env, expression))
 }
 
 /// Checks if the top level [`Expression`] produces a [`Value::Boolean`] result.
@@ -75,7 +50,7 @@ fn validate_expr_vec(
 /// # Examples
 ///
 /// ```
-/// use slac::validate::{validate_boolean_result, ValidationResult};
+/// use slac::validate::{validate_boolean_result};
 /// use slac::ast::Expression;
 /// use slac::value::Value;
 /// use slac::operator::Operator;
@@ -86,13 +61,13 @@ fn validate_expr_vec(
 ///     operator: Operator::And,
 /// };
 ///
-/// assert_eq!(validate_boolean_result(&ast), ValidationResult::Valid);
+/// assert!(validate_boolean_result(&ast).is_ok());
 /// ```
-pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
+pub fn validate_boolean_result(ast: &Expression) -> Result<()> {
     match ast {
         Expression::Unary { right: _, operator } => match operator {
-            Operator::Not => ValidationResult::Valid,
-            _ => ValidationResult::InvalidOperator(*operator),
+            Operator::Not => Ok(()),
+            _ => Err(Error::InvalidUnaryOperator(*operator)),
         },
         Expression::Binary {
             left: _,
@@ -106,16 +81,16 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
             | Operator::Equal
             | Operator::NotEqual
             | Operator::And
-            | Operator::Or => ValidationResult::Valid,
-            _ => ValidationResult::InvalidOperator(*operator),
+            | Operator::Or => Ok(()),
+            _ => Err(Error::InvalidBinaryOperator(*operator)),
         },
-        Expression::Array { expressions: _ } => ValidationResult::LiteralNotBoolean,
+        Expression::Array { expressions: _ } => Err(Error::LiteralNotBoolean),
         Expression::Literal { value } => match value {
-            Value::Boolean(_) => ValidationResult::Valid,
-            _ => ValidationResult::LiteralNotBoolean,
+            Value::Boolean(_) => Ok(()),
+            _ => Err(Error::LiteralNotBoolean),
         },
         Expression::Variable { name: _ } | Expression::Call { name: _, params: _ } => {
-            ValidationResult::Valid // Type not known
+            Ok(()) // Type not known
         }
     }
 }
@@ -123,8 +98,8 @@ pub fn validate_boolean_result(ast: &Expression) -> ValidationResult {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, environment::StaticEnvironment, operator::Operator,
-        validate::ValidationResult, value::Value,
+        ast::Expression, environment::StaticEnvironment, operator::Operator, validate::Error,
+        value::Value,
     };
 
     use super::validate_env;
@@ -143,7 +118,7 @@ mod test {
 
         let result = validate_env(&StaticEnvironment::default(), &ast);
 
-        assert_eq!(ValidationResult::Valid, result);
+        assert_eq!(Ok(()), result);
     }
 
     #[test]
@@ -163,7 +138,7 @@ mod test {
 
         let result = validate_env(&StaticEnvironment::default(), &ast);
 
-        assert_eq!(ValidationResult::Valid, result);
+        assert_eq!(Ok(()), result);
     }
 
     #[test]
@@ -180,10 +155,7 @@ mod test {
 
         let result = validate_env(&StaticEnvironment::default(), &ast);
 
-        assert_eq!(
-            ValidationResult::MissingVariable("VAR_NAME".to_string()),
-            result
-        );
+        assert_eq!(Err(Error::MissingVariable("VAR_NAME".to_string())), result);
     }
 
     #[test]
@@ -201,7 +173,7 @@ mod test {
 
         let result = validate_env(&StaticEnvironment::default(), &ast);
 
-        assert_eq!(ValidationResult::MissingFunction("max".to_string()), result);
+        assert_eq!(Err(Error::MissingFunction("max".to_string())), result);
     }
 
     fn dummy_function(_params: &[Value]) -> Result<Value, String> {
@@ -226,7 +198,10 @@ mod test {
 
         let result = validate_env(&env, &ast);
 
-        assert_eq!(ValidationResult::ParamCountMismatch(0, 2), result);
+        assert_eq!(
+            Err(Error::ParamCountMismatch("max".to_string(), 0, 2)),
+            result
+        );
     }
 
     #[test]
@@ -243,9 +218,6 @@ mod test {
 
         let result = validate_env(&env, &ast);
 
-        assert_eq!(
-            ValidationResult::MissingVariable("not_found".to_string()),
-            result
-        );
+        assert_eq!(Err(Error::MissingVariable("not_found".to_string())), result);
     }
 }
