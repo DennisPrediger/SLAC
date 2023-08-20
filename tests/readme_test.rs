@@ -41,7 +41,7 @@ mod interpreter {
 
         let result = TreeWalkingInterpreter::interprete(&env, &ast);
 
-        assert_eq!(result, Value::Boolean(true));
+        assert_eq!(result, Some(Value::Boolean(true)));
     }
 }
 
@@ -62,6 +62,6 @@ mod serialisation {
         let result = TreeWalkingInterpreter::interprete(&env, &output);
 
         assert_eq!(input, output);
-        assert_eq!(result, Value::Boolean(true));
+        assert_eq!(result, Some(Value::Boolean(true)));
     }
 }

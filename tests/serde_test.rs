@@ -19,7 +19,7 @@ mod test {
     }
 
     fn dummy_func(_params: &[slac::Value]) -> Result<slac::Value, String> {
-        Ok(slac::Value::Nil)
+        Ok(slac::Value::Boolean(false))
     }
 
     fn test_validate(script: &str) {
@@ -27,7 +27,7 @@ mod test {
         let mut env = StaticEnvironment::default();
         env.add_native_func("max", Some(2), dummy_func);
         env.add_native_func("some_func", Some(1), dummy_func);
-        env.add_var("some_var", slac::Value::Nil);
+        env.add_var("some_var", slac::Value::Boolean(false));
 
         assert!(validate_env(&env, &input).is_ok());
     }

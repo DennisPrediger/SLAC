@@ -63,7 +63,7 @@ pub fn bool(params: &[Value]) -> Result<Value, String> {
                 v.partial_cmp(&1.0).is_some_and(|o| o == Ordering::Equal), // 1 => true, other (incl. NaN) => false
             )),
             Value::Array(v) => Ok(Value::Boolean(!v.is_empty())), // [] => false, other => true
-            _ => Ok(value.clone()),                               // Nil => Nil, Boolean => Boolean
+            Value::Boolean(v) => Ok(Value::Boolean(*v)),          // Boolean => Boolean
         },
         None => Err("not enough parameters".to_string()),
     }
@@ -188,12 +188,7 @@ pub fn round(params: &[Value]) -> Result<Value, String> {
 
 pub fn str(params: &[Value]) -> Result<Value, String> {
     if let Some(value) = params.first() {
-        let result = match value {
-            Value::Nil => Value::Nil,
-            value => Value::String(value.to_string()),
-        };
-
-        Ok(result)
+        Ok(Value::String(value.to_string()))
     } else {
         Err("no parameter supplied".to_string())
     }
@@ -377,7 +372,7 @@ mod test {
 
         assert_eq!(
             Value::Boolean(false),
-            empty(&vec![Value::Array(vec![Value::Nil])]).unwrap()
+            empty(&vec![Value::Array(vec![Value::Boolean(false)])]).unwrap()
         );
 
         assert!(empty(&vec![]).is_err());
@@ -427,7 +422,6 @@ mod test {
 
     #[test]
     fn std_length() {
-        assert_eq!(Ok(Value::Number(0.0)), length(&vec![Value::Nil]));
         assert_eq!(Ok(Value::Number(0.0)), length(&vec![Value::Boolean(true)]));
         assert_eq!(Ok(Value::Number(0.0)), length(&vec![Value::Number(100.0)]));
 
@@ -572,8 +566,6 @@ mod test {
             Ok(Value::String("true".to_string())),
             str(&vec![Value::Boolean(true)])
         );
-
-        assert_eq!(Ok(Value::Nil), str(&vec![Value::Nil]));
 
         assert!(str(&vec![]).is_err());
     }

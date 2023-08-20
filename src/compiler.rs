@@ -423,7 +423,10 @@ mod test {
 
     #[test]
     fn err_open_array() {
-        let ast = Compiler::compile_ast(vec![Token::LeftBracket, Token::Literal(Value::Nil)]);
+        let ast = Compiler::compile_ast(vec![
+            Token::LeftBracket,
+            Token::Literal(Value::Boolean(false)),
+        ]);
 
         let expected = Error::Eof;
         assert_eq!(ast, Err(expected));

@@ -9,9 +9,6 @@ use std::{
 /// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
 #[derive(Debug, PartialOrd, Clone)]
 pub enum Value {
-    /// [`Value::Nil`] is only created by invalid operations and not from literals
-    /// in the AST.
-    Nil,
     Boolean(bool),
     String(String),
     Number(f64),
@@ -25,101 +22,97 @@ impl PartialEq for Value {
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Array(l0), Self::Array(r0)) => l0 == r0,
-            (Self::Nil, Self::Boolean(r0)) => r0 == &false,
-            (Self::Nil, Self::String(r0)) => r0.is_empty(),
-            (Self::Nil, Self::Number(r0)) => r0 == &0.0,
-            (Self::Nil, Self::Array(r0)) => r0.is_empty(),
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }
 }
 
 impl Neg for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn neg(self) -> Self::Output {
         match self {
-            Value::Number(value) => Value::Number(-value),
-            _ => Value::Nil,
+            Value::Number(value) => Some(Value::Number(-value)),
+            _ => None,
         }
     }
 }
 
 impl Not for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn not(self) -> Self::Output {
         match self {
-            Value::Boolean(value) => Value::Boolean(!value),
-            _ => Value::Nil,
+            Value::Boolean(value) => Some(Value::Boolean(!value)),
+            _ => None,
         }
     }
 }
 
 impl Add for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::String(lhs), Value::String(rhs)) => Value::String(lhs + &rhs),
-            (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs + rhs),
-            (Value::Array(lhs), Value::Array(rhs)) => Value::Array([lhs, rhs].concat()),
-            _ => Value::Nil,
+            (Value::String(lhs), Value::String(rhs)) => Some(Value::String(lhs + &rhs)),
+            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs + rhs)),
+            (Value::Array(lhs), Value::Array(rhs)) => Some(Value::Array([lhs, rhs].concat())),
+            _ => None,
         }
     }
 }
 
 impl Sub for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs - rhs),
-            _ => Value::Nil,
+            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs - rhs)),
+            _ => None,
         }
     }
 }
 
 impl Mul for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn mul(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs * rhs),
-            _ => Value::Nil,
+            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs * rhs)),
+            _ => None,
         }
     }
 }
 
 impl Div for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs / rhs),
-            _ => Value::Nil,
+            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs / rhs)),
+            _ => None,
         }
     }
 }
 
 impl Rem for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn rem(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs % rhs),
-            _ => Value::Nil,
+            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs % rhs)),
+            _ => None,
         }
     }
 }
 
 impl BitXor for Value {
-    type Output = Value;
+    type Output = Option<Value>;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Boolean(lhs), Value::Boolean(rhs)) => Value::Boolean(lhs ^ rhs),
-            _ => Value::Nil,
+            (Value::Boolean(lhs), Value::Boolean(rhs)) => Some(Value::Boolean(lhs ^ rhs)),
+            _ => None,
         }
     }
 }
@@ -127,7 +120,6 @@ impl BitXor for Value {
 impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Value::Nil => write!(f, "Nil"),
             Value::Boolean(v) => write!(f, "{v}"),
             Value::String(v) => write!(f, "{v}"),
             Value::Number(v) => write!(f, "{v}"),
@@ -147,12 +139,12 @@ impl Value {
     /// let a = Value::Number(10.0);
     /// let b = Value::Number(3.0);
     ///
-    /// assert_eq!(Value::Number(3.0), a.div_int(b));
+    /// assert_eq!(Some(Value::Number(3.0)), a.div_int(b));
     /// ```
-    pub fn div_int(self, rhs: Self) -> Self {
+    pub fn div_int(self, rhs: Self) -> Option<Self> {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Value::Number((lhs / rhs).trunc()),
-            _ => Value::Nil,
+            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number((lhs / rhs).trunc())),
+            _ => None,
         }
     }
 
@@ -180,7 +172,6 @@ impl Serialize for Value {
         S: serde::Serializer,
     {
         match self {
-            Value::Nil => serializer.serialize_unit(),
             Value::Boolean(v) => serializer.serialize_bool(*v),
             Value::String(v) => serializer.serialize_str(v),
             Value::Number(v) => serializer.serialize_f64(*v),
@@ -214,13 +205,6 @@ impl<'de> Visitor<'de> for ValueVisitor {
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(formatter, "a primitive value or list")
-    }
-
-    fn visit_unit<E>(self) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        Ok(Value::Nil)
     }
 
     fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
@@ -286,7 +270,7 @@ mod test {
         let a = Value::Number(10.0);
         let b = Value::Number(divisor);
 
-        a.div_int(b)
+        a.div_int(b).unwrap()
     }
 
     #[test]
@@ -308,7 +292,7 @@ mod test {
         let a = Value::Number(10.0);
         let b = Value::Number(divisor);
 
-        a % b
+        (a % b).unwrap()
     }
 
     #[test]
@@ -330,26 +314,7 @@ mod test {
     }
 
     #[test]
-    fn compare_empty_values() {
-        assert_eq!(Value::Nil, Value::Boolean(false));
-        assert_ne!(Value::Nil, Value::Boolean(true));
-
-        assert_eq!(Value::Nil, Value::String("".to_string()));
-        assert_ne!(Value::Nil, Value::String("0".to_string()));
-        assert_ne!(Value::Nil, Value::String("123".to_string()));
-
-        assert_eq!(Value::Nil, Value::Number(0.0));
-        assert_eq!(Value::Nil, Value::Number(-0.0));
-        assert_ne!(Value::Nil, Value::Number(1.0));
-        assert_ne!(Value::Nil, Value::Number(-100.0));
-
-        assert_eq!(Value::Nil, Value::Array(vec![]));
-        assert_ne!(Value::Nil, Value::Array(vec![Value::Nil]));
-    }
-
-    #[test]
     fn is_empty() {
-        assert_eq!(false, Value::Nil.is_empty());
         assert_eq!(false, Value::Boolean(false).is_empty());
         assert_eq!(false, Value::Number(0.0).is_empty());
 
@@ -357,39 +322,36 @@ mod test {
         assert_eq!(false, Value::String(String::from("something")).is_empty());
 
         assert_eq!(true, Value::Array(vec![]).is_empty());
-        assert_eq!(false, Value::Array(vec![Value::Nil]).is_empty());
+        assert_eq!(false, Value::Array(vec![Value::Boolean(true)]).is_empty());
     }
 
     #[test]
     fn invalid_operations() {
-        assert_eq!(Value::Nil, -Value::String("a string".to_string()));
-        assert_eq!(Value::Nil, !Value::String("a string".to_string()));
+        assert_eq!(None, -Value::String("a string".to_string()));
+        assert_eq!(None, !Value::String("a string".to_string()));
 
         assert_eq!(
-            Value::Nil,
+            None,
             Value::Number(10.0) + Value::String("a string".to_string())
         );
         assert_eq!(
-            Value::Nil,
+            None,
             Value::Number(10.0) - Value::String("a string".to_string())
         );
         assert_eq!(
-            Value::Nil,
+            None,
             Value::Number(10.0) * Value::String("a string".to_string())
         );
         assert_eq!(
-            Value::Nil,
+            None,
             Value::Number(10.0) / Value::String("a string".to_string())
         );
         assert_eq!(
-            Value::Nil,
+            None,
             Value::Number(10.0) % Value::String("a string".to_string())
         );
-        assert_eq!(
-            Value::Nil,
-            Value::Number(10.0).div_int(Value::Boolean(false))
-        );
-        assert_eq!(Value::Nil, Value::Number(10.0) ^ Value::Boolean(false));
+        assert_eq!(None, Value::Number(10.0).div_int(Value::Boolean(false)));
+        assert_eq!(None, Value::Number(10.0) ^ Value::Boolean(false));
     }
 }
 
@@ -403,7 +365,8 @@ mod test_serde_json {
 
     #[test]
     fn convert_from_json() {
-        assert_eq!(Value::Nil, serde_json::from_value(json!(null)).unwrap());
+        assert!(serde_json::from_value::<Value>(json!(null)).is_err());
+
         assert_eq!(
             Value::Boolean(true),
             serde_json::from_value(json!(true)).unwrap()
@@ -424,7 +387,6 @@ mod test_serde_json {
 
     #[test]
     fn convert_to_json() {
-        assert_eq!(json!(null), json!(Value::Nil));
         assert_eq!(json!(true), json!(Value::Boolean(true)));
         assert_eq!(json!("ab"), json!(Value::String("ab".to_string())));
         assert_eq!(json!(19.9), json!(Value::Number(19.9)));

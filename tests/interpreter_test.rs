@@ -1,10 +1,14 @@
 use slac::{compile, stdlib::add_stdlib, StaticEnvironment, TreeWalkingInterpreter, Value};
 
-fn execute(script: &str) -> Value {
+fn execute_raw(script: &str) -> Option<Value> {
     let ast = compile(script).unwrap();
     let env = StaticEnvironment::default();
 
     TreeWalkingInterpreter::interprete(&env, &ast)
+}
+
+fn execute(script: &str) -> Value {
+    execute_raw(script).unwrap_or(Value::Boolean(false))
 }
 
 #[test]
@@ -92,12 +96,12 @@ fn array_combination() {
 
 #[test]
 fn invalid_operations() {
-    assert_eq!(Value::Nil, execute("1 + 'some_string'"));
-    assert_eq!(Value::Nil, execute("1 - 'some_string'"));
-    assert_eq!(Value::Nil, execute("1 * 'some_string'"));
-    assert_eq!(Value::Nil, execute("1 / 'some_string'"));
-    assert_eq!(Value::Nil, execute("1 mod 'some_string'"));
-    assert_eq!(Value::Nil, execute("1 div 'some_string'"));
+    assert!(execute_raw("1 + 'some_string'").is_none());
+    assert!(execute_raw("1 - 'some_string'").is_none());
+    assert!(execute_raw("1 * 'some_string'").is_none());
+    assert!(execute_raw("1 / 'some_string'").is_none());
+    assert!(execute_raw("1 mod 'some_string'").is_none());
+    assert!(execute_raw("1 div 'some_string'").is_none());
 }
 
 fn execute_with_stdlib(script: &str) -> Value {
@@ -105,7 +109,7 @@ fn execute_with_stdlib(script: &str) -> Value {
     let mut env = StaticEnvironment::default();
     add_stdlib(&mut env);
 
-    TreeWalkingInterpreter::interprete(&env, &ast)
+    TreeWalkingInterpreter::interprete(&env, &ast).unwrap()
 }
 
 #[test]
@@ -208,7 +212,7 @@ fn operators_full() {
 
 fn expensive_func(_params: &[Value]) -> Result<Value, String> {
     assert!(false);
-    Ok(Value::Nil)
+    Ok(Value::Boolean(false))
 }
 
 #[test]
@@ -218,15 +222,21 @@ fn short_circuit_bool() {
 
     let ast = compile("false and expensive()").unwrap();
     let result = TreeWalkingInterpreter::interprete(&env, &ast);
-    assert_eq!(Value::Boolean(false), result);
+    assert_eq!(Some(Value::Boolean(false)), result);
 
     let ast = compile("true or expensive()").unwrap();
     let result = TreeWalkingInterpreter::interprete(&env, &ast);
-    assert_eq!(Value::Boolean(true), result);
+    assert_eq!(Some(Value::Boolean(true)), result);
 }
 
 #[test]
 fn empty_var_comparison() {
-    assert_eq!(Value::Boolean(true), execute("does_not_exist = ''"));
-    assert_eq!(Value::Boolean(false), execute("does_not_exist <> ''"));
+    assert_eq!(
+        Some(Value::Boolean(true)),
+        execute_raw("does_not_exist = ''")
+    );
+    assert_eq!(
+        Some(Value::Boolean(false)),
+        execute_raw("does_not_exist <> ''")
+    );
 }

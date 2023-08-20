@@ -13,11 +13,11 @@ impl<'a> TreeWalkingInterpreter<'a> {
         Self { environment }
     }
 
-    pub fn interprete(env: &dyn Environment, expression: &Expression) -> Value {
+    pub fn interprete(env: &dyn Environment, expression: &Expression) -> Option<Value> {
         TreeWalkingInterpreter::new(env).expression(expression)
     }
 
-    fn expression(&self, expression: &Expression) -> Value {
+    fn expression(&self, expression: &Expression) -> Option<Value> {
         match expression {
             Expression::Unary { right, operator } => self.unary(right, operator),
             Expression::Binary {
@@ -26,90 +26,100 @@ impl<'a> TreeWalkingInterpreter<'a> {
                 operator,
             } => self.binary(left, right, operator),
             Expression::Array { expressions } => self.array(expressions),
-            Expression::Literal { value } => value.clone(),
+            Expression::Literal { value } => Some(value.clone()),
             Expression::Variable { name } => self.variable(name),
             Expression::Call { name, params } => self.call(name, params),
         }
     }
 
-    fn unary(&self, right: &Expression, operator: &Operator) -> Value {
+    fn unary(&self, right: &Expression, operator: &Operator) -> Option<Value> {
         let right = self.expression(right);
 
-        match operator {
-            Operator::Minus => -right,
-            Operator::Not => !right,
-            _ => Value::Nil,
+        match (operator, right) {
+            (Operator::Minus, Some(rhs)) => -rhs,
+            (Operator::Not, Some(rhs)) => !rhs,
+            _ => None,
         }
     }
 
-    fn binary(&self, left: &Expression, right: &Expression, operator: &Operator) -> Value {
+    fn binary(&self, left: &Expression, right: &Expression, operator: &Operator) -> Option<Value> {
         let left = self.expression(left);
 
-        match operator {
-            Operator::And => self.boolean(left, right, true),
-            Operator::Or => self.boolean(left, right, false),
-            _ => {
+        match (operator, left) {
+            (Operator::And, Some(left)) => self.boolean(left, right, true),
+            (Operator::Or, Some(left)) => self.boolean(left, right, false),
+            (_, Some(left)) => {
                 let right = self.expression(right);
-                match operator {
-                    Operator::Plus => left + right,
-                    Operator::Minus => left - right,
-                    Operator::Multiply => left * right,
-                    Operator::Divide => left / right,
-                    Operator::Div => left.div_int(right),
-                    Operator::Mod => left % right,
-                    Operator::Xor => left ^ right,
-                    Operator::Greater => Value::Boolean(left > right),
-                    Operator::GreaterEqual => Value::Boolean(left >= right),
-                    Operator::Less => Value::Boolean(left < right),
-                    Operator::LessEqual => Value::Boolean(left <= right),
-                    Operator::Equal => Value::Boolean(left == right),
-                    Operator::NotEqual => Value::Boolean(left != right),
-                    _ => Value::Nil,
+
+                match (operator, right) {
+                    (Operator::Plus, Some(right)) => left + right,
+                    (Operator::Minus, Some(right)) => left - right,
+                    (Operator::Multiply, Some(right)) => left * right,
+                    (Operator::Divide, Some(right)) => left / right,
+                    (Operator::Div, Some(right)) => left.div_int(right),
+                    (Operator::Mod, Some(right)) => left % right,
+                    (Operator::Xor, Some(right)) => left ^ right,
+                    (Operator::Greater, Some(right)) => Some(Value::Boolean(left > right)),
+                    (Operator::GreaterEqual, Some(right)) => Some(Value::Boolean(left >= right)),
+                    (Operator::Less, Some(right)) => Some(Value::Boolean(left < right)),
+                    (Operator::LessEqual, Some(right)) => Some(Value::Boolean(left <= right)),
+                    (Operator::Equal, Some(right)) => Some(Value::Boolean(left == right)),
+                    (Operator::NotEqual, Some(right)) => Some(Value::Boolean(left != right)),
+                    (Operator::Equal, None) => Some(Value::Boolean(left.is_empty())),
+                    (Operator::NotEqual, None) => Some(Value::Boolean(!left.is_empty())),
+                    _ => None,
                 }
             }
+            (Operator::Equal, None) => match self.expression(right) {
+                Some(right) => Some(Value::Boolean(right.is_empty())),
+                None => Some(Value::Boolean(true)),
+            },
+            (Operator::NotEqual, None) => match self.expression(right) {
+                Some(right) => Some(Value::Boolean(!right.is_empty())),
+                None => Some(Value::Boolean(true)),
+            },
+            _ => None,
         }
     }
 
-    fn boolean(&self, left: Value, right: &Expression, full_evaluate_on: bool) -> Value {
+    fn boolean(&self, left: Value, right: &Expression, full_evaluate_on: bool) -> Option<Value> {
         match left {
             Value::Boolean(left) => {
                 if left == full_evaluate_on {
                     // if `left` is not the result we need, evaluate `right`
                     match self.expression(right) {
-                        Value::Boolean(right) => Value::Boolean(right),
-                        _ => Value::Nil,
+                        Some(Value::Boolean(right)) => Some(Value::Boolean(right)),
+                        _ => None,
                     }
                 } else {
-                    Value::Boolean(left) // short circuit
+                    Some(Value::Boolean(left)) // short circuit
                 }
             }
-            _ => Value::Nil,
+            _ => None,
         }
     }
 
-    fn array(&self, expressions: &Vec<Expression>) -> Value {
+    fn array(&self, expressions: &Vec<Expression>) -> Option<Value> {
         let mut values: Vec<Value> = vec![];
 
         for expression in expressions {
-            values.push(self.expression(expression));
+            values.push(self.expression(expression)?);
         }
 
-        Value::Array(values)
+        Some(Value::Array(values))
     }
 
-    fn variable(&self, name: &str) -> Value {
-        self.environment
-            .variable(name)
-            .map_or(Value::Nil, |v| (*v).clone())
+    fn variable(&self, name: &str) -> Option<Value> {
+        self.environment.variable(name).map(|v| (*v).clone())
     }
 
-    fn call(&self, name: &str, params: &[Expression]) -> Value {
-        let params: Vec<Value> = params
+    fn call(&self, name: &str, params: &[Expression]) -> Option<Value> {
+        let params: Option<Vec<Value>> = params
             .iter()
             .map(|expression| self.expression(expression))
             .collect();
 
-        self.environment.call(name, &params).unwrap_or(Value::Nil)
+        self.environment.call(name, &params?)
     }
 }
 
@@ -129,7 +139,7 @@ mod test {
             operator: Operator::Not,
         };
         let env = StaticEnvironment::default();
-        let value = TreeWalkingInterpreter::interprete(&env, &ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
 
         assert_eq!(Value::Boolean(true), value);
     }
@@ -143,7 +153,7 @@ mod test {
             operator: Operator::Minus,
         };
         let env = StaticEnvironment::default();
-        let value = TreeWalkingInterpreter::interprete(&env, &ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
 
         assert_eq!(Value::Number(-42.0), value);
     }
@@ -160,7 +170,7 @@ mod test {
             operator: Operator::And,
         };
         let env = StaticEnvironment::default();
-        let value = TreeWalkingInterpreter::interprete(&env, &ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
 
         assert_eq!(Value::Boolean(true), value);
     }
@@ -177,7 +187,7 @@ mod test {
             operator: Operator::And,
         };
         let env = StaticEnvironment::default();
-        let value = TreeWalkingInterpreter::interprete(&env, &ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
 
         assert_eq!(Value::Boolean(false), value);
     }
@@ -208,7 +218,7 @@ mod test {
             operator: Operator::Plus,
         };
         let env = StaticEnvironment::default();
-        let value = TreeWalkingInterpreter::interprete(&env, &ast);
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
 
         assert_eq!(
             Value::Array(vec![
@@ -229,7 +239,7 @@ mod test {
         let mut env = StaticEnvironment::default();
 
         env.add_var("test", Value::Number(42.0));
-        let result = TreeWalkingInterpreter::interprete(&env, &ast);
+        let result = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
         let expected = Value::Number(42.0);
 
         assert_eq!(expected, result);
@@ -252,7 +262,7 @@ mod test {
         let mut env = StaticEnvironment::default();
         env.add_native_func("max", Some(2), max);
 
-        let result = TreeWalkingInterpreter::interprete(&env, &ast);
+        let result = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
         let expected = Value::Number(20.0);
         assert_eq!(expected, result);
     }
