@@ -1,7 +1,7 @@
 // The README is not part of the doc tests, so test the examples in here.
 
 mod usage {
-    use slac::{ast::Expression, compile, operator::Operator, value::Value};
+    use slac::{compile, Expression, Operator, Value};
 
     #[test]
     fn test_usage() {
@@ -29,8 +29,7 @@ mod usage {
 
 mod interpreter {
     use slac::{
-        compile, environment::StaticEnvironment, interpreter::TreeWalkingInterpreter,
-        stdlib::add_stdlib, value::Value,
+        compile, environment::StaticEnvironment, stdlib::add_stdlib, TreeWalkingInterpreter, Value,
     };
 
     #[test]
@@ -48,10 +47,7 @@ mod interpreter {
 
 #[cfg(feature = "serde")]
 mod serialisation {
-    use slac::{
-        ast::Expression, compile, environment::StaticEnvironment,
-        interpreter::TreeWalkingInterpreter, value::Value,
-    };
+    use slac::{compile, Expression, StaticEnvironment, TreeWalkingInterpreter, Value};
 
     #[test]
     fn serialisation() {

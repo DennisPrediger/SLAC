@@ -50,10 +50,7 @@ fn validate_expr_vec(env: &dyn ValidateEnvironment, expressions: &[Expression]) 
 /// # Examples
 ///
 /// ```
-/// use slac::validate::{validate_boolean_result};
-/// use slac::ast::Expression;
-/// use slac::value::Value;
-/// use slac::operator::Operator;
+/// use slac::{validate_boolean_result, Expression, Operator, Value};
 ///
 /// let ast = Expression::Binary {
 ///     left: Box::new(Expression::Literal{value: Value::Boolean(true)}),

@@ -1,8 +1,4 @@
-use slac::compile;
-use slac::environment::StaticEnvironment;
-use slac::interpreter::TreeWalkingInterpreter;
-use slac::stdlib::add_stdlib;
-use slac::value::Value;
+use slac::{compile, stdlib::add_stdlib, StaticEnvironment, TreeWalkingInterpreter, Value};
 
 fn execute(script: &str) -> Value {
     let ast = compile(script).unwrap();

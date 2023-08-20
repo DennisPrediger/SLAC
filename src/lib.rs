@@ -7,22 +7,38 @@
 //!
 //! The [`AST`](ast::Expression) can be evaluated using the built-in [`interpreter::TreeWalkingInterpreter`].
 
-use ast::Expression;
-use compiler::Compiler;
-use error::Result;
-use scanner::Scanner;
-
-pub mod ast;
-pub mod compiler;
+mod ast;
+mod compiler;
 pub mod environment;
-pub mod error;
-pub mod interpreter;
-pub mod operator;
-pub mod scanner;
+mod error;
+mod interpreter;
+mod operator;
+mod scanner;
 pub mod stdlib;
-pub mod token;
-pub mod validate;
-pub mod value;
+mod token;
+mod validate;
+mod value;
+
+#[doc(inline)]
+pub use crate::ast::Expression;
+#[doc(inline)]
+pub use crate::compiler::Compiler;
+#[doc(inline)]
+pub use crate::environment::StaticEnvironment;
+#[doc(inline)]
+pub use crate::error::{Error, Result};
+#[doc(inline)]
+pub use crate::interpreter::TreeWalkingInterpreter;
+#[doc(inline)]
+pub use crate::operator::Operator;
+#[doc(inline)]
+pub use crate::scanner::Scanner;
+#[doc(inline)]
+pub use crate::token::Token;
+#[doc(inline)]
+pub use crate::validate::{validate_boolean_result, validate_env};
+#[doc(inline)]
+pub use crate::value::Value;
 
 /// Compiles a string into an [`ast::Expression`] tree.
 ///
@@ -31,8 +47,7 @@ pub mod value;
 ///
 /// # Examples
 /// ```
-/// use slac::{ast::Expression, compile, token::Token, operator::Operator, value::Value};
-///
+/// use slac::{compile, Expression, Operator, Token, Value};
 /// let ast = compile("10 + 20 >= 30");
 /// let expected = Expression::Binary {
 ///     left: Box::new(Expression::Binary {

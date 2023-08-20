@@ -1,6 +1,4 @@
 #[cfg(feature = "serde")]
-use serde;
-#[cfg(feature = "serde")]
 use serde::{de::Visitor, ser::SerializeSeq, Deserialize, Serialize};
 
 use std::{
@@ -144,7 +142,7 @@ impl Value {
     ///
     /// # Examples
     /// ```
-    /// use slac::value::Value;
+    /// use slac::Value;
     ///
     /// let a = Value::Number(10.0);
     /// let b = Value::Number(3.0);

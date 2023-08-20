@@ -2,10 +2,7 @@
 mod test {
 
     use minify::json::minify;
-    use slac::{
-        ast::Expression, compile, environment::StaticEnvironment, operator::Operator,
-        validate::validate_env,
-    };
+    use slac::{compile, validate_env, Expression, Operator, StaticEnvironment};
 
     fn test_serialize(script: &str, expected: &str) {
         let ast = compile(script).unwrap();
@@ -21,8 +18,8 @@ mod test {
         assert_eq!(input, output);
     }
 
-    fn dummy_func(_params: &[slac::value::Value]) -> Result<slac::value::Value, String> {
-        Ok(slac::value::Value::Nil)
+    fn dummy_func(_params: &[slac::Value]) -> Result<slac::Value, String> {
+        Ok(slac::Value::Nil)
     }
 
     fn test_validate(script: &str) {
@@ -30,7 +27,7 @@ mod test {
         let mut env = StaticEnvironment::default();
         env.add_native_func("max", Some(2), dummy_func);
         env.add_native_func("some_func", Some(1), dummy_func);
-        env.add_var("some_var", slac::value::Value::Nil);
+        env.add_var("some_var", slac::Value::Nil);
 
         assert!(validate_env(&env, &input).is_ok());
     }
@@ -335,10 +332,10 @@ mod test {
 
         let expected = Expression::Binary {
             left: Box::new(Expression::Literal {
-                value: slac::value::Value::Number(1.0),
+                value: slac::Value::Number(1.0),
             }),
             right: Box::new(Expression::Literal {
-                value: slac::value::Value::Number(0.0),
+                value: slac::Value::Number(0.0),
             }),
             operator: Operator::Minus,
         };

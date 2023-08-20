@@ -1,6 +1,4 @@
 #[cfg(feature = "serde")]
-use serde;
-#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::operator::Operator;

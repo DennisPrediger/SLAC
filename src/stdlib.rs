@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{environment::StaticEnvironment, value::Value};
+use crate::{StaticEnvironment, Value};
 
 pub fn add_stdlib(env: &mut StaticEnvironment) {
     env.add_native_func("abs", Some(1), abs);

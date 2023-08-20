@@ -1,4 +1,4 @@
-use slac::{ast::Expression, compile, operator::Operator, value::Value};
+use slac::{compile, Expression, Operator, Value};
 
 #[test]
 fn single_boolean_true() {

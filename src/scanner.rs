@@ -16,8 +16,7 @@ impl<'a> Scanner<'a> {
     ///
     /// # Examples
     /// ```
-    /// use slac::scanner::Scanner;
-    /// use slac::{token::Token, value::Value};
+    /// use slac::{Scanner, Token, Value};
     ///
     /// let tokens = Scanner::tokenize("40 + 2").unwrap();
     /// let expected: Vec<Token> = vec![Token::Literal(Value::Number(40.0)), Token::Plus, Token::Literal(Value::Number(2.0))];
