@@ -28,9 +28,7 @@ mod usage {
 }
 
 mod interpreter {
-    use slac::{
-        compile, environment::StaticEnvironment, stdlib::add_stdlib, TreeWalkingInterpreter, Value,
-    };
+    use slac::{compile, execute, stdlib::add_stdlib, StaticEnvironment, Value};
 
     #[test]
     fn test_interpreter() {
@@ -39,7 +37,7 @@ mod interpreter {
         add_stdlib(&mut env);
         env.add_var("some_var", Value::Number(42.0));
 
-        let result = TreeWalkingInterpreter::interprete(&env, &ast);
+        let result = execute(&env, &ast);
 
         assert_eq!(result, Some(Value::Boolean(true)));
     }
@@ -47,7 +45,7 @@ mod interpreter {
 
 #[cfg(feature = "serde")]
 mod serialisation {
-    use slac::{compile, Expression, StaticEnvironment, TreeWalkingInterpreter, Value};
+    use slac::{compile, execute, Expression, StaticEnvironment, Value};
 
     #[test]
     fn serialisation() {
@@ -59,7 +57,7 @@ mod serialisation {
         let output = serde_json::from_value::<Expression>(json).unwrap();
         let env = StaticEnvironment::default();
 
-        let result = TreeWalkingInterpreter::interprete(&env, &output);
+        let result = execute(&env, &output);
 
         assert_eq!(input, output);
         assert_eq!(result, Some(Value::Boolean(true)));

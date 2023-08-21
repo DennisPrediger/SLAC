@@ -19,6 +19,8 @@ mod token;
 mod validate;
 mod value;
 
+use crate::environment::Environment;
+
 #[doc(inline)]
 pub use crate::ast::Expression;
 #[doc(inline)]
@@ -27,8 +29,6 @@ pub use crate::compiler::Compiler;
 pub use crate::environment::StaticEnvironment;
 #[doc(inline)]
 pub use crate::error::{Error, Result};
-#[doc(inline)]
-pub use crate::interpreter::TreeWalkingInterpreter;
 #[doc(inline)]
 pub use crate::operator::Operator;
 #[doc(inline)]
@@ -72,4 +72,28 @@ pub fn compile(source: &str) -> Result<Expression> {
     let ast = Compiler::compile_ast(tokens)?;
 
     Ok(ast)
+}
+
+/// Executes an [`Expression`] using an [`Environment`].
+///
+/// # Example
+/// ```
+/// use slac::{Expression, Operator, Value};
+/// use slac::{execute, StaticEnvironment};
+///
+/// let env = StaticEnvironment::default();
+/// let ast = Expression::Binary {
+///     left: Box::new(Expression::Literal {
+///         value: Value::Number(40.0),
+///     }),
+///     right: Box::new(Expression::Literal {
+///         value: Value::Number(2.0),
+///     }),
+///     operator: Operator::Plus,
+/// };
+///
+/// assert_eq!(Some(Value::Number(42.0)), execute(&env, &ast));
+/// ```
+pub fn execute(env: &dyn Environment, ast: &Expression) -> Option<Value> {
+    interpreter::TreeWalkingInterpreter::interprete(env, ast)
 }
