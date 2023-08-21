@@ -9,7 +9,7 @@ It is written in Rust, and as such compiles easily as an **executable, wasm modu
 ## Library usage
 
 ```rust
-use slac::{ast::Expression, compile, operator::Operator, value::Value};
+use slac::{compile, Expression, Operator, Value};
 
 fn main() {
     let ast = compile("1 * 2 + 3");
@@ -22,7 +22,7 @@ fn main() {
             right: Box::new(Expression::Literal {
                 value: Value::Number(2.0),
             }),
-            operator: Operator::Star,
+            operator: Operator::Multiply,
         }),
         right: Box::new(Expression::Literal {
             value: Value::Number(3.0),
@@ -40,20 +40,17 @@ SLAC features a built-in [tree walk interpreter](https://en.wikipedia.org/wiki/I
 Create an `Environment` which houses the variables and user defined functions. Then use the `TreeWalkingInterpreter` class to execute the AST against the environment. Optional use `add_stdlib` to add some common functions.
 
 ```rust
-use slac::{
-    compile, environment::StaticEnvironment, interpreter::TreeWalkingInterpreter,
-    stdlib::add_stdlib, value::Value,
-};
+use slac::{compile, execute, stdlib::add_stdlib, StaticEnvironment, Value};
 
 fn main() {
-    let ast = compile("some_var > 5").unwrap();
+    let ast = compile("max(some_var, 3) > 5").unwrap();
     let mut env = StaticEnvironment::default();
     add_stdlib(&mut env);
     env.add_var("some_var", Value::Number(42.0));
 
-    let result = TreeWalkingInterpreter::interprete(&env, &ast);
+    let result = execute(&env, &ast);
 
-    assert_eq!(result, Value::Boolean(true));
+    assert_eq!(result, Some(Value::Boolean(true)));
 }
 ```
 
@@ -100,10 +97,7 @@ pi + -10
 By using the `serde` **feature flag**, the `Expression` can be (de)serialized to various formats, most notably JSON. This can be useful to separate the compilation and validation in the backend from the execution in the frontend.
 
 ```rust
-use slac::{
-    ast::Expression, compile, environment::StaticEnvironment,
-    interpreter::TreeWalkingInterpreter, value::Value,
-};
+use slac::{compile, execute, Expression, StaticEnvironment, Value};
 
 fn main() {
     let input = compile("50 * 3 > 149").unwrap();
@@ -114,10 +108,10 @@ fn main() {
     let output = serde_json::from_value::<Expression>(json).unwrap();
     let env = StaticEnvironment::default();
 
-    let result = TreeWalkingInterpreter::interprete(&env, &output);
+    let result = execute(&env, &output);
 
     assert_eq!(input, output);
-    assert_eq!(result, Value::Boolean(true));
+    assert_eq!(result, Some(Value::Boolean(true)));
 }
 ```
 
