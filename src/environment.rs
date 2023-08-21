@@ -1,7 +1,10 @@
+//! Dynamic variables and function calls can be provided by an [`Environment`].
+
 use std::{collections::HashMap, rc::Rc};
 
 use crate::value::Value;
 
+/// An enum signaling if a compatible function is provided by a [`ValidateEnvironment`].
 pub enum FunctionResult {
     /// A compatible function was found.
     Exists,
@@ -11,14 +14,17 @@ pub enum FunctionResult {
     WrongArity(usize),
 }
 
+/// An environment used during the **excution** in the interpreter.
 pub trait Environment {
     /// Get a variable [`Value`] from the Environment.
     fn variable(&self, name: &str) -> Option<Rc<Value>>;
 
-    /// Call a [`Function`] and return a [`Value`].
+    /// Call a [`Function`] and may return a [`Value`].
     fn call(&self, name: &str, params: &[Value]) -> Option<Value>;
 }
 
+/// An environment used during **validation** of the [`Expression`](crate::Expression).
+/// Only checks for existance.
 pub trait ValidateEnvironment {
     /// Checks if a variable with a given name exists.
     fn variable_exists(&self, name: &str) -> bool;

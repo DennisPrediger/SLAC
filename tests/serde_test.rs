@@ -2,7 +2,7 @@
 mod test {
 
     use minify::json::minify;
-    use slac::{compile, validate_env, Expression, Operator, StaticEnvironment};
+    use slac::{check_variables_and_functions, compile, Expression, Operator, StaticEnvironment};
 
     fn test_serialize(script: &str, expected: &str) {
         let ast = compile(script).unwrap();
@@ -29,7 +29,7 @@ mod test {
         env.add_native_func("some_func", Some(1), dummy_func);
         env.add_var("some_var", slac::Value::Boolean(false));
 
-        assert!(validate_env(&env, &input).is_ok());
+        assert!(check_variables_and_functions(&env, &input).is_ok());
     }
 
     fn test_json(script: &str, expected: &str) {

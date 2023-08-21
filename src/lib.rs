@@ -1,11 +1,28 @@
-//! The **Simple Logic & Arithmetic Compiler** is a library to convert an expression
-//! string into a structured [`ast::Expression`] tree (an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)).
+//! The **Simple Logic & Arithmetic Compiler** is a library to convert an single
+//! expression statement into a structured [`Expression`] [abstract syntax tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 //!
-//! While the interals are public you may want to use the [`compile`] function
-//! which returns a [`Result`] of either the compiled [`ast::Expression`]
-//! tree or an [`error::SyntaxError`].
+//! The AST can be validated, (de)serialized, and executed using the built-in interpreter.
 //!
-//! The [`AST`](ast::Expression) can be evaluated using the built-in [`interpreter::TreeWalkingInterpreter`].
+//! # Example
+//! ```
+//! use slac::{check_variables_and_functions, compile, execute, StaticEnvironment, Value};
+//! use slac::stdlib::add_stdlib;
+//!
+//! let ast = compile("max(10, 20) + 1").expect("compiles the ast");
+//! let mut env = StaticEnvironment::default();
+//!
+//! add_stdlib(&mut env);
+//! check_variables_and_functions(&env, &ast).expect("find the usage of max");
+//!
+//! let result = execute(&env, &ast).expect("execute the expression");
+//! assert_eq!(Value::Number(21.0), result);
+//! ```
+//!
+//! # Serialization / Deserialization
+//!
+//! The [`Expression`] can be fully serialized into an (e.g.) JSON string for precompilation
+//! and cached execution using [serde](https://crates.io/crates/serde). See `test/serde_test.rs`
+//! for the resulting JSON.
 
 mod ast;
 mod compiler;
@@ -36,14 +53,14 @@ pub use crate::scanner::Scanner;
 #[doc(inline)]
 pub use crate::token::Token;
 #[doc(inline)]
-pub use crate::validate::{validate_boolean_result, validate_env};
+pub use crate::validate::{check_boolean_result, check_variables_and_functions};
 #[doc(inline)]
 pub use crate::value::Value;
 
-/// Compiles a string into an [`ast::Expression`] tree.
+/// Compiles a string into an [`Expression`] tree.
 ///
 /// # Errors
-/// Returns a [`error::SyntaxError`] when encountering invalid Input.
+/// Returns an [`Error`] when encountering invalid Input.
 ///
 /// # Examples
 /// ```
@@ -94,6 +111,13 @@ pub fn compile(source: &str) -> Result<Expression> {
 ///
 /// assert_eq!(Some(Value::Number(42.0)), execute(&env, &ast));
 /// ```
+///
+/// # Remarks
+/// * Currently uses an `TreeWalkingInterpreter` to evaluate the AST.
+/// * Will [short-circuit](https://en.wikipedia.org/wiki/Short-circuit_evaluation) boolean expression.
+/// * Invalid operations will be evaluated to [`Option::None`].
+/// * Comparison of empty Values against [`Option::None`] is a valid operation
+///   * e.g: `empty_var = ''` is valid
 pub fn execute(env: &dyn Environment, ast: &Expression) -> Option<Value> {
     interpreter::TreeWalkingInterpreter::interprete(env, ast)
 }

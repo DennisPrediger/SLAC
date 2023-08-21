@@ -5,8 +5,7 @@ use crate::{error::Error, token::Token};
 
 /// A binary or arithemtic operator.
 #[derive(Debug, PartialEq, PartialOrd, Eq, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
 #[rustfmt::skip]
 pub enum Operator {
     Plus, Minus, Multiply, Divide,
@@ -17,6 +16,9 @@ pub enum Operator {
     Div, Mod,
 }
 
+/// Convert a [`Token`] into an [`Operator`].
+/// # Errors
+/// Returns [`Error::TokenNotAnOperator`] if an invalid Token is encountered.
 impl TryFrom<&Token> for Operator {
     type Error = Error;
 

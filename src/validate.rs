@@ -6,16 +6,22 @@ use crate::{
     value::Value,
 };
 
-/// Validates `Variable` and `Call` [`Expressions`](crate::ast::Expression) by walking
-/// the tree and returning a [`SlacError`] on the first error.
-pub fn validate_env(env: &dyn ValidateEnvironment, expression: &Expression) -> Result<()> {
+/// Validates [`Variable`](Expression::Variable) and [`Call`](Expression::Call)
+/// [`Expressions`](Expression) by walking the tree.
+/// # Errors
+/// Returns an [`Error`] on missing Variables or Functions.
+pub fn check_variables_and_functions(
+    env: &dyn ValidateEnvironment,
+    expression: &Expression,
+) -> Result<()> {
     match expression {
-        Expression::Unary { right, operator: _ } => validate_env(env, right),
+        Expression::Unary { right, operator: _ } => check_variables_and_functions(env, right),
         Expression::Binary {
             left,
             right,
             operator: _,
-        } => validate_env(env, left).and_then(|_| validate_env(env, right)),
+        } => check_variables_and_functions(env, left)
+            .and_then(|_| check_variables_and_functions(env, right)),
         Expression::Array {
             expressions: values,
         } => validate_expr_vec(env, values),
@@ -42,15 +48,14 @@ pub fn validate_env(env: &dyn ValidateEnvironment, expression: &Expression) -> R
 fn validate_expr_vec(env: &dyn ValidateEnvironment, expressions: &[Expression]) -> Result<()> {
     expressions
         .iter()
-        .try_for_each(|expression| validate_env(env, expression))
+        .try_for_each(|expression| check_variables_and_functions(env, expression))
 }
 
 /// Checks if the top level [`Expression`] produces a [`Value::Boolean`] result.
 ///
 /// # Examples
-///
 /// ```
-/// use slac::{validate_boolean_result, Expression, Operator, Value};
+/// use slac::{check_boolean_result, Expression, Operator, Value};
 ///
 /// let ast = Expression::Binary {
 ///     left: Box::new(Expression::Literal{value: Value::Boolean(true)}),
@@ -58,9 +63,12 @@ fn validate_expr_vec(env: &dyn ValidateEnvironment, expressions: &[Expression]) 
 ///     operator: Operator::And,
 /// };
 ///
-/// assert!(validate_boolean_result(&ast).is_ok());
+/// assert!(check_boolean_result(&ast).is_ok());
 /// ```
-pub fn validate_boolean_result(ast: &Expression) -> Result<()> {
+/// # Errors
+///
+/// Returns an [`Error`] when the top most Expression can't evaluate to a [`Value::Boolean`].
+pub fn check_boolean_result(ast: &Expression) -> Result<()> {
     match ast {
         Expression::Unary { right: _, operator } => match operator {
             Operator::Not => Ok(()),
@@ -99,7 +107,7 @@ mod test {
         value::Value,
     };
 
-    use super::validate_env;
+    use super::check_variables_and_functions;
 
     #[test]
     fn valid() {
@@ -113,7 +121,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let result = validate_env(&StaticEnvironment::default(), &ast);
+        let result = check_variables_and_functions(&StaticEnvironment::default(), &ast);
 
         assert_eq!(Ok(()), result);
     }
@@ -133,7 +141,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let result = validate_env(&StaticEnvironment::default(), &ast);
+        let result = check_variables_and_functions(&StaticEnvironment::default(), &ast);
 
         assert_eq!(Ok(()), result);
     }
@@ -150,7 +158,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let result = validate_env(&StaticEnvironment::default(), &ast);
+        let result = check_variables_and_functions(&StaticEnvironment::default(), &ast);
 
         assert_eq!(Err(Error::MissingVariable("VAR_NAME".to_string())), result);
     }
@@ -168,7 +176,7 @@ mod test {
             operator: Operator::Plus,
         };
 
-        let result = validate_env(&StaticEnvironment::default(), &ast);
+        let result = check_variables_and_functions(&StaticEnvironment::default(), &ast);
 
         assert_eq!(Err(Error::MissingFunction("max".to_string())), result);
     }
@@ -193,7 +201,7 @@ mod test {
         let mut env = StaticEnvironment::default();
         env.add_native_func("max", Some(2), dummy_function);
 
-        let result = validate_env(&env, &ast);
+        let result = check_variables_and_functions(&env, &ast);
 
         assert_eq!(
             Err(Error::ParamCountMismatch("max".to_string(), 0, 2)),
@@ -213,7 +221,7 @@ mod test {
         let mut env = StaticEnvironment::default();
         env.add_native_func("func", None, dummy_function);
 
-        let result = validate_env(&env, &ast);
+        let result = check_variables_and_functions(&env, &ast);
 
         assert_eq!(Err(Error::MissingVariable("not_found".to_string())), result);
     }

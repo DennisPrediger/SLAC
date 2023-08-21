@@ -6,7 +6,7 @@ use std::{
     ops::{Add, BitXor, Div, Mul, Neg, Not, Rem, Sub},
 };
 
-/// A value used in the [`TreeWalkingInterpreter`](crate::interpreter::TreeWalkingInterpreter).
+/// Wrapper for the four different possible variable types.
 #[derive(Debug, PartialOrd, Clone)]
 pub enum Value {
     Boolean(bool),

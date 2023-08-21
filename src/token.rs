@@ -1,7 +1,6 @@
 use crate::value::Value;
 
 /// A [`Token`] is the smallest logical unit evaluated by the compiler.
-/// It containes either an operator or a literal value.
 #[rustfmt::skip]
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Token {
@@ -24,7 +23,7 @@ pub enum Token {
 
 /// The precedences used to order the operators evaluated in the
 /// [Pratt-Parser](https://en.wikipedia.org/wiki/Operator-precedence_parser#Pratt_parsing)
-/// when building the [`Expression`](crate::ast::Expression) tree.
+/// when building the [`Expression`](crate::Expression) tree.
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Precedence {
     None,

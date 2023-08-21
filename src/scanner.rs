@@ -4,6 +4,7 @@ use crate::error::{Error, Result};
 use crate::token::Token;
 use crate::value::Value;
 
+/// A lexer to split a string into a list of [`Tokens`](Token).
 pub struct Scanner<'a> {
     source: &'a str,
     start: usize,
@@ -12,7 +13,7 @@ pub struct Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
-    /// Converts an input string into a series of [`Tokens`](Token).
+    /// Converts an input string into a list of [`Tokens`](Token).
     ///
     /// # Examples
     /// ```
@@ -24,7 +25,7 @@ impl<'a> Scanner<'a> {
     /// assert_eq!(tokens, expected);
     /// ```
     /// # Errors
-    /// Returns a [`SyntaxError`] when encountering invalid input.
+    /// Returns an [`Error`] when encountering invalid input.
     pub fn tokenize(source: &'a str) -> Result<Vec<Token>> {
         let mut scanner = Scanner {
             source,

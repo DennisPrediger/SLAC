@@ -7,15 +7,20 @@ use crate::{
     token::{Precedence, Token},
 };
 
+/// A compiler to transform a list of [`Tokens`](Token) into a single nested [`Expression`] tree.
+///
+/// # Remarks
+/// Uses a Pratt-Parser to build the AST based on the tokens `Precedence`.
 pub struct Compiler {
     tokens: Vec<Token>,
     current: usize,
 }
 
 impl Compiler {
-    /// From a series of [`Tokens`](Token) compiles a structured [`Expression`] tree.
+    /// From a list of [`Tokens`](Token) compiles a structured [`Expression`] tree.
+    ///
     /// # Errors
-    /// Returns a [`SyntaxError`] when encountering invalid input.
+    /// Returns an [`Error`] when encountering invalid input.
     pub fn compile_ast(tokens: Vec<Token>) -> Result<Expression> {
         let mut compiler = Compiler { tokens, current: 0 };
         compiler.compile()

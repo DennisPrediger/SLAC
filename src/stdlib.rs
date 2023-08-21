@@ -1,7 +1,14 @@
+//! Various common functions and constants to insert into a [`StaticEnvironment`].
+
 use std::cmp::Ordering;
 
 use crate::{StaticEnvironment, Value};
 
+pub const PI: f64 = std::f64::consts::PI;
+pub const E: f64 = std::f64::consts::E;
+pub const TAU: f64 = std::f64::consts::TAU;
+
+/// Insert all functions and constants into an [`StaticEnvironment`].
 pub fn add_stdlib(env: &mut StaticEnvironment) {
     env.add_native_func("abs", Some(1), abs);
     env.add_native_func("all", None, all);
@@ -21,9 +28,9 @@ pub fn add_stdlib(env: &mut StaticEnvironment) {
     env.add_native_func("str", Some(1), str);
     env.add_native_func("trim", Some(1), trim);
 
-    env.add_var("pi", Value::Number(std::f64::consts::PI));
-    env.add_var("e", Value::Number(std::f64::consts::E));
-    env.add_var("tau", Value::Number(std::f64::consts::TAU));
+    env.add_var("pi", Value::Number(PI));
+    env.add_var("e", Value::Number(E));
+    env.add_var("tau", Value::Number(TAU));
 }
 
 fn smart_vec(params: &[Value]) -> &[Value] {
@@ -33,6 +40,10 @@ fn smart_vec(params: &[Value]) -> &[Value] {
     }
 }
 
+/// Calculates the absolute value of a [`Value::Number`].
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied.
 pub fn abs(params: &[Value]) -> Result<Value, String> {
     if let Some(Value::Number(value)) = params.first() {
         Ok(Value::Number(value.abs()))
@@ -41,6 +52,11 @@ pub fn abs(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Checks if all members of an array are true.
+/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
+///
+/// # Errors
+/// Always returns [`Ok(Value::Boolean)`].
 pub fn all(params: &[Value]) -> Result<Value, String> {
     let values = smart_vec(params);
     let result = values.iter().all(|v| v == &Value::Boolean(true));
@@ -48,6 +64,11 @@ pub fn all(params: &[Value]) -> Result<Value, String> {
     Ok(Value::Boolean(result))
 }
 
+/// Checks if any members of an array is true.
+/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
+///
+/// # Errors
+/// Always returns [`Ok(Value::Boolean)`].
 pub fn any(params: &[Value]) -> Result<Value, String> {
     let values = smart_vec(params);
     let result = values.iter().any(|v| v == &Value::Boolean(true));
@@ -55,6 +76,10 @@ pub fn any(params: &[Value]) -> Result<Value, String> {
     Ok(Value::Boolean(result))
 }
 
+/// Converts any [`Value`] to a [`Value::Boolean`].
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied.
 pub fn bool(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => match value {
@@ -69,6 +94,14 @@ pub fn bool(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Checks if the second parameter (needle) is contained inside the first (haystack).
+/// Can be called with either:
+/// * two [`Value::String`]
+/// * a [`Value::Array`] as haystack and any [`Value`] as needle
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied or the supplied
+/// parameters are of the wrong type.
 pub fn contains(params: &[Value]) -> Result<Value, String> {
     let found = match (params.get(0), params.get(1)) {
         (Some(haystack), Some(needle)) => match (haystack, needle) {
@@ -82,6 +115,10 @@ pub fn contains(params: &[Value]) -> Result<Value, String> {
     Ok(Value::Boolean(found))
 }
 
+/// Checks if supplied [`Value`] is empty.
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied.
 pub fn empty(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => Ok(Value::Boolean(value.is_empty())),
@@ -89,6 +126,11 @@ pub fn empty(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Converts any [`Value`] to a [`Value::Number`] with floating point precision.
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied or if the [`Value`]
+/// can not be converted.
 pub fn float(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => match value {
@@ -103,6 +145,11 @@ pub fn float(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Converts any [`Value`] to a [`Value::Number`] with integer precision.
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied or if the [`Value`]
+/// can not be converted.
 pub fn int(params: &[Value]) -> Result<Value, String> {
     if let Value::Number(value) = float(params)? {
         Ok(Value::Number(value.trunc()))
@@ -111,6 +158,13 @@ pub fn int(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Returns the length of the supplied Value
+/// * [`Value::String`]: length of the String
+/// * [`Value::Array`]: length of the Array
+/// * otherwise 0
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied.
 pub fn length(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => Ok(Value::Number(value.len() as f64)),
@@ -118,6 +172,11 @@ pub fn length(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Converts a [`Value::String`] to lowercase.
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied or the supplied.
+/// [`Value`] is not a [`Value::String`]
 pub fn lowercase(params: &[Value]) -> Result<Value, String> {
     if let Some(Value::String(value)) = params.first() {
         Ok(Value::String(value.to_lowercase()))
@@ -126,6 +185,11 @@ pub fn lowercase(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Converts a [`Value::String`] to uppercase.
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied or the supplied.
+/// [`Value`] is not a [`Value::String`]
 pub fn uppercase(params: &[Value]) -> Result<Value, String> {
     if let Some(Value::String(value)) = params.first() {
         Ok(Value::String(value.to_uppercase()))
@@ -134,6 +198,11 @@ pub fn uppercase(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Returns the maximum [`Value`] of a [`Value::Array`].
+/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
+///
+/// # Errors
+/// Returns an error if the [`Value::Array`] can not be sorted.
 pub fn max(params: &[Value]) -> Result<Value, String> {
     smart_vec(params)
         .iter()
@@ -150,6 +219,11 @@ pub fn max(params: &[Value]) -> Result<Value, String> {
         .ok_or("function 'max' failed".to_string())
 }
 
+/// Returns the minimum [`Value`] of a [`Value::Array`].
+/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
+///
+/// # Errors
+/// Returns an error if the [`Value::Array`] can not be sorted.
 pub fn min(params: &[Value]) -> Result<Value, String> {
     smart_vec(params)
         .iter()
@@ -166,6 +240,13 @@ pub fn min(params: &[Value]) -> Result<Value, String> {
         .ok_or("function 'min' failed".to_string())
 }
 
+/// Raises a [`Value::Number`] to a power in the second parameter.
+///
+/// # Remark
+/// The second parameter is optional and defaults to 2.
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied.
 pub fn pow(params: &[Value]) -> Result<Value, String> {
     match (params.get(0), params.get(1)) {
         (Some(Value::Number(base)), exp) => {
@@ -179,6 +260,10 @@ pub fn pow(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Rounds a [`Value::Number`] to the nearest integer.
+//////
+/// # Errors
+/// Will return an error if not at least one parameter is supplied.
 pub fn round(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::Number(v)) => Ok(Value::Number(v.round())),
@@ -186,6 +271,11 @@ pub fn round(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Converts any [`Value`] to a [`Value::String`].
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied or if the [`Value`]
+/// can not be converted.
 pub fn str(params: &[Value]) -> Result<Value, String> {
     if let Some(value) = params.first() {
         Ok(Value::String(value.to_string()))
@@ -194,6 +284,11 @@ pub fn str(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Trims the whitespace of a [`Value::String`] on both sides.
+///
+/// # Errors
+/// Will return an error if not at least one parameter is supplied or the supplied.
+/// [`Value`] is not a [`Value::String`]
 pub fn trim(params: &[Value]) -> Result<Value, String> {
     if let Some(Value::String(value)) = params.first() {
         Ok(Value::String(value.trim().to_string()))
