@@ -199,6 +199,40 @@ fn std_lib_full() {
 }
 
 #[test]
+fn std_time() {
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib("string_to_date('2022-07-08') + 1 = string_to_date('2022-07-09')")
+    );
+
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib(
+            "inc_month(string_to_date('2022-07-08')) = string_to_date('2022-08-08')"
+        )
+    );
+
+    assert_eq!(
+        execute_with_stdlib("date_from_rfc3339('2023-08-27T08:30:00Z')"),
+        execute_with_stdlib("string_to_date('2023-08-27') + string_to_time('08:30:00')")
+    );
+
+    assert_eq!(
+        Value::Number(6.0), // Sunday = 6
+        execute_with_stdlib("day_of_week(string_to_date('2023-08-27'))")
+    );
+    assert_eq!(
+        Value::Number(4.0), // Friday = 4
+        execute_with_stdlib("day_of_week(string_to_date('2023-08-27') + 5)")
+    );
+
+    assert_eq!(
+        execute_with_stdlib("date_from_rfc3339('2023-08-27T08:30:00Z')"),
+        execute_with_stdlib("encode_date(2023,08,27) + encode_time(8,30,0)")
+    );
+}
+
+#[test]
 fn operators_full() {
     assert_eq!(
         Value::Boolean(true),

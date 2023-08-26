@@ -39,7 +39,7 @@ impl Display for Error {
         match self {
             Error::Eof => write!(f, "unexpected end of file"),
             Error::InvalidCharacter(char) => write!(f, "\"{char}\" is not a valid character"),
-            Error::InvalidNumber(number) => write!(f, "\"{number}\" is not a valid number "),
+            Error::InvalidNumber(number) => write!(f, "\"{number}\" is not a valid number"),
             Error::UnterminatedStringLiteral => write!(f, "unterminated string literal"),
             Error::MultipleExpressions(token) => {
                 write!(f, "encountered multiple expressions at token \"{token:?}\"")
