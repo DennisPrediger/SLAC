@@ -6,12 +6,12 @@
 //! # Example
 //! ```
 //! use slac::{check_variables_and_functions, compile, execute, StaticEnvironment, Value};
-//! use slac::stdlib::add_stdlib;
+//! use slac::std::extend_environment;
 //!
 //! let ast = compile("max(10, 20) + 1").expect("compiles the ast");
 //! let mut env = StaticEnvironment::default();
 //!
-//! add_stdlib(&mut env);
+//! extend_environment(&mut env);
 //! check_variables_and_functions(&env, &ast).expect("find the usage of max");
 //!
 //! let result = execute(&env, &ast).expect("execute the expression");
@@ -31,7 +31,7 @@ mod error;
 mod interpreter;
 mod operator;
 mod scanner;
-pub mod stdlib;
+pub mod std;
 mod token;
 mod validate;
 mod value;

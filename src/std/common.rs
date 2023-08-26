@@ -4,13 +4,8 @@ use std::cmp::Ordering;
 
 use crate::{StaticEnvironment, Value};
 
-pub const PI: f64 = std::f64::consts::PI;
-pub const E: f64 = std::f64::consts::E;
-pub const TAU: f64 = std::f64::consts::TAU;
-
 /// Insert all functions and constants into an [`StaticEnvironment`].
-pub fn add_stdlib(env: &mut StaticEnvironment) {
-    env.add_native_func("abs", Some(1), abs);
+pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("all", None, all);
     env.add_native_func("any", None, any);
     env.add_native_func("bool", Some(1), bool);
@@ -19,36 +14,15 @@ pub fn add_stdlib(env: &mut StaticEnvironment) {
     env.add_native_func("float", Some(1), float);
     env.add_native_func("int", Some(1), int);
     env.add_native_func("length", Some(1), length);
-    env.add_native_func("lowercase", Some(1), lowercase);
-    env.add_native_func("uppercase", Some(1), uppercase);
     env.add_native_func("max", None, max);
     env.add_native_func("min", None, min);
-    env.add_native_func("pow", None, pow);
-    env.add_native_func("round", Some(1), round);
     env.add_native_func("str", Some(1), str);
-    env.add_native_func("trim", Some(1), trim);
-
-    env.add_var("pi", Value::Number(PI));
-    env.add_var("e", Value::Number(E));
-    env.add_var("tau", Value::Number(TAU));
 }
 
 fn smart_vec(params: &[Value]) -> &[Value] {
     match params.first() {
         Some(Value::Array(v)) if (params.len() == 1) => v, // only one Array parameter
         _ => params,                                       // all varadic params
-    }
-}
-
-/// Calculates the absolute value of a [`Value::Number`].
-///
-/// # Errors
-/// Will return an error if not at least one parameter is supplied.
-pub fn abs(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::Number(value)) = params.first() {
-        Ok(Value::Number(value.abs()))
-    } else {
-        Err("not enough parameters".to_string())
     }
 }
 
@@ -172,32 +146,6 @@ pub fn length(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Converts a [`Value::String`] to lowercase.
-///
-/// # Errors
-/// Will return an error if not at least one parameter is supplied or the supplied.
-/// [`Value`] is not a [`Value::String`]
-pub fn lowercase(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.to_lowercase()))
-    } else {
-        Err("no param supplied".to_string())
-    }
-}
-
-/// Converts a [`Value::String`] to uppercase.
-///
-/// # Errors
-/// Will return an error if not at least one parameter is supplied or the supplied.
-/// [`Value`] is not a [`Value::String`]
-pub fn uppercase(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.to_uppercase()))
-    } else {
-        Err("no parameter supplied".to_string())
-    }
-}
-
 /// Returns the maximum [`Value`] of a [`Value::Array`].
 /// Can be called either with a single [`Value::Array`] or variable list of Parameters.
 ///
@@ -240,37 +188,6 @@ pub fn min(params: &[Value]) -> Result<Value, String> {
         .ok_or("function 'min' failed".to_string())
 }
 
-/// Raises a [`Value::Number`] to a power in the second parameter.
-///
-/// # Remark
-/// The second parameter is optional and defaults to 2.
-///
-/// # Errors
-/// Will return an error if not at least one parameter is supplied.
-pub fn pow(params: &[Value]) -> Result<Value, String> {
-    match (params.get(0), params.get(1)) {
-        (Some(Value::Number(base)), exp) => {
-            let exp = match exp {
-                Some(Value::Number(exp)) => *exp,
-                _ => 2.0,
-            };
-            Ok(Value::Number(base.powf(exp)))
-        }
-        _ => Err("not enough parameters".to_string()),
-    }
-}
-
-/// Rounds a [`Value::Number`] to the nearest integer.
-//////
-/// # Errors
-/// Will return an error if not at least one parameter is supplied.
-pub fn round(params: &[Value]) -> Result<Value, String> {
-    match params.first() {
-        Some(Value::Number(v)) => Ok(Value::Number(v.round())),
-        _ => Err("no parameter supplied".to_string()),
-    }
-}
-
 /// Converts any [`Value`] to a [`Value::String`].
 ///
 /// # Errors
@@ -284,40 +201,10 @@ pub fn str(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Trims the whitespace of a [`Value::String`] on both sides.
-///
-/// # Errors
-/// Will return an error if not at least one parameter is supplied or the supplied.
-/// [`Value`] is not a [`Value::String`]
-pub fn trim(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.trim().to_string()))
-    } else {
-        Err("no parameter supplied".to_string())
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use std::vec;
-
-    use crate::{
-        stdlib::{
-            abs, all, any, bool, contains, empty, float, int, length, lowercase, max, min, pow,
-            round, str, trim, uppercase,
-        },
-        value::Value,
-    };
-
-    #[test]
-    fn std_abs() {
-        assert_eq!(Ok(Value::Number(10.0)), abs(&vec![Value::Number(10.0)]));
-        assert_eq!(Ok(Value::Number(10.0)), abs(&vec![Value::Number(-10.0)]));
-        assert_eq!(Ok(Value::Number(12.34)), abs(&vec![Value::Number(12.34)]));
-        assert_eq!(Ok(Value::Number(12.34)), abs(&vec![Value::Number(-12.34)]));
-
-        assert!(abs(&vec![Value::String("-12.34".to_string())]).is_err());
-    }
+    use super::{all, any, bool, contains, empty, float, int, length, max, min, str};
+    use crate::value::Value;
 
     #[test]
     fn std_all() {
@@ -537,28 +424,6 @@ mod test {
     }
 
     #[test]
-    fn std_lowercase() {
-        assert_eq!(
-            Ok(Value::String("hello world".to_string())),
-            lowercase(&vec![Value::String("Hello World".to_string())])
-        );
-
-        assert!(lowercase(&vec![]).is_err());
-        assert!(lowercase(&vec![Value::Boolean(true)]).is_err());
-    }
-
-    #[test]
-    fn std_uppercase() {
-        assert_eq!(
-            Ok(Value::String("HELLO WORLD".to_string())),
-            uppercase(&vec![Value::String("Hello World".to_string())])
-        );
-
-        assert!(uppercase(&vec![]).is_err());
-        assert!(uppercase(&vec![Value::Boolean(true)]).is_err());
-    }
-
-    #[test]
     fn std_max() {
         let values = vec![Value::Number(10.0), Value::Number(20.0)];
         assert_eq!(Value::Number(20.0), max(&values).unwrap());
@@ -603,49 +468,6 @@ mod test {
     }
 
     #[test]
-    fn std_pow() {
-        assert_eq!(
-            Value::Number(100.0),
-            pow(&vec![Value::Number(10.0)]).unwrap()
-        );
-
-        assert_eq!(
-            Value::Number(0.001),
-            pow(&vec![Value::Number(10.0), Value::Number(-3.0)]).unwrap()
-        );
-
-        assert_eq!(
-            Value::Number(100.0),
-            pow(&vec![Value::Number(10.0), Value::Boolean(true)]).unwrap()
-        );
-
-        assert!(pow(&vec![]).is_err());
-        assert!(pow(&vec![Value::Boolean(true)]).is_err());
-    }
-
-    #[test]
-    fn std_round() {
-        assert_eq!(
-            Value::Number(10.0),
-            round(&vec![Value::Number(10.4)]).unwrap()
-        );
-        assert_eq!(
-            Value::Number(11.0),
-            round(&vec![Value::Number(10.5)]).unwrap()
-        );
-        assert_eq!(
-            Value::Number(-10.0),
-            round(&vec![Value::Number(-10.4)]).unwrap()
-        );
-        assert_eq!(
-            Value::Number(-11.0),
-            round(&vec![Value::Number(-10.5)]).unwrap()
-        );
-
-        assert!(round(&vec![]).is_err());
-    }
-
-    #[test]
     fn std_str() {
         assert_eq!(
             Ok(Value::String("123".to_string())),
@@ -663,16 +485,5 @@ mod test {
         );
 
         assert!(str(&vec![]).is_err());
-    }
-
-    #[test]
-    fn std_trim() {
-        assert_eq!(
-            Ok(Value::String("Hello World".to_string())),
-            trim(&vec![Value::String("  Hello World       ".to_string())])
-        );
-
-        assert!(trim(&vec![]).is_err());
-        assert!(trim(&vec![Value::Boolean(true)]).is_err());
     }
 }

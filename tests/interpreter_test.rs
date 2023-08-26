@@ -1,4 +1,4 @@
-use slac::{compile, execute, stdlib::add_stdlib, StaticEnvironment, Value};
+use slac::{compile, execute, std::extend_environment, StaticEnvironment, Value};
 
 fn execute_raw(script: &str) -> Option<Value> {
     let ast = compile(script).unwrap();
@@ -110,7 +110,7 @@ fn invalid_operations() {
 fn execute_with_stdlib(script: &str) -> Value {
     let ast = compile(script).unwrap();
     let mut env = StaticEnvironment::default();
-    add_stdlib(&mut env);
+    extend_environment(&mut env);
 
     execute(&env, &ast).unwrap()
 }
@@ -175,23 +175,25 @@ fn std_lib_full() {
     assert_eq!(
         Value::Boolean(true),
         execute_with_stdlib(
-            "(abs(-11.2) = 11.2) and 
-             all([true, true]) and 
-             any([true, false]) and
-             bool(1) and
-             contains('something', 'ome') and
-             empty([]) and
-             (float('3.14') = 3.14) and
-             (int(3.14) = 3) and
-             (length('hello') = 5) and
-             (lowercase('BIG WORDS') = 'big words') and
-             (uppercase('small words') = 'SMALL WORDS') and
-             (max(-10, 5) = 5) and
-             (min(-10, 5) = -10) and
-             (pow(10, 2) = 100) and
-             (round(3.4) = round(2.5)) and
-             (str(-10) = '-10') and
-             (trim('  space   ') = 'space')"
+            "
+            (abs(-11.2) = 11.2) and 
+            all([true, true]) and 
+            any([true, false]) and
+            bool(1) and
+            contains('something', 'ome') and
+            empty([]) and
+            (float('3.14') = 3.14) and
+            (int(3.14) = 3) and
+            (length('hello') = 5) and
+            (lowercase('BIG WORDS') = 'big words') and
+            (uppercase('small words') = 'SMALL WORDS') and
+            (max(-10, 5) = 5) and
+            (min(-10, 5) = -10) and
+            (pow(10, 2) = 100) and
+            (round(3.4) = round(2.5)) and
+            (str(-10) = '-10') and
+            (trim('  space   ') = 'space')
+             "
         )
     );
 }

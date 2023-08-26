@@ -28,13 +28,13 @@ mod usage {
 }
 
 mod interpreter {
-    use slac::{compile, execute, stdlib::add_stdlib, StaticEnvironment, Value};
+    use slac::{compile, execute, std::extend_environment, StaticEnvironment, Value};
 
     #[test]
     fn test_interpreter() {
         let ast = compile("max(some_var, 3) > 5").unwrap();
         let mut env = StaticEnvironment::default();
-        add_stdlib(&mut env);
+        extend_environment(&mut env);
         env.add_var("some_var", Value::Number(42.0));
 
         let result = execute(&env, &ast);

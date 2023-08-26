@@ -88,7 +88,7 @@ max(10, 20)
 // > 20
 
 // application defined variables
-pi + -10
+pi * -10
 // > -31,4
 ```
 
