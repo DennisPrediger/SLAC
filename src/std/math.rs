@@ -33,7 +33,8 @@ macro_rules! generate_std_math_function {
         pub fn $func_name(params: &[Value]) -> Result<Value, String> {
             match params.get(0) {
                 Some(Value::Number(value)) => Ok(Value::Number(value.$std_func())),
-                _ => Err(String::from("not enough Parameters")),
+                Some(_) => Err(String::from("wrong parameter type")),
+                None => Err(String::from("not enough Parameters")),
             }
         }
     )*};
@@ -52,7 +53,8 @@ generate_std_math_function!(abs abs,
 pub fn even(params: &[Value]) -> Result<Value, String> {
     match params.get(0) {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 == 0)),
-        _ => Err(String::from("not enough Parameters")),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("not enough Parameters")),
     }
 }
 
@@ -60,7 +62,8 @@ pub fn even(params: &[Value]) -> Result<Value, String> {
 pub fn odd(params: &[Value]) -> Result<Value, String> {
     match params.get(0) {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 != 0)),
-        _ => Err(String::from("not enough Parameters")),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("not enough Parameters")),
     }
 }
 
@@ -80,6 +83,7 @@ pub fn pow(params: &[Value]) -> Result<Value, String> {
             };
             Ok(Value::Number(base.powf(exp)))
         }
+        (Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err("not enough parameters".to_string()),
     }
 }
@@ -94,7 +98,7 @@ pub fn random(params: &[Value]) -> Result<Value, String> {
             let random = RandomState::new().build_hasher().finish();
             Ok(Value::Number((random as f64 / u64::MAX as f64) * range))
         },
-        _=> Err(String::from("invalid range parameter"))
+        _=> Err(String::from("wrong parameter type"))
     }
 }
 
@@ -105,7 +109,8 @@ pub fn random(params: &[Value]) -> Result<Value, String> {
 pub fn round(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::Number(v)) => Ok(Value::Number(v.round())),
-        _ => Err("no parameter supplied".to_string()),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("not enough Parameters")),
     }
 }
 

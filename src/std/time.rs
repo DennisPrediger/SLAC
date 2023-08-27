@@ -31,7 +31,7 @@ impl TryFrom<&Value> for NaiveDateTime {
                 NaiveDateTime::from_timestamp_millis(milliseconds as i64)
                     .ok_or("invalid datetime".to_string())
             }
-            _ => Err("not a Number".to_string()),
+            _ => Err("wrong parameter type".to_string()),
         }
     }
 }
@@ -52,7 +52,8 @@ pub fn date_to_string(params: &[Value]) -> Result<Value, String> {
 
             Ok(Value::String(datetime.format(fmt).to_string()))
         }
-        _ => Err(String::from("not enough parameters")),
+        (Some(_), _) => Err(String::from("wrong parameter type")),
+        _ => Err(String::from("not enough Parameters")),
     }
 }
 
@@ -68,6 +69,7 @@ pub fn string_to_date(params: &[Value]) -> Result<Value, String> {
             .map_err(|e| e.to_string())?
             .and_time(NaiveTime::default())
             .into()),
+        (Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
     }
 }
@@ -88,6 +90,7 @@ pub fn string_to_time(params: &[Value]) -> Result<Value, String> {
                 .and_time(time)
                 .into())
         }
+        (Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
     }
 }
@@ -99,7 +102,8 @@ pub fn date_from_rfc2822(params: &[Value]) -> Result<Value, String> {
             .map_err(|e| e.to_string())?
             .naive_utc()
             .into()),
-        _ => Err(String::from("invalid Date provided")),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("not enough parameters")),
     }
 }
 
@@ -110,7 +114,8 @@ pub fn date_from_rfc3339(params: &[Value]) -> Result<Value, String> {
             .map_err(|e| e.to_string())?
             .naive_utc()
             .into()),
-        _ => Err(String::from("invalid Date provided")),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("not enough parameters")),
     }
 }
 
@@ -121,7 +126,7 @@ pub fn day_of_week(params: &[Value]) -> Result<Value, String> {
             let datetime = NaiveDateTime::try_from(value)?;
             Ok(Value::Number(datetime.weekday() as u8 as f64))
         }
-        _ => Err(String::from("not enough parameters")),
+        None => Err(String::from("not enough parameters")),
     }
 }
 
@@ -134,6 +139,7 @@ pub fn encode_date(params: &[Value]) -> Result<Value, String> {
                 .and_then(|datetime| datetime.try_into().ok())
                 .ok_or(String::from("invalid date"))
         }
+        (Some(_), Some(_), Some(_)) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
     }
 }
@@ -157,6 +163,7 @@ pub fn encode_time(params: &[Value]) -> Result<Value, String> {
             })
             .map(|datetime| datetime.try_into().unwrap())
             .ok_or(String::from("invalid date")),
+        (Some(_), Some(_), Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
     }
 }
@@ -178,6 +185,7 @@ pub fn inc_month(params: &[Value]) -> Result<Value, String> {
                 }
             })?
             .into()),
+        (Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
     }
 }

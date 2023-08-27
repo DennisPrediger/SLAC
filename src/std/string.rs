@@ -15,10 +15,10 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn lowercase(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.to_lowercase()))
-    } else {
-        Err("no param supplied".to_string())
+    match params.first() {
+        Some(Value::String(value)) => Ok(Value::String(value.to_lowercase())),
+        Some(_) => Err("wrong parameter type".to_string()),
+        None => Err("no parameter supplied".to_string()),
     }
 }
 
@@ -28,10 +28,10 @@ pub fn lowercase(params: &[Value]) -> Result<Value, String> {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn uppercase(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.to_uppercase()))
-    } else {
-        Err("no parameter supplied".to_string())
+    match params.first() {
+        Some(Value::String(value)) => Ok(Value::String(value.to_uppercase())),
+        Some(_) => Err("wrong parameter type".to_string()),
+        None => Err("no parameter supplied".to_string()),
     }
 }
 
@@ -54,10 +54,10 @@ pub fn same_text(params: &[Value]) -> Result<Value, String> {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.trim().to_string()))
-    } else {
-        Err("no parameter supplied".to_string())
+    match params.first() {
+        Some(Value::String(value)) => Ok(Value::String(value.trim().to_string())),
+        Some(_) => Err("wrong parameter type".to_string()),
+        None => Err("no parameter supplied".to_string()),
     }
 }
 
@@ -67,10 +67,10 @@ pub fn trim(params: &[Value]) -> Result<Value, String> {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim_left(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.trim_start().to_string()))
-    } else {
-        Err("no parameter supplied".to_string())
+    match params.first() {
+        Some(Value::String(value)) => Ok(Value::String(value.trim_start().to_string())),
+        Some(_) => Err("wrong parameter type".to_string()),
+        None => Err("no parameter supplied".to_string()),
     }
 }
 
@@ -80,10 +80,10 @@ pub fn trim_left(params: &[Value]) -> Result<Value, String> {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim_right(params: &[Value]) -> Result<Value, String> {
-    if let Some(Value::String(value)) = params.first() {
-        Ok(Value::String(value.trim_end().to_string()))
-    } else {
-        Err("no parameter supplied".to_string())
+    match params.first() {
+        Some(Value::String(value)) => Ok(Value::String(value.trim_end().to_string())),
+        Some(_) => Err("wrong parameter type".to_string()),
+        None => Err("no parameter supplied".to_string()),
     }
 }
 
