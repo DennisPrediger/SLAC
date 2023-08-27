@@ -153,14 +153,17 @@ mod test {
                 value: Value::Number(10.0),
             }),
             right: Box::new(Expression::Variable {
-                name: "VAR_NAME".to_string(),
+                name: String::from("VAR_NAME"),
             }),
             operator: Operator::Plus,
         };
 
         let result = check_variables_and_functions(&StaticEnvironment::default(), &ast);
 
-        assert_eq!(Err(Error::MissingVariable("VAR_NAME".to_string())), result);
+        assert_eq!(
+            Err(Error::MissingVariable(String::from("VAR_NAME"))),
+            result
+        );
     }
 
     #[test]
@@ -170,7 +173,7 @@ mod test {
                 value: Value::Number(10.0),
             }),
             right: Box::new(Expression::Call {
-                name: "max".to_string(),
+                name: String::from("max"),
                 params: vec![],
             }),
             operator: Operator::Plus,
@@ -178,7 +181,7 @@ mod test {
 
         let result = check_variables_and_functions(&StaticEnvironment::default(), &ast);
 
-        assert_eq!(Err(Error::MissingFunction("max".to_string())), result);
+        assert_eq!(Err(Error::MissingFunction(String::from("max"))), result);
     }
 
     fn dummy_function(_params: &[Value]) -> Result<Value, String> {
@@ -192,7 +195,7 @@ mod test {
                 value: Value::Number(10.0),
             }),
             right: Box::new(Expression::Call {
-                name: "max".to_string(),
+                name: String::from("max"),
                 params: vec![],
             }),
             operator: Operator::Plus,
@@ -204,7 +207,7 @@ mod test {
         let result = check_variables_and_functions(&env, &ast);
 
         assert_eq!(
-            Err(Error::ParamCountMismatch("max".to_string(), 0, 2)),
+            Err(Error::ParamCountMismatch(String::from("max"), 0, 2)),
             result
         );
     }
@@ -212,9 +215,9 @@ mod test {
     #[test]
     fn err_function_nested_params() {
         let ast = Expression::Call {
-            name: "func".to_string(),
+            name: String::from("func"),
             params: vec![Expression::Variable {
-                name: "not_found".to_string(),
+                name: String::from("not_found"),
             }],
         };
 
@@ -223,6 +226,9 @@ mod test {
 
         let result = check_variables_and_functions(&env, &ast);
 
-        assert_eq!(Err(Error::MissingVariable("not_found".to_string())), result);
+        assert_eq!(
+            Err(Error::MissingVariable(String::from("not_found"))),
+            result
+        );
     }
 }

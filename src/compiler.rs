@@ -418,8 +418,10 @@ mod test {
 
     #[test]
     fn err_open_function_call() {
-        let ast =
-            Compiler::compile_ast(vec![Token::Identifier("max".to_string()), Token::LeftParen]);
+        let ast = Compiler::compile_ast(vec![
+            Token::Identifier(String::from("max")),
+            Token::LeftParen,
+        ]);
 
         let expected = Error::Eof;
 

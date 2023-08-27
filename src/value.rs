@@ -327,28 +327,28 @@ mod test {
 
     #[test]
     fn invalid_operations() {
-        assert_eq!(None, -Value::String("a string".to_string()));
-        assert_eq!(None, !Value::String("a string".to_string()));
+        assert_eq!(None, -Value::String(String::from("a string")));
+        assert_eq!(None, !Value::String(String::from("a string")));
 
         assert_eq!(
             None,
-            Value::Number(10.0) + Value::String("a string".to_string())
+            Value::Number(10.0) + Value::String(String::from("a string"))
         );
         assert_eq!(
             None,
-            Value::Number(10.0) - Value::String("a string".to_string())
+            Value::Number(10.0) - Value::String(String::from("a string"))
         );
         assert_eq!(
             None,
-            Value::Number(10.0) * Value::String("a string".to_string())
+            Value::Number(10.0) * Value::String(String::from("a string"))
         );
         assert_eq!(
             None,
-            Value::Number(10.0) / Value::String("a string".to_string())
+            Value::Number(10.0) / Value::String(String::from("a string"))
         );
         assert_eq!(
             None,
-            Value::Number(10.0) % Value::String("a string".to_string())
+            Value::Number(10.0) % Value::String(String::from("a string"))
         );
         assert_eq!(None, Value::Number(10.0).div_int(Value::Boolean(false)));
         assert_eq!(None, Value::Number(10.0) ^ Value::Boolean(false));
@@ -372,7 +372,7 @@ mod test_serde_json {
             serde_json::from_value(json!(true)).unwrap()
         );
         assert_eq!(
-            Value::String("ab".to_string()),
+            Value::String(String::from("ab")),
             serde_json::from_value(json!("ab")).unwrap()
         );
         assert_eq!(
@@ -388,12 +388,15 @@ mod test_serde_json {
     #[test]
     fn convert_to_json() {
         assert_eq!(json!(true), json!(Value::Boolean(true)));
-        assert_eq!(json!("ab"), json!(Value::String("ab".to_string())));
+        assert_eq!(
+            json!(String::from("ab")),
+            json!(Value::String(String::from("ab")))
+        );
         assert_eq!(json!(19.9), json!(Value::Number(19.9)));
         assert_eq!(
             json!(["hallo", 42.0, false]),
             json!(Value::Array(vec![
-                Value::String("hallo".to_string()),
+                Value::String(String::from("hallo")),
                 Value::Number(42.0),
                 Value::Boolean(false)
             ]))

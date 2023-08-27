@@ -17,8 +17,8 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 pub fn lowercase(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.to_lowercase())),
-        Some(_) => Err("wrong parameter type".to_string()),
-        None => Err("no parameter supplied".to_string()),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("no parameter supplied")),
     }
 }
 
@@ -30,8 +30,8 @@ pub fn lowercase(params: &[Value]) -> Result<Value, String> {
 pub fn uppercase(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.to_uppercase())),
-        Some(_) => Err("wrong parameter type".to_string()),
-        None => Err("no parameter supplied".to_string()),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("no parameter supplied")),
     }
 }
 
@@ -44,7 +44,7 @@ pub fn same_text(params: &[Value]) -> Result<Value, String> {
         (Some(Value::String(left)), Some(Value::String(right))) => {
             Ok(Value::Boolean(left.to_lowercase() == right.to_lowercase()))
         }
-        _ => Err("no param supplied".to_string()),
+        _ => Err(String::from("no param supplied")),
     }
 }
 
@@ -56,8 +56,8 @@ pub fn same_text(params: &[Value]) -> Result<Value, String> {
 pub fn trim(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.trim().to_string())),
-        Some(_) => Err("wrong parameter type".to_string()),
-        None => Err("no parameter supplied".to_string()),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("no parameter supplied")),
     }
 }
 
@@ -69,8 +69,8 @@ pub fn trim(params: &[Value]) -> Result<Value, String> {
 pub fn trim_left(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.trim_start().to_string())),
-        Some(_) => Err("wrong parameter type".to_string()),
-        None => Err("no parameter supplied".to_string()),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("no parameter supplied")),
     }
 }
 
@@ -82,8 +82,8 @@ pub fn trim_left(params: &[Value]) -> Result<Value, String> {
 pub fn trim_right(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.trim_end().to_string())),
-        Some(_) => Err("wrong parameter type".to_string()),
-        None => Err("no parameter supplied".to_string()),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("no parameter supplied")),
     }
 }
 
@@ -95,8 +95,8 @@ mod test {
     #[test]
     fn string_lowercase() {
         assert_eq!(
-            Ok(Value::String("hello world".to_string())),
-            lowercase(&vec![Value::String("Hello World".to_string())])
+            Ok(Value::String(String::from("hello world"))),
+            lowercase(&vec![Value::String(String::from("Hello World"))])
         );
 
         assert!(lowercase(&vec![]).is_err());
@@ -106,8 +106,8 @@ mod test {
     #[test]
     fn string_uppercase() {
         assert_eq!(
-            Ok(Value::String("HELLO WORLD".to_string())),
-            uppercase(&vec![Value::String("Hello World".to_string())])
+            Ok(Value::String(String::from("HELLO WORLD"))),
+            uppercase(&vec![Value::String(String::from("Hello World"))])
         );
 
         assert!(uppercase(&vec![]).is_err());
@@ -119,16 +119,16 @@ mod test {
         assert_eq!(
             Ok(Value::Boolean(true)),
             same_text(&vec![
-                Value::String("hello world".to_string()),
-                Value::String("Hello World".to_string())
+                Value::String(String::from("hello world")),
+                Value::String(String::from("Hello World"))
             ])
         );
 
         assert_eq!(
             Ok(Value::Boolean(false)),
             same_text(&vec![
-                Value::String("hallo world".to_string()),
-                Value::String("hello world".to_string())
+                Value::String(String::from("hallo world")),
+                Value::String(String::from("hello world"))
             ])
         );
     }
@@ -136,21 +136,21 @@ mod test {
     #[test]
     fn string_trim() {
         assert_eq!(
-            Ok(Value::String("Hello World".to_string())),
-            trim(&vec![Value::String("  Hello World       ".to_string())])
+            Ok(Value::String(String::from("Hello World"))),
+            trim(&vec![Value::String(String::from("  Hello World       "))])
         );
 
         assert!(trim(&vec![]).is_err());
         assert!(trim(&vec![Value::Boolean(true)]).is_err());
 
         assert_eq!(
-            Ok(Value::String("Hello World       ".to_string())),
-            trim_left(&vec![Value::String("  Hello World       ".to_string())])
+            Ok(Value::String(String::from("Hello World       "))),
+            trim_left(&vec![Value::String(String::from("  Hello World       "))])
         );
 
         assert_eq!(
-            Ok(Value::String("  Hello World".to_string())),
-            trim_right(&vec![Value::String("  Hello World       ".to_string())])
+            Ok(Value::String(String::from("  Hello World"))),
+            trim_right(&vec![Value::String(String::from("  Hello World       "))])
         );
     }
 }

@@ -84,7 +84,7 @@ pub fn pow(params: &[Value]) -> Result<Value, String> {
             Ok(Value::Number(base.powf(exp)))
         }
         (Some(_), _) => Err(String::from("wrong parameter type")),
-        _ => Err("not enough parameters".to_string()),
+        _ => Err(String::from("not enough parameters")),
     }
 }
 
@@ -126,7 +126,7 @@ mod test {
         assert_eq!(Ok(Value::Number(12.34)), abs(&vec![Value::Number(12.34)]));
         assert_eq!(Ok(Value::Number(12.34)), abs(&vec![Value::Number(-12.34)]));
 
-        assert!(abs(&vec![Value::String("-12.34".to_string())]).is_err());
+        assert!(abs(&vec![Value::String(String::from("-12.34"))]).is_err());
     }
 
     #[test]

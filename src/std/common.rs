@@ -64,7 +64,7 @@ pub fn bool(params: &[Value]) -> Result<Value, String> {
             Value::Array(v) => Ok(Value::Boolean(!v.is_empty())), // [] => false, other => true
             Value::Boolean(v) => Ok(Value::Boolean(*v)),          // Boolean => Boolean
         },
-        None => Err("not enough parameters".to_string()),
+        None => Err(String::from("not enough parameters")),
     }
 }
 
@@ -81,9 +81,9 @@ pub fn contains(params: &[Value]) -> Result<Value, String> {
         (Some(haystack), Some(needle)) => match (haystack, needle) {
             (Value::String(needle), Value::String(haystack)) => needle.contains(haystack), // search in String
             (Value::Array(haystack), needle) => haystack.iter().any(|v| v == needle), // search in Array
-            _ => return Err("param types invalid".to_string()),
+            _ => return Err(String::from("param types invalid")),
         },
-        _ => return Err("not enough parameters".to_string()),
+        _ => return Err(String::from("not enough parameters")),
     };
 
     Ok(Value::Boolean(found))
@@ -96,7 +96,7 @@ pub fn contains(params: &[Value]) -> Result<Value, String> {
 pub fn empty(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => Ok(Value::Boolean(value.is_empty())),
-        None => Err("no parameter supplied".to_string()),
+        None => Err(String::from("no parameter supplied")),
     }
 }
 
@@ -113,9 +113,9 @@ pub fn float(params: &[Value]) -> Result<Value, String> {
                 Ok(Value::Number(float))
             }
             Value::Number(_) => Ok(value.clone()),
-            _ => Err("value can not be converted to float".to_string()),
+            _ => Err(String::from("value can not be converted to float")),
         },
-        None => Err("not enough parameters".to_string()),
+        None => Err(String::from("not enough parameters")),
     }
 }
 
@@ -128,7 +128,7 @@ pub fn int(params: &[Value]) -> Result<Value, String> {
     if let Value::Number(value) = float(params)? {
         Ok(Value::Number(value.trunc()))
     } else {
-        Err("undefined input value".to_string())
+        Err(String::from("undefined input value"))
     }
 }
 
@@ -142,7 +142,7 @@ pub fn int(params: &[Value]) -> Result<Value, String> {
 pub fn length(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => Ok(Value::Number(value.len() as f64)),
-        None => Err("no parameter supplied".to_string()),
+        None => Err(String::from("no parameter supplied")),
     }
 }
 
@@ -164,7 +164,7 @@ pub fn max(params: &[Value]) -> Result<Value, String> {
             }
         })
         .cloned()
-        .ok_or("function 'max' failed".to_string())
+        .ok_or(String::from("function 'max' failed"))
 }
 
 /// Returns the minimum [`Value`] of a [`Value::Array`].
@@ -185,7 +185,7 @@ pub fn min(params: &[Value]) -> Result<Value, String> {
             }
         })
         .cloned()
-        .ok_or("function 'min' failed".to_string())
+        .ok_or(String::from("function 'min' failed"))
 }
 
 /// Converts any [`Value`] to a [`Value::String`].
@@ -197,7 +197,7 @@ pub fn str(params: &[Value]) -> Result<Value, String> {
     if let Some(value) = params.first() {
         Ok(Value::String(value.to_string()))
     } else {
-        Err("no parameter supplied".to_string())
+        Err(String::from("no parameter supplied"))
     }
 }
 
@@ -271,12 +271,12 @@ mod test {
 
         assert_eq!(
             Value::Boolean(true),
-            bool(&vec![Value::String("true".to_string())]).unwrap()
+            bool(&vec![Value::String(String::from("true"))]).unwrap()
         );
 
         assert_eq!(
             Value::Boolean(false),
-            bool(&vec![Value::String("other".to_string())]).unwrap()
+            bool(&vec![Value::String(String::from("other"))]).unwrap()
         );
 
         assert_eq!(
@@ -319,16 +319,16 @@ mod test {
         assert_eq!(
             Ok(Value::Boolean(true)),
             contains(&vec![
-                Value::String("Hello World".to_string()),
-                Value::String("World".to_string())
+                Value::String(String::from("Hello World")),
+                Value::String(String::from("World"))
             ])
         );
 
         assert_eq!(
             Ok(Value::Boolean(false)),
             contains(&vec![
-                Value::String("Hello World".to_string()),
-                Value::String("WORLD".to_string())
+                Value::String(String::from("Hello World")),
+                Value::String(String::from("WORLD"))
             ])
         );
 
@@ -339,12 +339,12 @@ mod test {
     fn std_empty() {
         assert_eq!(
             Value::Boolean(true),
-            empty(&vec![Value::String("".to_string())]).unwrap()
+            empty(&vec![Value::String(String::from(""))]).unwrap()
         );
 
         assert_eq!(
             Value::Boolean(false),
-            empty(&vec![Value::String("🙄".to_string())]).unwrap()
+            empty(&vec![Value::String(String::from("🙄"))]).unwrap()
         );
 
         assert_eq!(
@@ -364,17 +364,17 @@ mod test {
     fn std_float() {
         assert_eq!(
             Value::Number(12.2),
-            float(&vec![Value::String("12.2".to_string())]).unwrap()
+            float(&vec![Value::String(String::from("12.2"))]).unwrap()
         );
 
         assert_eq!(
             Value::Number(-12.2),
-            float(&vec![Value::String("-12.2".to_string())]).unwrap()
+            float(&vec![Value::String(String::from("-12.2"))]).unwrap()
         );
 
         assert_eq!(
             Value::Number(0.123),
-            float(&vec![Value::String(".123".to_string())]).unwrap()
+            float(&vec![Value::String(String::from(".123"))]).unwrap()
         );
 
         assert!(float(&vec![]).is_err());
@@ -385,17 +385,17 @@ mod test {
     fn std_int() {
         assert_eq!(
             Value::Number(12.0),
-            int(&vec![Value::String("12.2".to_string())]).unwrap()
+            int(&vec![Value::String(String::from("12.2"))]).unwrap()
         );
 
         assert_eq!(
             Value::Number(-12.0),
-            int(&vec![Value::String("-12.2".to_string())]).unwrap()
+            int(&vec![Value::String(String::from("-12.2"))]).unwrap()
         );
 
         assert_eq!(
             Value::Number(0.0),
-            int(&vec![Value::String(".123".to_string())]).unwrap()
+            int(&vec![Value::String(String::from(".123"))]).unwrap()
         );
 
         assert!(int(&vec![]).is_err());
@@ -409,7 +409,7 @@ mod test {
 
         assert_eq!(
             Ok(Value::Number(5.0)),
-            length(&vec![Value::String("Hello".to_string())])
+            length(&vec![Value::String(String::from("Hello"))])
         );
 
         assert_eq!(
@@ -470,17 +470,17 @@ mod test {
     #[test]
     fn std_str() {
         assert_eq!(
-            Ok(Value::String("123".to_string())),
-            str(&vec![Value::String("123".to_string())])
+            Ok(Value::String(String::from("123"))),
+            str(&vec![Value::String(String::from("123"))])
         );
 
         assert_eq!(
-            Ok(Value::String("123".to_string())),
+            Ok(Value::String(String::from("123"))),
             str(&vec![Value::Number(123.0)])
         );
 
         assert_eq!(
-            Ok(Value::String("true".to_string())),
+            Ok(Value::String(String::from("true"))),
             str(&vec![Value::Boolean(true)])
         );
 

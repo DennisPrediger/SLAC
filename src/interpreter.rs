@@ -234,7 +234,7 @@ mod test {
     #[test]
     fn variable_access() {
         let ast = Expression::Variable {
-            name: "test".to_string(),
+            name: String::from("test"),
         };
         let mut env = StaticEnvironment::default();
 

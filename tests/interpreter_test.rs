@@ -21,7 +21,7 @@ fn add_number() {
 
 #[test]
 fn add_string() {
-    let expected = Value::String("Hello World".to_string());
+    let expected = Value::String(String::from("Hello World"));
     assert_eq!(expected, execute_test("'Hello World'"));
     assert_eq!(expected, execute_test("'Hello' + ' ' + 'World'"));
     assert_eq!(expected, execute_test("'Hello ' + '' + 'World'"));
@@ -29,7 +29,7 @@ fn add_string() {
 
 #[test]
 fn add_unicode_string() {
-    let expected = Value::String("мир приветствий".to_string());
+    let expected = Value::String(String::from("мир приветствий"));
 
     assert_eq!(expected, execute_test("'мир' + ' ' + 'приветствий'"));
 }
@@ -147,12 +147,12 @@ fn std_lib_contains() {
 #[test]
 fn std_lib_lowercase_uppercase() {
     assert_eq!(
-        Value::String("hello world 😀".to_string()),
+        Value::String(String::from("hello world 😀")),
         execute_with_stdlib("lowercase('Hello World 😀')")
     );
 
     assert_eq!(
-        Value::String("HELLO WORLD 😀".to_string()),
+        Value::String(String::from("HELLO WORLD 😀")),
         execute_with_stdlib("uppercase('Hello World 😀')")
     );
 }
@@ -160,7 +160,7 @@ fn std_lib_lowercase_uppercase() {
 #[test]
 fn std_str() {
     assert_eq!(
-        Value::String("99".to_string()),
+        Value::String(String::from("99")),
         execute_with_stdlib("str(99)")
     );
 
