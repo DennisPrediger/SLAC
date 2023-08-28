@@ -10,8 +10,12 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("any", None, any);
     env.add_native_func("bool", Some(1), bool);
     env.add_native_func("contains", Some(2), contains);
+    env.add_native_func("compare", Some(2), compare);
     env.add_native_func("empty", Some(1), empty);
     env.add_native_func("float", Some(1), float);
+    env.add_native_func("high", Some(1), high);
+    env.add_native_func("low", Some(1), low);
+    env.add_native_func("insert", Some(3), insert);
     env.add_native_func("int", Some(1), int);
     env.add_native_func("length", Some(1), length);
     env.add_native_func("max", None, max);
@@ -89,6 +93,16 @@ pub fn contains(params: &[Value]) -> Result<Value, String> {
     Ok(Value::Boolean(found))
 }
 
+pub fn compare(params: &[Value]) -> Result<Value, String> {
+    match (params.get(0), params.get(1)) {
+        (Some(left), Some(right)) => Ok(Value::Number(f64::from(
+            left.partial_cmp(right)
+                .ok_or(String::from("not comparable"))? as i8,
+        ))),
+        _ => Err(String::from("not enough parameters")),
+    }
+}
+
 /// Checks if supplied [`Value`] is empty.
 ///
 /// # Errors
@@ -108,14 +122,66 @@ pub fn empty(params: &[Value]) -> Result<Value, String> {
 pub fn float(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => match value {
+            Value::Boolean(v) => Ok(Value::Number(f64::from(*v as i8))),
             Value::String(v) => {
                 let float = v.parse::<f64>().map_err(|e| e.to_string())?;
                 Ok(Value::Number(float))
             }
-            Value::Number(_) => Ok(value.clone()),
+            Value::Number(v) => Ok(Value::Number(*v)),
             _ => Err(String::from("value can not be converted to float")),
         },
         None => Err(String::from("not enough parameters")),
+    }
+}
+
+pub fn high(params: &[Value]) -> Result<Value, String> {
+    match params.first() {
+        Some(Value::Array(values)) => values.last().cloned().ok_or(String::from("empty array")),
+        Some(Value::String(value)) => Ok(Value::String(
+            value.chars().last().unwrap_or_default().to_string(),
+        )),
+        Some(_) => Err(String::from("wrong parameter type")),
+        _ => Err(String::from("not enough Parameters")),
+    }
+}
+
+pub fn low(params: &[Value]) -> Result<Value, String> {
+    match params.first() {
+        Some(Value::Array(values)) => values.first().cloned().ok_or(String::from("empty array")),
+        Some(Value::String(value)) => Ok(Value::String(
+            value.chars().next().unwrap_or_default().to_string(),
+        )),
+        Some(_) => Err(String::from("wrong parameter type")),
+        _ => Err(String::from("not enough Parameters")),
+    }
+}
+
+pub fn insert(params: &[Value]) -> Result<Value, String> {
+    match (params.get(0), params.get(1), params.get(2)) {
+        (Some(Value::Array(values)), Some(element), Some(Value::Number(index))) => {
+            let index = *index as usize;
+            if index > values.len() {
+                return Err(String::from("index out of bounds"));
+            }
+
+            let mut values = values.clone();
+            values.insert(index, element.clone());
+
+            Ok(Value::Array(values))
+        }
+        (Some(Value::String(target)), Some(Value::String(source)), Some(Value::Number(index))) => {
+            let index = *index as usize;
+            if index > target.chars().count() {
+                return Err(String::from("index out of bounds"));
+            }
+
+            let before: String = target.chars().take(index).collect();
+            let after: String = target.chars().skip(index).collect();
+
+            Ok(Value::String(before + source + &after))
+        }
+        (Some(_), _, Some(_)) => Err(String::from("wrong parameter type")),
+        _ => Err(String::from("not enough Parameters")),
     }
 }
 
@@ -203,7 +269,9 @@ pub fn str(params: &[Value]) -> Result<Value, String> {
 
 #[cfg(test)]
 mod test {
-    use super::{all, any, bool, contains, empty, float, int, length, max, min, str};
+    use super::{
+        all, any, bool, compare, contains, empty, float, insert, int, length, max, min, str,
+    };
     use crate::value::Value;
 
     #[test]
@@ -336,6 +404,24 @@ mod test {
     }
 
     #[test]
+    fn std_compare() {
+        assert_eq!(
+            Ok(Value::Number(-1.0)),
+            compare(&vec![Value::Number(10.0), Value::Number(20.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(0.0)),
+            compare(&vec![Value::Number(15.0), Value::Number(15.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(1.0)),
+            compare(&vec![Value::Number(20.0), Value::Number(10.0)])
+        );
+    }
+
+    #[test]
     fn std_empty() {
         assert_eq!(
             Value::Boolean(true),
@@ -377,8 +463,38 @@ mod test {
             float(&vec![Value::String(String::from(".123"))]).unwrap()
         );
 
+        assert_eq!(Ok(Value::Number(1.0)), float(&vec![Value::Boolean(true)]));
+        assert_eq!(Ok(Value::Number(0.0)), float(&vec![Value::Boolean(false)]));
+
         assert!(float(&vec![]).is_err());
-        assert!(float(&vec![Value::Boolean(false)]).is_err());
+    }
+
+    #[test]
+    fn std_insert() {
+        assert_eq!(
+            Ok(Value::Array(vec![
+                Value::String(String::from("Hello")),
+                Value::String(String::from("middle")),
+                Value::String(String::from("world"))
+            ])),
+            insert(&vec![
+                Value::Array(vec![
+                    Value::String(String::from("Hello")),
+                    Value::String(String::from("world"))
+                ]),
+                Value::String(String::from("middle")),
+                Value::Number(1.0)
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("Hello middle world"))),
+            insert(&vec![
+                Value::String(String::from("Hello world")),
+                Value::String(String::from("middle ")),
+                Value::Number(6.0)
+            ])
+        );
     }
 
     #[test]
@@ -398,8 +514,10 @@ mod test {
             int(&vec![Value::String(String::from(".123"))]).unwrap()
         );
 
+        assert_eq!(Ok(Value::Number(1.0)), int(&vec![Value::Boolean(true)]));
+        assert_eq!(Ok(Value::Number(0.0)), int(&vec![Value::Boolean(false)]));
+
         assert!(int(&vec![]).is_err());
-        assert!(int(&vec![Value::Boolean(false)]).is_err());
     }
 
     #[test]

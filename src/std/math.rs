@@ -11,6 +11,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_var("e", Value::Number(E));
     env.add_var("tau", Value::Number(TAU));
 
+    env.add_native_func("abs", Some(1), abs);
     env.add_native_func("arc_tan", Some(1), arc_tan);
     env.add_native_func("cos", Some(1), cos);
     env.add_native_func("exp", Some(1), exp);
@@ -19,7 +20,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("sin", Some(1), sin);
     env.add_native_func("sqrt", Some(1), sqrt);
 
-    env.add_native_func("abs", Some(1), abs);
+    env.add_native_func("int_to_hex", Some(1), int_to_hex);    
     env.add_native_func("even", Some(1), even);
     env.add_native_func("odd", Some(1), odd);
     env.add_native_func("pow", None, pow);
@@ -27,9 +28,9 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("round", Some(1), round);
 }
 
-macro_rules! generate_std_math_function {
+macro_rules! generate_std_math_functions {
     ($($func_name:ident $std_func:ident),*) => {$(
-        /// See [std::primitive::f64].
+        /// See [`std::primitive::f64`].
         pub fn $func_name(params: &[Value]) -> Result<Value, String> {
             match params.get(0) {
                 Some(Value::Number(value)) => Ok(Value::Number(value.$std_func())),
@@ -40,16 +41,30 @@ macro_rules! generate_std_math_function {
     )*};
 }
 
-generate_std_math_function!(abs abs,
-                            arc_tan atan, 
-                            cos cos, 
-                            exp exp, 
-                            frac fract, 
-                            ln ln, 
-                            sin sin, 
-                            sqrt sqrt);
+// Generate common parameter-less f64 functions.
+generate_std_math_functions!(
+    abs abs,
+    arc_tan atan,
+    cos cos,
+    exp exp,
+    frac fract,
+    ln ln,
+    sin sin,
+    sqrt sqrt,
+    round round
+);
 
-/// !!! todo
+
+/// Converts a [`Value::Number`] to a hex string.
+pub fn int_to_hex(params: &[Value]) -> Result<Value, String> { 
+    match params.first() {
+        Some(Value::Number(value)) => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
+        Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("not enough Parameters")),
+    }
+}
+
+/// Checks if a [`Value::Number`] is even.
 pub fn even(params: &[Value]) -> Result<Value, String> {
     match params.get(0) {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 == 0)),
@@ -58,7 +73,7 @@ pub fn even(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// !!! todo
+/// Checks if a [`Value::Number`] is odd.
 pub fn odd(params: &[Value]) -> Result<Value, String> {
     match params.get(0) {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 != 0)),
@@ -97,27 +112,15 @@ pub fn random(params: &[Value]) -> Result<Value, String> {
         Value::Number(range) => {
             let random = RandomState::new().build_hasher().finish();
             Ok(Value::Number((random as f64 / u64::MAX as f64) * range))
-        },
-        _=> Err(String::from("wrong parameter type"))
-    }
-}
-
-/// Rounds a [`Value::Number`] to the nearest integer.
-//////
-/// # Errors
-/// Will return an error if not at least one parameter is supplied.
-pub fn round(params: &[Value]) -> Result<Value, String> {
-    match params.first() {
-        Some(Value::Number(v)) => Ok(Value::Number(v.round())),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("not enough Parameters")),
+        }
+        _ => Err(String::from("wrong parameter type")),
     }
 }
 
 #[cfg(test)]
 mod test {
+    use super::{abs, even, int_to_hex, odd, pow, random, round};
     use crate::Value;
-    use super::{abs, pow,even, round, random, odd};
 
     #[test]
     fn math_abs() {
@@ -127,6 +130,22 @@ mod test {
         assert_eq!(Ok(Value::Number(12.34)), abs(&vec![Value::Number(-12.34)]));
 
         assert!(abs(&vec![Value::String(String::from("-12.34"))]).is_err());
+    }
+
+    #[test]
+    fn math_int_to_hex() {
+        assert_eq!(
+            Ok(Value::String(String::from("3039"))),
+            int_to_hex(&vec![Value::Number(12345.0)])
+        );
+        assert_eq!(
+            Ok(Value::String(String::from("DEADBEEF"))),
+            int_to_hex(&vec![Value::Number(3735928559.0)])
+        );
+        assert_eq!(
+            Ok(Value::String(String::from("DEADBEEF"))),
+            int_to_hex(&vec![Value::Number(3735928559.1234)])
+        );
     }
 
     #[test]
@@ -150,7 +169,10 @@ mod test {
     #[test]
     fn math_odd_even() {
         for i in -1000..1000 {
-            assert_ne!(even(&vec![Value::Number(i as f64)]), odd(&vec![Value::Number(i as f64)]));
+            assert_ne!(
+                even(&vec![Value::Number(i as f64)]),
+                odd(&vec![Value::Number(i as f64)])
+            );
         }
     }
 

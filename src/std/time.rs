@@ -7,6 +7,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("time_to_string", Some(2), date_to_string);
     env.add_native_func("string_to_date", Some(1), string_to_date);
     env.add_native_func("string_to_time", Some(1), string_to_time);
+    env.add_native_func("string_to_date_time", Some(1), string_to_date_time);
     env.add_native_func("day_of_week", Some(1), day_of_week);
     env.add_native_func("encode_date", Some(3), encode_date);
     env.add_native_func("encode_time", Some(3), encode_time);
@@ -86,10 +87,26 @@ pub fn string_to_time(params: &[Value]) -> Result<Value, String> {
             let time = NaiveTime::parse_from_str(s, fmt).map_err(|e| e.to_string())?;
 
             Ok(NaiveDate::from_ymd_opt(1899, 12, 30)
-                .unwrap()
+                .unwrap_or_default()
                 .and_time(time)
                 .into())
         }
+        (Some(_), _) => Err(String::from("wrong parameter type")),
+        _ => Err(String::from("not enough parameters")),
+    }
+}
+
+/// Parse a string into a Timestamp.
+pub fn string_to_date_time(params: &[Value]) -> Result<Value, String> {
+    match (
+        params.get(0),
+        params
+            .get(1)
+            .unwrap_or(&Value::String(String::from("%Y-%m-%d %H:%M:%S"))),
+    ) {
+        (Some(Value::String(s)), Value::String(fmt)) => Ok(NaiveDateTime::parse_from_str(s, fmt)
+            .map_err(|e| e.to_string())?
+            .into()),
         (Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
     }
@@ -124,7 +141,7 @@ pub fn day_of_week(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => {
             let datetime = NaiveDateTime::try_from(value)?;
-            Ok(Value::Number(datetime.weekday() as u8 as f64))
+            Ok(Value::Number(f64::from(datetime.weekday() as u8)))
         }
         None => Err(String::from("not enough parameters")),
     }
@@ -161,7 +178,7 @@ pub fn encode_time(params: &[Value]) -> Result<Value, String> {
             .and_then(|date| {
                 date.and_hms_milli_opt(*hour as u32, *min as u32, *sec as u32, *milli as u32)
             })
-            .map(|datetime| datetime.try_into().unwrap())
+            .and_then(|datetime| datetime.try_into().ok())
             .ok_or(String::from("invalid date")),
         (Some(_), Some(_), Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
