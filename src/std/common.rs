@@ -1,10 +1,11 @@
-//! Various common functions and constants to insert into a [`StaticEnvironment`].
+//! Common functions and constants for converting variables into different
+//! [`Value`] types or check, extract and extend [`Value::Array`] variables.
 
 use std::cmp::Ordering;
 
 use crate::{StaticEnvironment, Value};
 
-/// Insert all functions and constants into an [`StaticEnvironment`].
+/// Extends a [`StaticEnvironment`] with `common` functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("all", None, all);
     env.add_native_func("any", None, any);
@@ -23,6 +24,8 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("str", Some(1), str);
 }
 
+/// Return the first parameter if it's an [`Value::Array`] or return all
+/// parameters as varadic function.
 fn smart_vec(params: &[Value]) -> &[Value] {
     match params.first() {
         Some(Value::Array(v)) if (params.len() == 1) => v, // only one Array parameter
@@ -30,11 +33,9 @@ fn smart_vec(params: &[Value]) -> &[Value] {
     }
 }
 
-/// Checks if all members of an array are true.
-/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
-///
-/// # Errors
-/// Always returns [`Ok(Value::Boolean)`].
+/// Checks if all members of a [`Value::Array`] are [`Value::Boolean(true)`].
+/// Can be called with a single [`Value::Array`] parameter or as varadic function.
+#[allow(clippy::missing_errors_doc)]
 pub fn all(params: &[Value]) -> Result<Value, String> {
     let values = smart_vec(params);
     let result = values.iter().all(|v| v == &Value::Boolean(true));
@@ -42,11 +43,9 @@ pub fn all(params: &[Value]) -> Result<Value, String> {
     Ok(Value::Boolean(result))
 }
 
-/// Checks if any members of an array is true.
-/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
-///
-/// # Errors
-/// Always returns [`Ok(Value::Boolean)`].
+/// Checks if any member of a [`Value::Array`] is [`Value::Boolean(true)`].
+/// Can be called with a single [`Value::Array`] parameter or as varadic function.
+#[allow(clippy::missing_errors_doc)]
 pub fn any(params: &[Value]) -> Result<Value, String> {
     let values = smart_vec(params);
     let result = values.iter().any(|v| v == &Value::Boolean(true));
@@ -56,7 +55,16 @@ pub fn any(params: &[Value]) -> Result<Value, String> {
 
 /// Converts any [`Value`] to a [`Value::Boolean`].
 ///
+/// # Remarks
+///
+/// Conversion depends on the supplied [`Value`] parameter:
+/// * [`Value::Boolean`]: stays the same
+/// * [`Value::Number`]: true = 1.0
+/// * [`Value::String`]: true = "true" (case insensitive)
+/// * [`Value::Array`]: true = !is_empty()
+///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied.
 pub fn bool(params: &[Value]) -> Result<Value, String> {
     match params.first() {
@@ -78,8 +86,9 @@ pub fn bool(params: &[Value]) -> Result<Value, String> {
 /// * a [`Value::Array`] as haystack and any [`Value`] as needle
 ///
 /// # Errors
-/// Will return an error if not at least one parameter is supplied or the supplied
-/// parameters are of the wrong type.
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn contains(params: &[Value]) -> Result<Value, String> {
     let found = match (params.get(0), params.get(1)) {
         (Some(haystack), Some(needle)) => match (haystack, needle) {
@@ -93,6 +102,12 @@ pub fn contains(params: &[Value]) -> Result<Value, String> {
     Ok(Value::Boolean(found))
 }
 
+/// Compares two [`Value`] and returns the [`Ordering`] as [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the [`Value`] are
+/// not comparable.
 pub fn compare(params: &[Value]) -> Result<Value, String> {
     match (params.get(0), params.get(1)) {
         (Some(left), Some(right)) => Ok(Value::Number(f64::from(
@@ -114,9 +129,11 @@ pub fn empty(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Converts any [`Value`] to a [`Value::Number`] with floating point precision.
+/// Converts [`Value::Boolean`] or [`Value::String`] to a [`Value::Number`].
+/// A [`Value::Number`] will retain it's value.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or if the [`Value`]
 /// can not be converted.
 pub fn float(params: &[Value]) -> Result<Value, String> {
@@ -134,6 +151,13 @@ pub fn float(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Returns the last character of a [`Value::String`] or the last element of a
+/// [`Value::Array`].
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn high(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::Array(values)) => values.last().cloned().ok_or(String::from("empty array")),
@@ -145,6 +169,13 @@ pub fn high(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Returns the first character of a [`Value::String`] or the first element of a
+/// [`Value::Array`].
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn low(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::Array(values)) => values.first().cloned().ok_or(String::from("empty array")),
@@ -156,6 +187,14 @@ pub fn low(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// Inserts a [`Value::String`] into another [`Value::String`] at the specified
+/// character index.
+/// Or Inserts a [`Value`] into a [`Value::Array`] at the specified index.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters, the parameters are of
+/// the wrong [`Value`] type or if the index is out of bounds.
 pub fn insert(params: &[Value]) -> Result<Value, String> {
     match (params.get(0), params.get(1), params.get(2)) {
         (Some(Value::Array(values)), Some(element), Some(Value::Number(index))) => {
@@ -186,8 +225,10 @@ pub fn insert(params: &[Value]) -> Result<Value, String> {
 }
 
 /// Converts any [`Value`] to a [`Value::Number`] with integer precision.
+/// See [`float`] for conversion information.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or if the [`Value`]
 /// can not be converted.
 pub fn int(params: &[Value]) -> Result<Value, String> {
@@ -198,12 +239,11 @@ pub fn int(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Returns the length of the supplied Value
-/// * [`Value::String`]: length of the String
-/// * [`Value::Array`]: length of the Array
-/// * otherwise 0
+/// Returns the length of the supplied [`Value::String`] or [`Value::Array`].
+/// For other [`Value`] types return 0.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied.
 pub fn length(params: &[Value]) -> Result<Value, String> {
     match params.first() {
@@ -213,9 +253,10 @@ pub fn length(params: &[Value]) -> Result<Value, String> {
 }
 
 /// Returns the maximum [`Value`] of a [`Value::Array`].
-/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
+/// Can be called with a single [`Value::Array`] parameter or as varadic function.
 ///
 /// # Errors
+///
 /// Returns an error if the [`Value::Array`] can not be sorted.
 pub fn max(params: &[Value]) -> Result<Value, String> {
     smart_vec(params)
@@ -234,9 +275,10 @@ pub fn max(params: &[Value]) -> Result<Value, String> {
 }
 
 /// Returns the minimum [`Value`] of a [`Value::Array`].
-/// Can be called either with a single [`Value::Array`] or variable list of Parameters.
+/// Can be called with a single [`Value::Array`] parameter or as varadic function.
 ///
 /// # Errors
+///
 /// Returns an error if the [`Value::Array`] can not be sorted.
 pub fn min(params: &[Value]) -> Result<Value, String> {
     smart_vec(params)

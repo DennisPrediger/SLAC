@@ -1,4 +1,9 @@
-use std::{collections::hash_map::RandomState, hash::{BuildHasher, Hasher}};
+//! Functions to perform calculations with [`Value::Number`] variables.
+
+use std::{
+    collections::hash_map::RandomState,
+    hash::{BuildHasher, Hasher},
+};
 
 use crate::{StaticEnvironment, Value};
 
@@ -6,6 +11,8 @@ pub const PI: f64 = std::f64::consts::PI;
 pub const E: f64 = std::f64::consts::E;
 pub const TAU: f64 = std::f64::consts::TAU;
 
+/// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::Number`]
+/// variables and various common mathematical constants.
 pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_var("pi", Value::Number(PI));
     env.add_var("e", Value::Number(E));
@@ -20,7 +27,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("sin", Some(1), sin);
     env.add_native_func("sqrt", Some(1), sqrt);
 
-    env.add_native_func("int_to_hex", Some(1), int_to_hex);    
+    env.add_native_func("int_to_hex", Some(1), int_to_hex);
     env.add_native_func("even", Some(1), even);
     env.add_native_func("odd", Some(1), odd);
     env.add_native_func("pow", None, pow);
@@ -30,7 +37,13 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 
 macro_rules! generate_std_math_functions {
     ($($func_name:ident $std_func:ident),*) => {$(
-        /// See [`std::primitive::f64`].
+
+        /// See the corresponding function descriptions in [`std::primitive::f64`].
+        ///
+        /// # Errors
+        ///
+        /// Returns an error if there is no parameter supplied or the parameter
+        /// is not a [`Value::Number`].
         pub fn $func_name(params: &[Value]) -> Result<Value, String> {
             match params.get(0) {
                 Some(Value::Number(value)) => Ok(Value::Number(value.$std_func())),
@@ -38,6 +51,7 @@ macro_rules! generate_std_math_functions {
                 None => Err(String::from("not enough Parameters")),
             }
         }
+
     )*};
 }
 
@@ -54,9 +68,13 @@ generate_std_math_functions!(
     round round
 );
 
-
-/// Converts a [`Value::Number`] to a hex string.
-pub fn int_to_hex(params: &[Value]) -> Result<Value, String> { 
+/// Converts a [`Value::Number`] to an uppercase hex [`Value::String`].
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
+pub fn int_to_hex(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::Number(value)) => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
         Some(_) => Err(String::from("wrong parameter type")),
@@ -64,7 +82,12 @@ pub fn int_to_hex(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Checks if a [`Value::Number`] is even.
+/// Checks if a [`Value::Number`] is even and returns a [`Value::Boolean`].
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn even(params: &[Value]) -> Result<Value, String> {
     match params.get(0) {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 == 0)),
@@ -73,7 +96,12 @@ pub fn even(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Checks if a [`Value::Number`] is odd.
+/// Checks if a [`Value::Number`] is odd and returns a [`Value::Boolean`].
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn odd(params: &[Value]) -> Result<Value, String> {
     match params.get(0) {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 != 0)),
@@ -82,13 +110,16 @@ pub fn odd(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Raises a [`Value::Number`] to a power in the second parameter.
+/// Raises a [`Value::Number`] to the power in the second [`Value::Number`] parameter.
 ///
 /// # Remark
+///
 /// The second parameter is optional and defaults to 2.
 ///
 /// # Errors
-/// Will return an error if not at least one parameter is supplied.
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn pow(params: &[Value]) -> Result<Value, String> {
     match (params.get(0), params.get(1)) {
         (Some(Value::Number(base)), exp) => {
@@ -103,10 +134,13 @@ pub fn pow(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Generates a random-ish [`Value::Number`]. Uses [`RandomState`] and is very 
+/// Generates a random-ish [`Value::Number`]. Uses [`RandomState`] and is very
 /// much **not** cryptographicly secure
+///
 /// # Errors
-/// Will return an error if the optional Range parameter is not a [`Value::Number`].
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn random(params: &[Value]) -> Result<Value, String> {
     match params.get(0).unwrap_or(&Value::Number(1.0)) {
         Value::Number(range) => {
@@ -228,6 +262,5 @@ mod test {
             assert!(random(&vec![Value::Number(-100.0)]) >= Ok(Value::Number(-100.0)));
             assert!(random(&vec![Value::Number(-100.0)]) < Ok(Value::Number(0.0)));
         }
-            
     }
 }

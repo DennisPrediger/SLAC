@@ -1,7 +1,15 @@
+//! Optional module to perform date and time operations using [`Value::Number`]
+//! variables.
+//!
+//! Date, time and DateTime values are stored as [`std::primitive::f64`]
+//! doubles. The integral part of a TDateTime value is the **number of days** that
+//! have passed since `31.12.1899`. The fractional part of a TDateTime value is
+//! the `time of day` as a **fraction of 24 hours**.
 use chrono::{DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime};
 
 use crate::{StaticEnvironment, Value};
 
+/// Extends a [`StaticEnvironment`] with `time` conversion functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("date_to_string", Some(2), date_to_string);
     env.add_native_func("time_to_string", Some(2), date_to_string);
@@ -17,7 +25,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("date_from_rfc3339", Some(1), date_from_rfc3339);
 }
 
-// Delta between 31.12.1899 and 01.01.1970
+// The number of days between 31.12.1899 and 01.01.1970.
 const UNIX_DATE_DELTA: f64 = 25569.;
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;
 
@@ -45,7 +53,13 @@ impl From<NaiveDateTime> for Value {
     }
 }
 
-/// Converts a Date into a string
+/// Formats a datetime [`Value`] with the specified format string.
+/// See [`chrono::format::strftime`] for info on the syntax.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn date_to_string(params: &[Value]) -> Result<Value, String> {
     match (params.get(0), params.get(1)) {
         (Some(Value::String(fmt)), Some(value)) => {
@@ -58,7 +72,13 @@ pub fn date_to_string(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Parse a string into a Date
+/// Parses a date string with the specified format string and returns a [`Value::Number`].
+/// See [`chrono::format::strftime`] for info on the syntax.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn string_to_date(params: &[Value]) -> Result<Value, String> {
     match (
         params.get(0),
@@ -75,7 +95,13 @@ pub fn string_to_date(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Parse a string into a Timestamp.
+/// Parses a time string with the specified format string and returns a [`Value::Number`].
+/// See [`chrono::format::strftime`] for info on the syntax.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn string_to_time(params: &[Value]) -> Result<Value, String> {
     match (
         params.get(0),
@@ -96,7 +122,13 @@ pub fn string_to_time(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Parse a string into a Timestamp.
+/// Parses a datetime string with the specified format string and returns a [`Value::Number`].
+/// See [`chrono::format::strftime`] for info on the syntax.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn string_to_date_time(params: &[Value]) -> Result<Value, String> {
     match (
         params.get(0),
@@ -112,7 +144,13 @@ pub fn string_to_date_time(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Creates a Datetime from a rfc2822 string.
+/// Parses a [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822) string and returns a [`Value::Number`].
+/// E.g: `Fri, 21 Nov 1997 09:55:06 -0600`
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn date_from_rfc2822(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) => Ok(DateTime::parse_from_rfc2822(value)
@@ -124,7 +162,13 @@ pub fn date_from_rfc2822(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Creates a Datetime from a rfc3339 string.
+/// Parses a [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) string and returns a [`Value::Number`].
+/// E.g: `1997-11-21T09:55:06.00-06:00`
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn date_from_rfc3339(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) => Ok(DateTime::parse_from_rfc3339(value)
@@ -137,6 +181,11 @@ pub fn date_from_rfc3339(params: &[Value]) -> Result<Value, String> {
 }
 
 /// Returns the day of the week for a specified date.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn day_of_week(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => {
@@ -147,7 +196,12 @@ pub fn day_of_week(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Returns a DateTime value that represents a specified Year, Month, and Day.
+/// Constructs a date [`Value`] according to the specified `year`, `month`, and `day`.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn encode_date(params: &[Value]) -> Result<Value, String> {
     match (params.get(0), params.get(1), params.get(2)) {
         (Some(Value::Number(year)), Some(Value::Number(month)), Some(Value::Number(day))) => {
@@ -161,7 +215,13 @@ pub fn encode_date(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Returns a DateTime value for a specified Hour, Min, Sec, and MSec.
+/// Constructs a time [`Value`] according to the specified `hour`, `minute`,
+/// `second`, and (optionally) `millisecond`.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn encode_time(params: &[Value]) -> Result<Value, String> {
     match (
         params.get(0),
@@ -185,7 +245,17 @@ pub fn encode_time(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Increases the month
+/// Increases the month of the supplied date [`Value`] by an optional integer
+/// value or 1.
+///
+/// # Remarks
+///
+/// The increment parameter can be negative, which will decrement the month.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn inc_month(params: &[Value]) -> Result<Value, String> {
     match (params.get(0), params.get(1).unwrap_or(&Value::Number(1.0))) {
         (Some(value), Value::Number(increment)) => Ok(NaiveDateTime::try_from(value)
@@ -207,7 +277,12 @@ pub fn inc_month(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Returns the day of the week for a specified date.
+/// Returns a [`Value::Boolean`] if the supplied date [`Value`] is a leap year.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
 pub fn is_leap_year(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(value) => {

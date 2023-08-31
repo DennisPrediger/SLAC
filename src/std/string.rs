@@ -1,5 +1,8 @@
+//! Functions to manipulate [`Value::String`] variables.
+
 use crate::{StaticEnvironment, Value};
 
+/// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
 pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("chr", Some(1), chr);
     env.add_native_func("ord", Some(1), ord);
@@ -11,17 +14,34 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("trim_right", Some(1), trim_right);
 }
 
+/// Converts a [`Value::Number`] into a [`Value::String`] containg a single
+/// ASCII character.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
+/// Returns an error if the supplied number is outside of ASCII character range.
 pub fn chr(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::Number(value)) if (0.0..127.0).contains(value) => Ok(Value::String(
             char::from_u32(*value as u32).unwrap_or('\0').to_string(),
         )),
-        Some(Value::Number(_)) => Err(String::from("number is out of ascii range")),
+        Some(Value::Number(_)) => Err(String::from("number is out of ASCII range")),
         Some(_) => Err(String::from("wrong parameter type")),
         None => Err(String::from("no parameter supplied")),
     }
 }
 
+/// Converts a single charachter [`Value::String`] into a [`Value::Number`]
+/// containing it's ASCII number value.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
+/// Returns an error if the supplied [`Value::String`] is longer than one character
+/// or not an ASCII charachter.
 pub fn ord(params: &[Value]) -> Result<Value, String> {
     match params.first() {
         Some(Value::String(value)) if value.chars().count() == 1 => {
@@ -30,7 +50,7 @@ pub fn ord(params: &[Value]) -> Result<Value, String> {
                     value.chars().next().unwrap_or('\0') as u8,
                 )))
             } else {
-                Err(String::from("string out of ascii range"))
+                Err(String::from("string out of ASCII range"))
             }
         }
         Some(Value::String(_)) => Err(String::from("string is too long")),
@@ -42,6 +62,7 @@ pub fn ord(params: &[Value]) -> Result<Value, String> {
 /// Converts a [`Value::String`] to lowercase.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn lowercase(params: &[Value]) -> Result<Value, String> {
@@ -55,6 +76,7 @@ pub fn lowercase(params: &[Value]) -> Result<Value, String> {
 /// Converts a [`Value::String`] to uppercase.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn uppercase(params: &[Value]) -> Result<Value, String> {
@@ -65,8 +87,10 @@ pub fn uppercase(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Compares a String
+/// Compares two [`Value::String`] by text content.
+///
 /// # Errors
+///
 /// Will return an error if not at least two parameters are supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn same_text(params: &[Value]) -> Result<Value, String> {
@@ -81,6 +105,7 @@ pub fn same_text(params: &[Value]) -> Result<Value, String> {
 /// Trims the whitespace of a [`Value::String`] on both sides.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim(params: &[Value]) -> Result<Value, String> {
@@ -91,9 +116,10 @@ pub fn trim(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Trims the whitespace of a [`Value::String`] on the start of the String.
+/// Trims the whitespace of a [`Value::String`] on the left side of the String.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim_left(params: &[Value]) -> Result<Value, String> {
@@ -104,9 +130,10 @@ pub fn trim_left(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Trims the whitespace of a [`Value::String`] on the end of the String.
+/// Trims the whitespace of a [`Value::String`] on the right side of the String.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim_right(params: &[Value]) -> Result<Value, String> {
