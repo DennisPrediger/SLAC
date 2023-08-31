@@ -12,7 +12,7 @@
 //!
 //! This module uses the [`chrono`] library and can be included using
 //! the `chrono` feature.
-use chrono::{DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use chrono::{DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 
 use crate::{StaticEnvironment, Value};
 
@@ -181,9 +181,7 @@ pub fn date_to_rfc2822(params: &[Value]) -> Result<Value, String> {
         Some(value) => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::String(
-                DateTime::<Utc>::from_utc(datetime, Utc).to_rfc2822(),
-            ))
+            Ok(Value::String(Utc.from_utc_datetime(&datetime).to_rfc2822()))
         }
         None => Err(String::from("not enough parameters")),
     }
@@ -219,9 +217,7 @@ pub fn date_to_rfc3339(params: &[Value]) -> Result<Value, String> {
         Some(value) => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::String(
-                DateTime::<Utc>::from_utc(datetime, Utc).to_rfc3339(),
-            ))
+            Ok(Value::String(Utc.from_utc_datetime(&datetime).to_rfc3339()))
         }
         None => Err(String::from("not enough parameters")),
     }
