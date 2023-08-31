@@ -1,11 +1,18 @@
 //! Optional module to perform date and time operations using [`Value::Number`]
 //! variables.
 //!
+//! # Remarks
+//!
 //! Date, time and DateTime values are stored as [`std::primitive::f64`]
 //! doubles. The integral part of a TDateTime value is the **number of days** that
 //! have passed since `31.12.1899`. The fractional part of a TDateTime value is
 //! the `time of day` as a **fraction of 24 hours**.
-use chrono::{DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime};
+//!
+//! # Chrono
+//!
+//! This module uses the [`chrono`] library and can be included using
+//! the `chrono` feature.
+use chrono::{DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 use crate::{StaticEnvironment, Value};
 
@@ -144,8 +151,8 @@ pub fn string_to_date_time(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Parses a [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822) string and returns a [`Value::Number`].
-/// E.g: `Fri, 21 Nov 1997 09:55:06 -0600`
+/// Parses a [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822) string
+/// (e.g: `Fri, 21 Nov 1997 09:55:06 -0600`) and returns a [`Value::Number`].
 ///
 /// # Errors
 ///
@@ -162,8 +169,28 @@ pub fn date_from_rfc2822(params: &[Value]) -> Result<Value, String> {
     }
 }
 
-/// Parses a [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) string and returns a [`Value::Number`].
-/// E.g: `1997-11-21T09:55:06.00-06:00`
+/// Converts a datetime [`Value::Number`] into a [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822)
+/// [`Value::String`] (e.g: `Fri, 21 Nov 1997 09:55:06 +0000`).
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
+pub fn date_to_rfc2822(params: &[Value]) -> Result<Value, String> {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::String(
+                DateTime::<Utc>::from_utc(datetime, Utc).to_rfc2822(),
+            ))
+        }
+        None => Err(String::from("not enough parameters")),
+    }
+}
+
+/// Parses a [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339) [`Value::String`]
+/// (e.g: `1997-11-21T09:55:06.00-06:00`) and returns a [`Value::Number`].
 ///
 /// # Errors
 ///
@@ -176,6 +203,26 @@ pub fn date_from_rfc3339(params: &[Value]) -> Result<Value, String> {
             .naive_utc()
             .into()),
         Some(_) => Err(String::from("wrong parameter type")),
+        None => Err(String::from("not enough parameters")),
+    }
+}
+
+/// Converts a datetime [`Value::Number`] into a [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339)
+/// [`Value::String`] (e.g: `1997-11-21T09:55:06.00-06:00`).
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
+pub fn date_to_rfc3339(params: &[Value]) -> Result<Value, String> {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::String(
+                DateTime::<Utc>::from_utc(datetime, Utc).to_rfc3339(),
+            ))
+        }
         None => Err(String::from("not enough parameters")),
     }
 }
@@ -301,8 +348,9 @@ mod test {
     use chrono::NaiveDateTime;
 
     use super::{
-        date_from_rfc2822, date_from_rfc3339, date_to_string, day_of_week, encode_date,
-        encode_time, inc_month, is_leap_year, string_to_date, string_to_time,
+        date_from_rfc2822, date_from_rfc3339, date_to_rfc2822, date_to_rfc3339, date_to_string,
+        day_of_week, encode_date, encode_time, inc_month, is_leap_year, string_to_date,
+        string_to_time,
     };
     use crate::Value;
 
@@ -442,5 +490,23 @@ mod test {
             Ok(Value::Boolean(true)),
             is_leap_year(&vec![Value::Number(36526.0)])
         );
+    }
+
+    #[test]
+    fn time_rfc2822() {
+        let rfc = Value::String(String::from("Fri, 28 Nov 2014 12:00:09 +0000"));
+        let date = date_from_rfc2822(&vec![rfc.clone()]).unwrap();
+
+        assert_eq!(Value::Number(41971.50010416667), date);
+        assert_eq!(Ok(rfc), date_to_rfc2822(&vec![date]));
+    }
+
+    #[test]
+    fn time_rfc3339() {
+        let rfc = Value::String(String::from("2014-11-28T12:00:09+00:00"));
+        let date = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
+
+        assert_eq!(Value::Number(41971.50010416667), date);
+        assert_eq!(Ok(rfc), date_to_rfc3339(&vec![date]));
     }
 }
