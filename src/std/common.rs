@@ -16,6 +16,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("float", Some(1), float);
     env.add_native_func("high", Some(1), high);
     env.add_native_func("low", Some(1), low);
+    env.add_native_func("if_then", Some(2), if_then);
     env.add_native_func("insert", Some(3), insert);
     env.add_native_func("int", Some(1), int);
     env.add_native_func("length", Some(1), length);
@@ -187,6 +188,27 @@ pub fn low(params: &[Value]) -> Result<Value, String> {
     }
 }
 
+/// If the first parameter is [`Value::Boolean(true)`] returns the second parameter, otherwise returns the thrid.
+/// If the third parameter is not defined, return an empty [`Value`] of the same type as the second parameter.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters or the parameters are of
+/// the wrong [`Value`] type.
+pub fn if_then(params: &[Value]) -> Result<Value, String> {
+    match (params.get(0), params.get(1), params.get(2)) {
+        (Some(Value::Boolean(condition)), Some(first), second) => {
+            if *condition {
+                Ok(first.clone())
+            } else {
+                Ok(second.cloned().unwrap_or_else(|| first.empty()))
+            }
+        }
+        (Some(_), _, _) => Err(String::from("wrong parameter type")),
+        _ => Err(String::from("not enough Parameters")),
+    }
+}
+
 /// Inserts a [`Value::String`] into another [`Value::String`] at the specified
 /// character index.
 /// Or Inserts a [`Value`] into a [`Value::Array`] at the specified index.
@@ -312,7 +334,8 @@ pub fn str(params: &[Value]) -> Result<Value, String> {
 #[cfg(test)]
 mod test {
     use super::{
-        all, any, bool, compare, contains, empty, float, insert, int, length, max, min, str,
+        all, any, bool, compare, contains, empty, float, if_then, insert, int, length, max, min,
+        str,
     };
     use crate::value::Value;
 
@@ -509,6 +532,58 @@ mod test {
         assert_eq!(Ok(Value::Number(0.0)), float(&vec![Value::Boolean(false)]));
 
         assert!(float(&vec![]).is_err());
+    }
+
+    #[test]
+    fn std_if_then() {
+        assert_eq!(
+            Ok(Value::Number(1.0)),
+            if_then(&vec![
+                Value::Boolean(true),
+                Value::Number(1.0),
+                Value::Number(2.0)
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(2.0)),
+            if_then(&vec![
+                Value::Boolean(false),
+                Value::Number(1.0),
+                Value::Number(2.0)
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(1.0)),
+            if_then(&vec![Value::Boolean(true), Value::Number(1.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(0.0)),
+            if_then(&vec![Value::Boolean(false), Value::Number(1.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Boolean(false)),
+            if_then(&vec![Value::Boolean(false), Value::Boolean(true)])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::new())),
+            if_then(&vec![
+                Value::Boolean(false),
+                Value::String(String::from(String::from("Hello World")))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Array(vec![])),
+            if_then(&vec![
+                Value::Boolean(false),
+                Value::Array(vec![Value::Boolean(true)]),
+            ])
+        );
     }
 
     #[test]

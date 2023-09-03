@@ -148,6 +148,8 @@ impl Value {
         }
     }
 
+    /// Return the length of the [`Value::String`] or [`Value::Array`],
+    /// otherwise return 0.
     pub fn len(&self) -> usize {
         match self {
             Value::String(v) => v.len(),
@@ -156,11 +158,23 @@ impl Value {
         }
     }
 
+    /// Returns a boolean if the [`Value::String`] or [`Value::Array`] are empty,
+    /// otherwise return false.
     pub fn is_empty(&self) -> bool {
         match self {
             Value::String(v) => v.is_empty(),
             Value::Array(v) => v.is_empty(),
             _ => false,
+        }
+    }
+
+    /// Returns an new empty [`Value`] of the same type as the callee.
+    pub fn empty(&self) -> Value {
+        match self {
+            Value::Boolean(_) => Value::Boolean(false),
+            Value::String(_) => Value::String(String::new()),
+            Value::Number(_) => Value::Number(0.0),
+            Value::Array(_) => Value::Array(vec![]),
         }
     }
 }
