@@ -111,10 +111,13 @@ pub fn string_to_date(params: &[Value]) -> NativeResult {
             .get(1)
             .unwrap_or(&Value::String(String::from("%Y-%m-%d"))),
     ) {
-        (Some(Value::String(s)), Value::String(fmt)) => Ok(NaiveDate::parse_from_str(s, fmt)
-            .map_err(|e| NativeError::from(e.to_string()))?
-            .and_time(NaiveTime::default())
-            .into()),
+        (Some(Value::String(s)), Value::String(fmt)) => {
+            let datetime = NaiveDate::parse_from_str(s, fmt)
+                .map_err(|e| NativeError::from(e.to_string()))?
+                .and_time(NaiveTime::default());
+
+            Ok(Value::from(datetime))
+        }
         (Some(_), _) => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(1)),
     }
@@ -137,8 +140,9 @@ pub fn string_to_time(params: &[Value]) -> NativeResult {
         (Some(Value::String(s)), Value::String(fmt)) => {
             let time =
                 NaiveTime::parse_from_str(s, fmt).map_err(|e| NativeError::from(e.to_string()))?;
+            let datetime = NaiveDate::default().and_time(time);
 
-            Ok(NaiveDate::default().and_time(time).into())
+            Ok(Value::from(datetime))
         }
         (Some(_), _) => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(1)),
@@ -159,9 +163,12 @@ pub fn string_to_date_time(params: &[Value]) -> NativeResult {
             .get(1)
             .unwrap_or(&Value::String(String::from("%Y-%m-%d %H:%M:%S"))),
     ) {
-        (Some(Value::String(s)), Value::String(fmt)) => Ok(NaiveDateTime::parse_from_str(s, fmt)
-            .map_err(|e| NativeError::from(e.to_string()))?
-            .into()),
+        (Some(Value::String(s)), Value::String(fmt)) => {
+            let datetime = NaiveDateTime::parse_from_str(s, fmt)
+                .map_err(|e| NativeError::from(e.to_string()))?;
+
+            Ok(Value::from(datetime))
+        }
         (Some(_), _) => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(1)),
     }
@@ -176,10 +183,13 @@ pub fn string_to_date_time(params: &[Value]) -> NativeResult {
 /// the wrong [`Value`] type.
 pub fn date_from_rfc2822(params: &[Value]) -> NativeResult {
     match params.first() {
-        Some(Value::String(value)) => Ok(DateTime::parse_from_rfc2822(value)
-            .map_err(|e| NativeError::from(e.to_string()))?
-            .naive_utc()
-            .into()),
+        Some(Value::String(value)) => {
+            let datetime = DateTime::parse_from_rfc2822(value)
+                .map_err(|e| NativeError::from(e.to_string()))?
+                .naive_utc();
+
+            Ok(Value::from(datetime))
+        }
         Some(_) => Err(NativeError::WrongParameterType),
         None => Err(NativeError::NotEnoughParameters(1)),
     }
@@ -212,10 +222,13 @@ pub fn date_to_rfc2822(params: &[Value]) -> NativeResult {
 /// the wrong [`Value`] type.
 pub fn date_from_rfc3339(params: &[Value]) -> NativeResult {
     match params.first() {
-        Some(Value::String(value)) => Ok(DateTime::parse_from_rfc3339(value)
-            .map_err(|e| NativeError::from(e.to_string()))?
-            .naive_utc()
-            .into()),
+        Some(Value::String(value)) => {
+            let datetime = DateTime::parse_from_rfc3339(value)
+                .map_err(|e| NativeError::from(e.to_string()))?
+                .naive_utc();
+
+            Ok(Value::from(datetime))
+        }
         Some(_) => Err(NativeError::WrongParameterType),
         None => Err(NativeError::NotEnoughParameters(1)),
     }
@@ -266,8 +279,8 @@ pub fn encode_date(params: &[Value]) -> NativeResult {
         (Some(Value::Number(year)), Some(Value::Number(month)), Some(Value::Number(day))) => {
             NaiveDate::from_ymd_opt(*year as i32, *month as u32, *day as u32)
                 .map(|date| date.and_time(NaiveTime::default()))
-                .and_then(|datetime| datetime.try_into().ok())
-                .ok_or(NativeError::from("invalid date"))
+                .map(Value::from)
+                .ok_or(NativeError::from("invalid date parameters"))
         }
         (Some(_), Some(_), Some(_)) => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(3)),
@@ -295,8 +308,8 @@ pub fn encode_time(params: &[Value]) -> NativeResult {
             Value::Number(milli),
         ) => NaiveDate::default()
             .and_hms_milli_opt(*hour as u32, *min as u32, *sec as u32, *milli as u32)
-            .map(|v| v.into())
-            .ok_or(NativeError::from("invalid times parameters")),
+            .map(Value::from)
+            .ok_or(NativeError::from("invalid time parameters")),
         (Some(_), Some(_), Some(_), _) => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(3)),
     }
@@ -315,20 +328,22 @@ pub fn encode_time(params: &[Value]) -> NativeResult {
 /// the wrong [`Value`] type.
 pub fn inc_month(params: &[Value]) -> NativeResult {
     match (params.get(0), params.get(1).unwrap_or(&Value::Number(1.0))) {
-        (Some(value), Value::Number(increment)) => Ok(NaiveDateTime::try_from(value)
-            .and_then(|datetime| {
+        (Some(value), Value::Number(increment)) => {
+            let datetime = NaiveDateTime::try_from(value).and_then(|datetime| {
                 let delta = Months::new(increment.abs() as u32);
                 if increment > &0.0 {
                     datetime
                         .checked_add_months(delta)
-                        .ok_or(NativeError::from("inc_month overflow"))
+                        .ok_or(NativeError::from("inc_month increment overflow"))
                 } else {
                     datetime
                         .checked_sub_months(delta)
-                        .ok_or(NativeError::from("inc_month undeflow"))
+                        .ok_or(NativeError::from("inc_month decrement underflow"))
                 }
-            })?
-            .into()),
+            })?;
+
+            Ok(Value::from(datetime))
+        }
         (Some(_), _) => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(1)),
     }
@@ -368,7 +383,7 @@ mod test {
     fn time_datetime_to_float() {
         let timestamp =
             NaiveDateTime::parse_from_str("2019-07-24 18:00:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        let time_value = timestamp.into();
+        let time_value = Value::from(timestamp);
 
         assert_eq!(Value::Number(18101.75), time_value);
         assert_eq!(NaiveDateTime::try_from(&time_value).unwrap(), timestamp);
