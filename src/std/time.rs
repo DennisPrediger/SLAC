@@ -1,12 +1,30 @@
-//! Optional module to perform date and time operations using [`Value::Number`]
-//! variables.
+//! Optional module to perform date and time operations using [`Value::Number`].
 //!
-//! # Remarks
+//! While SLAC does not have a dedicated [`Value`] type for timestamps, this module
+//! enables date, time and datetime manipulation on [`Value::Number`] floating
+//! point values.
 //!
-//! Date, time and DateTime values are stored as [`std::primitive::f64`]
-//! doubles. The integral part of a TDateTime value is the **number of days** that
-//! have passed since `31.12.1899`. The fractional part of a TDateTime value is
-//! the `time of day` as a **fraction of 24 hours**.
+//! The integral part of the [`Value::Number`] float is the number of **days**,
+//! which have passed since `midnight, January 1, 1970, UTC` (aka. the UNIX timestamp).
+//! The fractional part is the `time of day` as a **fraction of 24 hours**
+//! (e.g: 0.25 = 06:00 h, 0.75 = 18:00 h).
+//!
+//! This way of representing time is similar to Delphi [`TDateTime`](https://docwiki.embarcadero.com/Libraries/Alexandria/en/System.TDateTime).
+//! Note: In contrast to UNIX Time, Delphi `TDateTime` is 25569 Days ahead,
+//! starting it's count on December 30, 1899.
+//!
+//! Since the integral is the number of days, calculating date offsets is just a
+//! matter of adding integer Days.
+//!
+//! ```slac
+//! encode_date(2023, 12, 24) + 7 = new_years_eve
+//! ```
+//!
+//! Likewise the calculation of a timespan is a simple fraction of a day.
+//!
+//! ```slac
+//! encode_time(12, 30, 00) + (1 / 24) <= now // valid from 13:30:00
+//! ```
 //!
 //! # Chrono
 //!
@@ -32,8 +50,6 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("date_from_rfc3339", Some(1), date_from_rfc3339);
 }
 
-// The number of days between 31.12.1899 and 01.01.1970.
-const UNIX_DATE_DELTA: f64 = 25569.;
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;
 
 impl TryFrom<&Value> for NaiveDateTime {
@@ -42,9 +58,9 @@ impl TryFrom<&Value> for NaiveDateTime {
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Number(value) => {
-                let milliseconds = (value - UNIX_DATE_DELTA) * MILLISECONDS_PER_DAY;
+                let milliseconds = (value * MILLISECONDS_PER_DAY) as i64;
 
-                NaiveDateTime::from_timestamp_millis(milliseconds as i64)
+                NaiveDateTime::from_timestamp_millis(milliseconds)
                     .ok_or(String::from("invalid datetime"))
             }
             _ => Err(String::from("wrong parameter type")),
@@ -54,9 +70,9 @@ impl TryFrom<&Value> for NaiveDateTime {
 
 impl From<NaiveDateTime> for Value {
     fn from(val: NaiveDateTime) -> Self {
-        let milliseconds = val.timestamp_millis() as f64;
+        let milliseconds = val.timestamp_millis();
 
-        Value::Number(UNIX_DATE_DELTA + (milliseconds / MILLISECONDS_PER_DAY))
+        Value::Number(milliseconds as f64 / MILLISECONDS_PER_DAY)
     }
 }
 
@@ -119,10 +135,7 @@ pub fn string_to_time(params: &[Value]) -> Result<Value, String> {
         (Some(Value::String(s)), Value::String(fmt)) => {
             let time = NaiveTime::parse_from_str(s, fmt).map_err(|e| e.to_string())?;
 
-            Ok(NaiveDate::from_ymd_opt(1899, 12, 30)
-                .unwrap_or_default()
-                .and_time(time)
-                .into())
+            Ok(NaiveDate::default().and_time(time).into())
         }
         (Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
@@ -277,12 +290,10 @@ pub fn encode_time(params: &[Value]) -> Result<Value, String> {
             Some(Value::Number(min)),
             Some(Value::Number(sec)),
             Value::Number(milli),
-        ) => NaiveDate::from_ymd_opt(1899, 12, 30)
-            .and_then(|date| {
-                date.and_hms_milli_opt(*hour as u32, *min as u32, *sec as u32, *milli as u32)
-            })
+        ) => NaiveDate::default()
+            .and_hms_milli_opt(*hour as u32, *min as u32, *sec as u32, *milli as u32)
             .and_then(|datetime| datetime.try_into().ok())
-            .ok_or(String::from("invalid date")),
+            .ok_or(String::from("invalid times parameters")),
         (Some(_), Some(_), Some(_), _) => Err(String::from("wrong parameter type")),
         _ => Err(String::from("not enough parameters")),
     }
@@ -346,17 +357,17 @@ mod test {
     use super::{
         date_from_rfc2822, date_from_rfc3339, date_to_rfc2822, date_to_rfc3339, date_to_string,
         day_of_week, encode_date, encode_time, inc_month, is_leap_year, string_to_date,
-        string_to_time,
+        string_to_date_time, string_to_time,
     };
     use crate::Value;
 
     #[test]
     fn time_datetime_to_float() -> Result<(), String> {
         let timestamp =
-            NaiveDateTime::parse_from_str("2019-07-24 16:00:00", "%Y-%m-%d %H:%M:%S").unwrap();
+            NaiveDateTime::parse_from_str("2019-07-24 18:00:00", "%Y-%m-%d %H:%M:%S").unwrap();
         let time_value = timestamp.into();
 
-        assert_eq!(time_value, Value::Number(43670.66666666667));
+        assert_eq!(Value::Number(18101.75), time_value);
 
         assert_eq!(NaiveDateTime::try_from(&time_value)?, timestamp);
         Ok(())
@@ -366,18 +377,26 @@ mod test {
     fn time_date_to_string() {
         let date = date_to_string(&vec![
             Value::String(String::from("%Y-%m-%d %H:%M:%S")),
-            Value::Number(43670.66666666667),
+            Value::Number(18101.75),
         ])
         .unwrap();
 
-        assert_eq!(Value::String(String::from("2019-07-24 16:00:00")), date);
+        assert_eq!(Value::String(String::from("2019-07-24 18:00:00")), date);
     }
 
     #[test]
     fn time_string_to_date() {
         let date = string_to_date(&vec![Value::String(String::from("2019-07-24"))]).unwrap();
 
-        assert_eq!(Value::Number(43670.0), date);
+        assert_eq!(Value::Number(18101.0), date);
+
+        let date = string_to_date(&vec![
+            Value::String(String::from("07/24/2019")),
+            Value::String(String::from("%m/%d/%Y")),
+        ])
+        .unwrap();
+
+        assert_eq!(Value::Number(18101.0), date);
     }
 
     #[test]
@@ -388,23 +407,31 @@ mod test {
     }
 
     #[test]
+    fn time_string_to_date_time() {
+        let date =
+            string_to_date_time(&vec![Value::String(String::from("2019-07-24 12:00:00"))]).unwrap();
+
+        assert_eq!(Value::Number(18101.5), date);
+    }
+
+    #[test]
     fn time_date_from_rfc() {
         assert_eq!(
-            Ok(Value::Number(43670.66666666667)),
+            Ok(Value::Number(18101.75)),
             date_from_rfc2822(&vec![Value::String(String::from(
-                "Wed, 24 Jul 2019 16:00:00 +0000"
+                "Wed, 24 Jul 2019 18:00:00 +0000"
             ))])
         );
 
         assert_eq!(
-            Ok(Value::Number(43670.66666666667)),
-            date_from_rfc3339(&vec![Value::String(String::from("2019-07-24T16:00:00Z"))])
+            Ok(Value::Number(18101.75)),
+            date_from_rfc3339(&vec![Value::String(String::from("2019-07-24T18:00:00Z"))])
         );
     }
 
     #[test]
     fn time_day_of_week() {
-        let day = day_of_week(&vec![Value::Number(43670.66666666667)]);
+        let day = day_of_week(&vec![Value::Number(18101.75)]);
 
         assert_eq!(Ok(Value::Number(2.0)), day);
     }
@@ -417,18 +444,18 @@ mod test {
             Value::Number(24.0),
         ]);
 
-        assert_eq!(Ok(Value::Number(43670.0)), date);
+        assert_eq!(Ok(Value::Number(18101.0)), date);
     }
 
     #[test]
     fn time_encode_time() {
         let time = encode_time(&vec![
-            Value::Number(16.0),
+            Value::Number(18.0),
             Value::Number(0.0),
             Value::Number(0.0),
         ]);
 
-        assert_eq!(Ok(Value::Number(0.6666666666678793)), time);
+        assert_eq!(Ok(Value::Number(0.75)), time);
     }
 
     #[test]
@@ -440,13 +467,13 @@ mod test {
         ]);
 
         let time = encode_time(&vec![
-            Value::Number(16.0),
+            Value::Number(18.0),
             Value::Number(0.0),
             Value::Number(0.0),
         ]);
 
         let datetime = date.unwrap() + time.unwrap();
-        assert_eq!(Value::Number(43670.66666666667), datetime.unwrap());
+        assert_eq!(Value::Number(18101.75), datetime.unwrap());
     }
 
     #[test]
@@ -478,31 +505,50 @@ mod test {
 
     #[test]
     fn time_is_leap_year() {
-        assert_eq!(
-            Ok(Value::Boolean(false)),
-            is_leap_year(&vec![Value::Number(43670.0)])
-        );
-        assert_eq!(
-            Ok(Value::Boolean(true)),
-            is_leap_year(&vec![Value::Number(36526.0)])
-        );
+        let year_2023 = encode_date(&vec![
+            Value::Number(2023.0),
+            Value::Number(1.0),
+            Value::Number(1.0),
+        ])
+        .unwrap();
+
+        let year_2024: Value = encode_date(&vec![
+            Value::Number(2024.0),
+            Value::Number(1.0),
+            Value::Number(1.0),
+        ])
+        .unwrap();
+
+        assert_eq!(Ok(Value::Boolean(false)), is_leap_year(&vec![year_2023]));
+        assert_eq!(Ok(Value::Boolean(true)), is_leap_year(&vec![year_2024]));
     }
 
     #[test]
     fn time_rfc2822() {
-        let rfc = Value::String(String::from("Fri, 28 Nov 2014 12:00:09 +0000"));
+        let rfc = Value::String(String::from("Fri, 28 Nov 2014 12:00:00 +0000"));
         let date = date_from_rfc2822(&vec![rfc.clone()]).unwrap();
 
-        assert_eq!(Value::Number(41971.50010416667), date);
+        assert_eq!(Value::Number(16402.5), date);
         assert_eq!(Ok(rfc), date_to_rfc2822(&vec![date]));
     }
 
     #[test]
     fn time_rfc3339() {
-        let rfc = Value::String(String::from("2014-11-28T12:00:09+00:00"));
+        let rfc = Value::String(String::from("2014-11-28T12:00:00+00:00"));
         let date = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
 
-        assert_eq!(Value::Number(41971.50010416667), date);
+        assert_eq!(Value::Number(16402.5), date);
         assert_eq!(Ok(rfc), date_to_rfc3339(&vec![date]));
+
+        let rfc = Value::String(String::from("2014-11-28T00:00:00+00:00"));
+        let date = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
+
+        assert_eq!(Value::Number(16402.0), date);
+        assert_eq!(Ok(rfc), date_to_rfc3339(&vec![date.clone()]));
+
+        let rfc = Value::String(String::from("2014-11-28T00:00:00Z"));
+        let date_utc = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
+
+        assert_eq!(date, date_utc);
     }
 }
