@@ -2,6 +2,8 @@
 
 use crate::{StaticEnvironment, Value};
 
+use super::error::{NativeError, NativeResult};
+
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
 pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("chr", Some(1), chr);
@@ -22,14 +24,14 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
 /// Returns an error if the supplied number is outside of ASCII character range.
-pub fn chr(params: &[Value]) -> Result<Value, String> {
+pub fn chr(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::Number(value)) if (0.0..127.0).contains(value) => Ok(Value::String(
             char::from_u32(*value as u32).unwrap_or('\0').to_string(),
         )),
-        Some(Value::Number(_)) => Err(String::from("number is out of ASCII range")),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("no parameter supplied")),
+        Some(Value::Number(_)) => Err(NativeError::from("number is out of ASCII range")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -42,7 +44,7 @@ pub fn chr(params: &[Value]) -> Result<Value, String> {
 /// the wrong [`Value`] type.
 /// Returns an error if the supplied [`Value::String`] is longer than one character
 /// or not an ASCII charachter.
-pub fn ord(params: &[Value]) -> Result<Value, String> {
+pub fn ord(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::String(value)) if value.chars().count() == 1 => {
             if value.is_ascii() {
@@ -50,12 +52,12 @@ pub fn ord(params: &[Value]) -> Result<Value, String> {
                     value.chars().next().unwrap_or('\0') as u8,
                 )))
             } else {
-                Err(String::from("string out of ASCII range"))
+                Err(NativeError::from("character is out of ASCII range"))
             }
         }
-        Some(Value::String(_)) => Err(String::from("string is too long")),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("no parameter supplied")),
+        Some(Value::String(_)) => Err(NativeError::from("string is too long")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -65,11 +67,11 @@ pub fn ord(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
-pub fn lowercase(params: &[Value]) -> Result<Value, String> {
+pub fn lowercase(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.to_lowercase())),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("no parameter supplied")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -79,11 +81,11 @@ pub fn lowercase(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
-pub fn uppercase(params: &[Value]) -> Result<Value, String> {
+pub fn uppercase(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.to_uppercase())),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("no parameter supplied")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -93,12 +95,12 @@ pub fn uppercase(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least two parameters are supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
-pub fn same_text(params: &[Value]) -> Result<Value, String> {
+pub fn same_text(params: &[Value]) -> NativeResult {
     match (params.get(0), params.get(1)) {
         (Some(Value::String(left)), Some(Value::String(right))) => {
             Ok(Value::Boolean(left.to_lowercase() == right.to_lowercase()))
         }
-        _ => Err(String::from("no param supplied")),
+        _ => Err(NativeError::NotEnoughParameters(2)),
     }
 }
 
@@ -108,11 +110,11 @@ pub fn same_text(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
-pub fn trim(params: &[Value]) -> Result<Value, String> {
+pub fn trim(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.trim().to_string())),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("no parameter supplied")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -122,11 +124,11 @@ pub fn trim(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
-pub fn trim_left(params: &[Value]) -> Result<Value, String> {
+pub fn trim_left(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.trim_start().to_string())),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("no parameter supplied")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -136,11 +138,11 @@ pub fn trim_left(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
-pub fn trim_right(params: &[Value]) -> Result<Value, String> {
+pub fn trim_right(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::String(value)) => Ok(Value::String(value.trim_end().to_string())),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("no parameter supplied")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 

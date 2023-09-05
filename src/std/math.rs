@@ -5,6 +5,7 @@ use std::{
     hash::{BuildHasher, Hasher},
 };
 
+use super::error::{NativeError, NativeResult};
 use crate::{StaticEnvironment, Value};
 
 pub const PI: f64 = std::f64::consts::PI;
@@ -44,11 +45,11 @@ macro_rules! generate_std_math_functions {
         ///
         /// Returns an error if there is no parameter supplied or the parameter
         /// is not a [`Value::Number`].
-        pub fn $func_name(params: &[Value]) -> Result<Value, String> {
+        pub fn $func_name(params: &[Value]) -> NativeResult {
             match params.get(0) {
                 Some(Value::Number(value)) => Ok(Value::Number(value.$std_func())),
-                Some(_) => Err(String::from("wrong parameter type")),
-                None => Err(String::from("not enough Parameters")),
+                Some(_) => Err(NativeError::WrongParameterType),
+                None => Err(NativeError::NotEnoughParameters(1)),
             }
         }
 
@@ -74,11 +75,11 @@ generate_std_math_functions!(
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn int_to_hex(params: &[Value]) -> Result<Value, String> {
+pub fn int_to_hex(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(Value::Number(value)) => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("not enough Parameters")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -88,11 +89,11 @@ pub fn int_to_hex(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn even(params: &[Value]) -> Result<Value, String> {
-    match params.get(0) {
+pub fn even(params: &[Value]) -> NativeResult {
+    match params.first() {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 == 0)),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("not enough Parameters")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -102,11 +103,11 @@ pub fn even(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn odd(params: &[Value]) -> Result<Value, String> {
-    match params.get(0) {
+pub fn odd(params: &[Value]) -> NativeResult {
+    match params.first() {
         Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 != 0)),
-        Some(_) => Err(String::from("wrong parameter type")),
-        None => Err(String::from("not enough Parameters")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -120,17 +121,11 @@ pub fn odd(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn pow(params: &[Value]) -> Result<Value, String> {
-    match (params.get(0), params.get(1)) {
-        (Some(Value::Number(base)), exp) => {
-            let exp = match exp {
-                Some(Value::Number(exp)) => *exp,
-                _ => 2.0,
-            };
-            Ok(Value::Number(base.powf(exp)))
-        }
-        (Some(_), _) => Err(String::from("wrong parameter type")),
-        _ => Err(String::from("not enough parameters")),
+pub fn pow(params: &[Value]) -> NativeResult {
+    match (params.get(0), params.get(1).unwrap_or(&Value::Number(2.0))) {
+        (Some(Value::Number(base)), Value::Number(exp)) => Ok(Value::Number(base.powf(*exp))),
+        (Some(_), _) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -141,13 +136,13 @@ pub fn pow(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn random(params: &[Value]) -> Result<Value, String> {
+pub fn random(params: &[Value]) -> NativeResult {
     match params.get(0).unwrap_or(&Value::Number(1.0)) {
         Value::Number(range) => {
             let random = RandomState::new().build_hasher().finish();
             Ok(Value::Number((random as f64 / u64::MAX as f64) * range))
         }
-        _ => Err(String::from("wrong parameter type")),
+        _ => Err(NativeError::WrongParameterType),
     }
 }
 
@@ -222,13 +217,9 @@ mod test {
             pow(&vec![Value::Number(10.0), Value::Number(-3.0)]).unwrap()
         );
 
-        assert_eq!(
-            Value::Number(100.0),
-            pow(&vec![Value::Number(10.0), Value::Boolean(true)]).unwrap()
-        );
-
         assert!(pow(&vec![]).is_err());
         assert!(pow(&vec![Value::Boolean(true)]).is_err());
+        assert!(pow(&vec![Value::Number(10.0), Value::Boolean(true)]).is_err());
     }
 
     #[test]

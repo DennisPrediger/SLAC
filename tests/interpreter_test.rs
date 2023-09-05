@@ -1,4 +1,8 @@
-use slac::{compile, execute, std::extend_environment, StaticEnvironment, Value};
+use slac::{
+    compile, execute,
+    std::{extend_environment, NativeResult},
+    StaticEnvironment, Value,
+};
 
 fn execute_raw(script: &str) -> Option<Value> {
     let ast = compile(script).unwrap();
@@ -249,7 +253,7 @@ fn operators_full() {
     );
 }
 
-fn expensive_func(_params: &[Value]) -> Result<Value, String> {
+fn expensive_func(_params: &[Value]) -> NativeResult {
     assert!(false);
     Ok(Value::Boolean(false))
 }

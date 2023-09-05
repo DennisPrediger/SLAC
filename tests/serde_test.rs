@@ -2,7 +2,10 @@
 mod test {
 
     use minify::json::minify;
-    use slac::{check_variables_and_functions, compile, Expression, Operator, StaticEnvironment};
+    use slac::{
+        check_variables_and_functions, compile, std::NativeResult, Expression, Operator,
+        StaticEnvironment,
+    };
 
     fn test_serialize(script: &str, expected: &str) {
         let ast = compile(script).unwrap();
@@ -18,7 +21,7 @@ mod test {
         assert_eq!(input, output);
     }
 
-    fn dummy_func(_params: &[slac::Value]) -> Result<slac::Value, String> {
+    fn dummy_func(_params: &[slac::Value]) -> NativeResult {
         Ok(slac::Value::Boolean(false))
     }
 

@@ -3,6 +3,7 @@
 
 use std::cmp::Ordering;
 
+use super::error::{NativeError, NativeResult};
 use crate::{StaticEnvironment, Value};
 
 /// Extends a [`StaticEnvironment`] with `common` functions.
@@ -37,7 +38,7 @@ fn smart_vec(params: &[Value]) -> &[Value] {
 /// Checks if all members of a [`Value::Array`] are [`Value::Boolean(true)`].
 /// Can be called with a single [`Value::Array`] parameter or as varadic function.
 #[allow(clippy::missing_errors_doc)]
-pub fn all(params: &[Value]) -> Result<Value, String> {
+pub fn all(params: &[Value]) -> NativeResult {
     let values = smart_vec(params);
     let result = values.iter().all(|v| v == &Value::Boolean(true));
 
@@ -47,7 +48,7 @@ pub fn all(params: &[Value]) -> Result<Value, String> {
 /// Checks if any member of a [`Value::Array`] is [`Value::Boolean(true)`].
 /// Can be called with a single [`Value::Array`] parameter or as varadic function.
 #[allow(clippy::missing_errors_doc)]
-pub fn any(params: &[Value]) -> Result<Value, String> {
+pub fn any(params: &[Value]) -> NativeResult {
     let values = smart_vec(params);
     let result = values.iter().any(|v| v == &Value::Boolean(true));
 
@@ -67,7 +68,7 @@ pub fn any(params: &[Value]) -> Result<Value, String> {
 /// # Errors
 ///
 /// Will return an error if not at least one parameter is supplied.
-pub fn bool(params: &[Value]) -> Result<Value, String> {
+pub fn bool(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(value) => match value {
             Value::String(v) => Ok(Value::Boolean(v.to_lowercase() == "true")), // "true" => true, other => false
@@ -77,7 +78,7 @@ pub fn bool(params: &[Value]) -> Result<Value, String> {
             Value::Array(v) => Ok(Value::Boolean(!v.is_empty())), // [] => false, other => true
             Value::Boolean(v) => Ok(Value::Boolean(*v)),          // Boolean => Boolean
         },
-        None => Err(String::from("not enough parameters")),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -90,14 +91,14 @@ pub fn bool(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn contains(params: &[Value]) -> Result<Value, String> {
+pub fn contains(params: &[Value]) -> NativeResult {
     let found = match (params.get(0), params.get(1)) {
         (Some(haystack), Some(needle)) => match (haystack, needle) {
             (Value::String(needle), Value::String(haystack)) => needle.contains(haystack), // search in String
             (Value::Array(haystack), needle) => haystack.iter().any(|v| v == needle), // search in Array
-            _ => return Err(String::from("param types invalid")),
+            _ => return Err(NativeError::WrongParameterType),
         },
-        _ => return Err(String::from("not enough parameters")),
+        _ => return Err(NativeError::NotEnoughParameters(2)),
     };
 
     Ok(Value::Boolean(found))
@@ -109,24 +110,25 @@ pub fn contains(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the [`Value`] are
 /// not comparable.
-pub fn compare(params: &[Value]) -> Result<Value, String> {
+pub fn compare(params: &[Value]) -> NativeResult {
     match (params.get(0), params.get(1)) {
         (Some(left), Some(right)) => Ok(Value::Number(f64::from(
             left.partial_cmp(right)
                 .ok_or(String::from("not comparable"))? as i8,
         ))),
-        _ => Err(String::from("not enough parameters")),
+        _ => Err(NativeError::NotEnoughParameters(2)),
     }
 }
 
 /// Checks if supplied [`Value`] is empty.
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied.
-pub fn empty(params: &[Value]) -> Result<Value, String> {
+pub fn empty(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(value) => Ok(Value::Boolean(value.is_empty())),
-        None => Err(String::from("no parameter supplied")),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -137,7 +139,7 @@ pub fn empty(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least one parameter is supplied or if the [`Value`]
 /// can not be converted.
-pub fn float(params: &[Value]) -> Result<Value, String> {
+pub fn float(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(value) => match value {
             Value::Boolean(v) => Ok(Value::Number(f64::from(*v as i8))),
@@ -146,9 +148,9 @@ pub fn float(params: &[Value]) -> Result<Value, String> {
                 Ok(Value::Number(float))
             }
             Value::Number(v) => Ok(Value::Number(*v)),
-            _ => Err(String::from("value can not be converted to float")),
+            _ => Err(NativeError::WrongParameterType),
         },
-        None => Err(String::from("not enough parameters")),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -159,14 +161,17 @@ pub fn float(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn high(params: &[Value]) -> Result<Value, String> {
+pub fn high(params: &[Value]) -> NativeResult {
     match params.first() {
-        Some(Value::Array(values)) => values.last().cloned().ok_or(String::from("empty array")),
+        Some(Value::Array(values)) => values
+            .last()
+            .cloned()
+            .ok_or(NativeError::from("empty array")),
         Some(Value::String(value)) => Ok(Value::String(
             value.chars().last().unwrap_or_default().to_string(),
         )),
-        Some(_) => Err(String::from("wrong parameter type")),
-        _ => Err(String::from("not enough Parameters")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -177,14 +182,17 @@ pub fn high(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn low(params: &[Value]) -> Result<Value, String> {
+pub fn low(params: &[Value]) -> NativeResult {
     match params.first() {
-        Some(Value::Array(values)) => values.first().cloned().ok_or(String::from("empty array")),
+        Some(Value::Array(values)) => values
+            .first()
+            .cloned()
+            .ok_or(NativeError::from("empty array")),
         Some(Value::String(value)) => Ok(Value::String(
             value.chars().next().unwrap_or_default().to_string(),
         )),
-        Some(_) => Err(String::from("wrong parameter type")),
-        _ => Err(String::from("not enough Parameters")),
+        Some(_) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -195,7 +203,7 @@ pub fn low(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn if_then(params: &[Value]) -> Result<Value, String> {
+pub fn if_then(params: &[Value]) -> NativeResult {
     match (params.get(0), params.get(1), params.get(2)) {
         (Some(Value::Boolean(condition)), Some(first), second) => {
             if *condition {
@@ -204,8 +212,8 @@ pub fn if_then(params: &[Value]) -> Result<Value, String> {
                 Ok(second.cloned().unwrap_or_else(|| first.empty()))
             }
         }
-        (Some(_), _, _) => Err(String::from("wrong parameter type")),
-        _ => Err(String::from("not enough Parameters")),
+        (Some(_), _, _) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(2)),
     }
 }
 
@@ -217,12 +225,12 @@ pub fn if_then(params: &[Value]) -> Result<Value, String> {
 ///
 /// Returns an error if there are not enough parameters, the parameters are of
 /// the wrong [`Value`] type or if the index is out of bounds.
-pub fn insert(params: &[Value]) -> Result<Value, String> {
+pub fn insert(params: &[Value]) -> NativeResult {
     match (params.get(0), params.get(1), params.get(2)) {
         (Some(Value::Array(values)), Some(element), Some(Value::Number(index))) => {
             let index = *index as usize;
             if index > values.len() {
-                return Err(String::from("index out of bounds"));
+                return Err(NativeError::IndexOutOfBounds(index));
             }
 
             let mut values = values.clone();
@@ -233,7 +241,7 @@ pub fn insert(params: &[Value]) -> Result<Value, String> {
         (Some(Value::String(target)), Some(Value::String(source)), Some(Value::Number(index))) => {
             let index = *index as usize;
             if index > target.chars().count() {
-                return Err(String::from("index out of bounds"));
+                return Err(NativeError::IndexOutOfBounds(index));
             }
 
             let before: String = target.chars().take(index).collect();
@@ -241,8 +249,8 @@ pub fn insert(params: &[Value]) -> Result<Value, String> {
 
             Ok(Value::String(before + source + &after))
         }
-        (Some(_), _, Some(_)) => Err(String::from("wrong parameter type")),
-        _ => Err(String::from("not enough Parameters")),
+        (Some(_), _, Some(_)) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(3)),
     }
 }
 
@@ -253,11 +261,10 @@ pub fn insert(params: &[Value]) -> Result<Value, String> {
 ///
 /// Will return an error if not at least one parameter is supplied or if the [`Value`]
 /// can not be converted.
-pub fn int(params: &[Value]) -> Result<Value, String> {
-    if let Value::Number(value) = float(params)? {
-        Ok(Value::Number(value.trunc()))
-    } else {
-        Err(String::from("undefined input value"))
+pub fn int(params: &[Value]) -> NativeResult {
+    match float(params)? {
+        Value::Number(value) => Ok(Value::Number(value.trunc())),
+        _ => Err(NativeError::WrongParameterType),
     }
 }
 
@@ -267,10 +274,10 @@ pub fn int(params: &[Value]) -> Result<Value, String> {
 /// # Errors
 ///
 /// Will return an error if not at least one parameter is supplied.
-pub fn length(params: &[Value]) -> Result<Value, String> {
+pub fn length(params: &[Value]) -> NativeResult {
     match params.first() {
         Some(value) => Ok(Value::Number(value.len() as f64)),
-        None => Err(String::from("no parameter supplied")),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -280,7 +287,7 @@ pub fn length(params: &[Value]) -> Result<Value, String> {
 /// # Errors
 ///
 /// Returns an error if the [`Value::Array`] can not be sorted.
-pub fn max(params: &[Value]) -> Result<Value, String> {
+pub fn max(params: &[Value]) -> NativeResult {
     smart_vec(params)
         .iter()
         .max_by(|a, b| {
@@ -293,7 +300,7 @@ pub fn max(params: &[Value]) -> Result<Value, String> {
             }
         })
         .cloned()
-        .ok_or(String::from("function 'max' failed"))
+        .ok_or(NativeError::NotEnoughParameters(1))
 }
 
 /// Returns the minimum [`Value`] of a [`Value::Array`].
@@ -302,7 +309,7 @@ pub fn max(params: &[Value]) -> Result<Value, String> {
 /// # Errors
 ///
 /// Returns an error if the [`Value::Array`] can not be sorted.
-pub fn min(params: &[Value]) -> Result<Value, String> {
+pub fn min(params: &[Value]) -> NativeResult {
     smart_vec(params)
         .iter()
         .min_by(|a, b| {
@@ -315,7 +322,7 @@ pub fn min(params: &[Value]) -> Result<Value, String> {
             }
         })
         .cloned()
-        .ok_or(String::from("function 'min' failed"))
+        .ok_or(NativeError::NotEnoughParameters(1))
 }
 
 /// Converts any [`Value`] to a [`Value::String`].
@@ -323,11 +330,10 @@ pub fn min(params: &[Value]) -> Result<Value, String> {
 /// # Errors
 /// Will return an error if not at least one parameter is supplied or if the [`Value`]
 /// can not be converted.
-pub fn str(params: &[Value]) -> Result<Value, String> {
-    if let Some(value) = params.first() {
-        Ok(Value::String(value.to_string()))
-    } else {
-        Err(String::from("no parameter supplied"))
+pub fn str(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => Ok(Value::String(value.to_string())),
+        None => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 

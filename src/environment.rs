@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, rc::Rc};
 
-use crate::value::Value;
+use crate::{std::NativeFunction, value::Value};
 
 /// An enum signaling if a compatible function is provided by a [`ValidateEnvironment`].
 pub enum FunctionResult {
@@ -32,10 +32,6 @@ pub trait ValidateEnvironment {
     /// Checks if a function with a given name and a compatible arity exists.
     fn function_exists(&self, name: &str, arity: usize) -> FunctionResult;
 }
-
-/// A function pointer used to execute native Rust functions.
-/// All parameters to the function are inside a single Vec<[`Value`]>.
-pub type NativeFunction = fn(&[Value]) -> Result<Value, String>;
 
 pub struct Function {
     pub func: NativeFunction,

@@ -103,8 +103,8 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, environment::StaticEnvironment, operator::Operator, validate::Error,
-        value::Value,
+        ast::Expression, environment::StaticEnvironment, operator::Operator, std::NativeResult,
+        validate::Error, value::Value,
     };
 
     use super::check_variables_and_functions;
@@ -184,7 +184,7 @@ mod test {
         assert_eq!(Err(Error::MissingFunction(String::from("max"))), result);
     }
 
-    fn dummy_function(_params: &[Value]) -> Result<Value, String> {
+    fn dummy_function(_params: &[Value]) -> NativeResult {
         Ok(Value::Boolean(true))
     }
 
