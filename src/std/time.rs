@@ -50,6 +50,8 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("is_leap_year", Some(1), is_leap_year);
     env.add_native_func("date_from_rfc2822", Some(1), date_from_rfc2822);
     env.add_native_func("date_from_rfc3339", Some(1), date_from_rfc3339);
+    env.add_native_func("date_to_rfc2822", Some(1), date_to_rfc3339);
+    env.add_native_func("date_to_rfc3339", Some(1), date_to_rfc3339);
 }
 
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;
