@@ -10,6 +10,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("ord", Some(1), ord);
     env.add_native_func("lowercase", Some(1), lowercase);
     env.add_native_func("uppercase", Some(1), uppercase);
+    env.add_native_func("replace", Some(3), replace);
     env.add_native_func("same_text", Some(2), same_text);
     env.add_native_func("trim", Some(1), trim);
     env.add_native_func("trim_left", Some(1), trim_left);
@@ -86,6 +87,30 @@ pub fn uppercase(params: &[Value]) -> NativeResult {
         Some(Value::String(value)) => Ok(Value::String(value.to_uppercase())),
         Some(_) => Err(NativeError::WrongParameterType),
         None => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+/// Replaces all matches of a pattern with another string.
+///
+/// # Remarks
+///
+/// If a third parameter is not supplied the replacement will be an empty string.
+///
+/// # Errors
+///
+/// Will return an error if not at least three parameters are supplied or the supplied
+/// [`Value`] is not a [`Value::String`]
+pub fn replace(params: &[Value]) -> NativeResult {
+    match (
+        params.get(0),
+        params.get(1),
+        params.get(2).unwrap_or(&Value::String(String::new())),
+    ) {
+        (Some(Value::String(value)), Some(Value::String(from)), Value::String(to)) => {
+            Ok(Value::String(value.replace(from, to)))
+        }
+        (Some(_), Some(_), _) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(3)),
     }
 }
 
@@ -206,6 +231,44 @@ mod test {
 
         assert!(uppercase(&vec![]).is_err());
         assert!(uppercase(&vec![Value::Boolean(true)]).is_err());
+    }
+
+    #[test]
+    fn string_replace() {
+        assert_eq!(
+            Ok(Value::String(String::from("Hello Moon"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from("World")),
+                Value::String(String::from("Moon"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("Heiio Worid"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from("l")),
+                Value::String(String::from("i"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("Hello"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from(" World")),
+                Value::String(String::from(""))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("Hello"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from(" World"))
+            ])
+        );
     }
 
     #[test]
