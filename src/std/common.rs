@@ -10,6 +10,7 @@ use crate::{StaticEnvironment, Value};
 pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("all", None, all);
     env.add_native_func("any", None, any);
+    env.add_native_func("between", Some(3), between);
     env.add_native_func("bool", Some(1), bool);
     env.add_native_func("contains", Some(2), contains);
     env.add_native_func("compare", Some(2), compare);
@@ -53,6 +54,27 @@ pub fn any(params: &[Value]) -> NativeResult {
     let result = values.iter().any(|v| v == &Value::Boolean(true));
 
     Ok(Value::Boolean(result))
+}
+
+/// Returns a [`Value::Boolean`] indicating if the first parameter falls within
+/// the range of the second and third parameter.
+///
+/// # Remarks
+///
+/// The range includes the lower and upper bounds.
+///
+/// # Errors
+///
+/// Returns an error if there are not enough parameters.
+pub fn between(params: &[Value]) -> NativeResult {
+    match (params.get(0), params.get(1), params.get(2)) {
+        (Some(value), Some(lower), Some(upper)) => {
+            let result = value >= lower && value <= upper;
+
+            Ok(Value::Boolean(result))
+        }
+        _ => Err(NativeError::NotEnoughParameters(3)),
+    }
 }
 
 /// Converts any [`Value`] to a [`Value::Boolean`].
@@ -391,6 +413,45 @@ mod test {
             Value::Boolean(false),
         ])];
         assert_eq!(Value::Boolean(false), any(&values).unwrap());
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn std_between() {
+        assert_eq!(
+            Ok(Value::Boolean(true)),
+            between(&vec![Value::Number(2.0), Value::Number(1.0), Value::Number(3.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Boolean(true)),
+            between(&vec![Value::Number(20.0), Value::Number(20.0), Value::Number(30.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Boolean(true)),
+            between(&vec![Value::Number(3.0), Value::Number(1.0), Value::Number(3.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Boolean(true)),
+            between(&vec![Value::Number(-5.0), Value::Number(-6.0), Value::Number(-4.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Boolean(false)),
+            between(&vec![Value::Number(4.0), Value::Number(1.0), Value::Number(3.0)])
+        );
+
+        assert_eq!(
+            Ok(Value::Boolean(true)),
+            between(&vec![Value::String(String::from("b")), Value::String(String::from("a")), Value::String(String::from("c"))])
+        );
+
+        assert_eq!(
+            Ok(Value::Boolean(false)),
+            between(&vec![Value::String(String::from("a")), Value::String(String::from("b")), Value::String(String::from("c"))])
+        );
     }
 
     #[test]
