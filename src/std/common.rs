@@ -22,6 +22,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("length", Some(1), length);
     env.add_native_func("max", None, max);
     env.add_native_func("min", None, min);
+    env.add_native_func("reverse", Some(1), reverse);
     env.add_native_func("str", Some(1), str);
 }
 
@@ -303,9 +304,25 @@ pub fn min(params: &[Value]) -> NativeResult {
         .ok_or(NativeError::NotEnoughParameters(1))
 }
 
+/// Reverses the items of a [`Value::Array`] or the characters of a [`Value::String`].
+///
+/// # Errors
+///
+/// Will return an error if not at least one parameter is supplied or if the [`Value`]
+/// is not reversible.
+pub fn reverse(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(Value::Array(values)) => Ok(Value::Array(values.iter().cloned().rev().collect())),
+        Some(Value::String(value)) => Ok(Value::String(value.chars().rev().collect())),
+        Some(_) => Err(NativeError::WrongParameterType),
+        None => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
 /// Converts any [`Value`] to a [`Value::String`].
 ///
 /// # Errors
+///
 /// Will return an error if not at least one parameter is supplied or if the [`Value`]
 /// can not be converted.
 pub fn str(params: &[Value]) -> NativeResult {
@@ -720,6 +737,27 @@ mod test {
         assert_eq!(Value::Number(10.0), min(&values).unwrap());
 
         assert!(min(&vec![]).is_err());
+    }
+
+    #[test]
+    fn std_rev() {
+        assert_eq!(
+            Ok(Value::Array(vec![
+                Value::Number(3.0),
+                Value::Number(2.0),
+                Value::Number(1.0)
+            ])),
+            reverse(&vec![Value::Array(vec![
+                Value::Number(1.0),
+                Value::Number(2.0),
+                Value::Number(3.0)
+            ])])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("😎 dlroW olleH"))),
+            reverse(&vec![Value::String(String::from("Hello World 😎"))])
+        );
     }
 
     #[test]
