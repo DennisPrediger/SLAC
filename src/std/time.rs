@@ -30,7 +30,9 @@
 //!
 //! This module uses the [`chrono`] library and can be included using
 //! the `chrono` feature.
-use chrono::{DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
+use chrono::{
+    DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc,
+};
 
 use crate::{StaticEnvironment, Value};
 
@@ -54,6 +56,13 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("date_from_rfc3339", Some(1), date_from_rfc3339);
     env.add_native_func("date_to_rfc2822", Some(1), date_to_rfc3339);
     env.add_native_func("date_to_rfc3339", Some(1), date_to_rfc3339);
+    env.add_native_func("year", Some(1), year);
+    env.add_native_func("month", Some(1), month);
+    env.add_native_func("day", Some(1), day);
+    env.add_native_func("hour", Some(1), hour);
+    env.add_native_func("minute", Some(1), minute);
+    env.add_native_func("second", Some(1), second);
+    env.add_native_func("millisecond", Some(1), millisecond);
 }
 
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;
@@ -372,6 +381,125 @@ pub fn is_leap_year(params: &[Value]) -> NativeResult {
     }
 }
 
+/// Returns the year portion of a supplied DateTime as a [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if no parameter is supplied or the parameters is of the
+/// wrong [`Value`] type.
+pub fn year(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::Number(datetime.year() as f64))
+        }
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+/// Returns the month portion of a supplied DateTime as a [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if no parameter is supplied or the parameters is of the
+/// wrong [`Value`] type.
+pub fn month(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::Number(datetime.month() as f64))
+        }
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+/// Returns the day portion of a supplied DateTime as a [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if no parameter is supplied or the parameters is of the
+/// wrong [`Value`] type.
+pub fn day(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::Number(datetime.day() as f64))
+        }
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+/// Returns the hour portion of a supplied DateTime as a [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if no parameter is supplied or the parameters is of the
+/// wrong [`Value`] type.
+pub fn hour(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::Number(datetime.hour() as f64))
+        }
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+/// Returns the minute portion of a supplied DateTime as a [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if no parameter is supplied or the parameters is of the
+/// wrong [`Value`] type.
+pub fn minute(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::Number(datetime.minute() as f64))
+        }
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+/// Returns the second portion of a supplied DateTime as a [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if no parameter is supplied or the parameters is of the
+/// wrong [`Value`] type.
+pub fn second(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::Number(datetime.second() as f64))
+        }
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+/// Returns the millisecond portion of a supplied DateTime as a [`Value::Number`].
+///
+/// # Errors
+///
+/// Returns an error if no parameter is supplied or the parameters is of the
+/// wrong [`Value`] type.
+pub fn millisecond(params: &[Value]) -> NativeResult {
+    match params.first() {
+        Some(value) => {
+            let datetime = NaiveDateTime::try_from(value)?;
+
+            Ok(Value::Number((datetime.nanosecond() / 1_000_000) as f64))
+        }
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use chrono::NaiveDateTime;
@@ -447,9 +575,10 @@ mod test {
 
     #[test]
     fn time_day_of_week() {
-        let day = day_of_week(&vec![Value::Number(18101.75)]);
-
-        assert_eq!(Ok(Value::Number(2.0)), day);
+        assert_eq!(
+            Ok(Value::Number(2.0)),
+            day_of_week(&vec![Value::Number(18101.75)])
+        );
     }
 
     #[test]
@@ -566,5 +695,19 @@ mod test {
         let date_utc = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
 
         assert_eq!(date, date_utc);
+    }
+
+    #[test]
+    fn time_extract_functions() {
+        let rfc = Value::String(String::from("2023-08-09T10:11:12.013+00:00"));
+        let date = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
+
+        assert_eq!(Ok(Value::Number(2023.0)), year(&vec![date.clone()]));
+        assert_eq!(Ok(Value::Number(08.0)), month(&vec![date.clone()]));
+        assert_eq!(Ok(Value::Number(09.0)), day(&vec![date.clone()]));
+        assert_eq!(Ok(Value::Number(10.0)), hour(&vec![date.clone()]));
+        assert_eq!(Ok(Value::Number(11.0)), minute(&vec![date.clone()]));
+        assert_eq!(Ok(Value::Number(12.0)), second(&vec![date.clone()]));
+        assert_eq!(Ok(Value::Number(13.0)), millisecond(&vec![date.clone()]));
     }
 }
