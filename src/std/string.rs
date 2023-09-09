@@ -12,6 +12,8 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("uppercase", Some(1), uppercase);
     env.add_native_func("replace", Some(3), replace);
     env.add_native_func("same_text", Some(2), same_text);
+    env.add_native_func("split", Some(2), split);
+    env.add_native_func("split_csv", Some(1), split_csv);
     env.add_native_func("trim", Some(1), trim);
     env.add_native_func("trim_left", Some(1), trim_left);
     env.add_native_func("trim_right", Some(1), trim_right);
@@ -119,13 +121,86 @@ pub fn replace(params: &[Value]) -> NativeResult {
 /// # Errors
 ///
 /// Will return an error if not at least two parameters are supplied or the supplied
-/// [`Value`] is not a [`Value::String`]
+/// [`Value`] is not a [`Value::String`].
 pub fn same_text(params: &[Value]) -> NativeResult {
     match (params.get(0), params.get(1)) {
         (Some(Value::String(left)), Some(Value::String(right))) => {
             Ok(Value::Boolean(left.to_lowercase() == right.to_lowercase()))
         }
         _ => Err(NativeError::NotEnoughParameters(2)),
+    }
+}
+
+/// Splits a [`Value::String`] into a [`Value::Array`] according to a seperator string.
+///
+/// # Errors
+///
+/// Will return an error if not at least two parameters are supplied or the supplied
+/// [`Value`] are not of [`Value::String`].
+pub fn split(params: &[Value]) -> NativeResult {
+    match (params.get(0), params.get(1)) {
+        (Some(Value::String(line)), Some(Value::String(seperator))) => {
+            let values = line
+                .split(seperator)
+                .map(String::from)
+                .map(Value::String)
+                .collect();
+
+            Ok(Value::Array(values))
+        }
+        (Some(_), Some(_)) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
+    }
+}
+
+fn char_from_value(value: &Value) -> Option<char> {
+    match value {
+        Value::String(string) if string.len() == 1 => string.chars().next(),
+        _ => None,
+    }
+}
+
+fn parse_csv(line: &str, separator: char) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut field = String::new();
+    let mut in_quotes = false;
+
+    for c in line.chars() {
+        if c == separator && !in_quotes {
+            result.push(field.clone());
+            field.clear();
+        } else if c == '"' {
+            in_quotes = !in_quotes;
+        } else {
+            field.push(c);
+        }
+    }
+
+    result.push(field);
+    result
+}
+
+/// Splits a csv [`Value::String`] into a [`Value::Array`] according to a seperator
+/// character (Default: ';').
+///
+/// # Errors
+///
+/// Will return an error if not at least two parameters are supplied or the supplied
+/// [`Value`] are not of [`Value::String`].
+pub fn split_csv(params: &[Value]) -> NativeResult {
+    match (
+        params.get(0),
+        params.get(1).and_then(char_from_value).unwrap_or(';'),
+    ) {
+        (Some(Value::String(line)), seperator) => {
+            let values = parse_csv(line, seperator)
+                .into_iter()
+                .map(Value::String)
+                .collect();
+            Ok(Value::Array(values))
+        }
+        (Some(_), _) => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -267,6 +342,51 @@ mod test {
             replace(&vec![
                 Value::String(String::from("Hello World")),
                 Value::String(String::from(" World"))
+            ])
+        );
+    }
+
+    #[test]
+    fn string_split_csv() {
+        assert_eq!(
+            Ok(Value::Array(vec![
+                Value::String(String::from("Hello; World")),
+                Value::String(String::from("1234")),
+                Value::String(String::from("")),
+                Value::String(String::from("End"))
+            ])),
+            split_csv(&vec![Value::String(String::from(
+                "\"Hello; World\";1234;;End"
+            ))])
+        );
+
+        assert_eq!(
+            Ok(Value::Array(vec![Value::String(String::new())])),
+            split_csv(&vec![Value::String(String::from(""))])
+        );
+    }
+
+    #[test]
+    fn string_split() {
+        assert_eq!(
+            Ok(Value::Array(vec![
+                Value::String(String::from("\"Hello")),
+                Value::String(String::from(" World\"")),
+                Value::String(String::from("1234")),
+                Value::String(String::from("")),
+                Value::String(String::from("End"))
+            ])),
+            split(&vec![
+                Value::String(String::from("\"Hello; World\";1234;;End")),
+                Value::String(String::from(";"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Array(vec![Value::String(String::new())])),
+            split(&vec![
+                Value::String(String::from("")),
+                Value::String(String::from(";"))
             ])
         );
     }
