@@ -16,8 +16,6 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("compare", Some(2), compare);
     env.add_native_func("empty", Some(1), empty);
     env.add_native_func("float", Some(1), float);
-    env.add_native_func("high", Some(1), high);
-    env.add_native_func("low", Some(1), low);
     env.add_native_func("if_then", Some(2), if_then);
     env.add_native_func("insert", Some(3), insert);
     env.add_native_func("int", Some(1), int);
@@ -173,48 +171,6 @@ pub fn float(params: &[Value]) -> NativeResult {
             _ => Err(NativeError::WrongParameterType),
         },
         None => Err(NativeError::NotEnoughParameters(1)),
-    }
-}
-
-/// Returns the last character of a [`Value::String`] or the last element of a
-/// [`Value::Array`].
-///
-/// # Errors
-///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
-pub fn high(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::Array(values)) => values
-            .last()
-            .cloned()
-            .ok_or(NativeError::from("empty array")),
-        Some(Value::String(value)) => Ok(Value::String(
-            value.chars().last().unwrap_or_default().to_string(),
-        )),
-        Some(_) => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
-    }
-}
-
-/// Returns the first character of a [`Value::String`] or the first element of a
-/// [`Value::Array`].
-///
-/// # Errors
-///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
-pub fn low(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::Array(values)) => values
-            .first()
-            .cloned()
-            .ok_or(NativeError::from("empty array")),
-        Some(Value::String(value)) => Ok(Value::String(
-            value.chars().next().unwrap_or_default().to_string(),
-        )),
-        Some(_) => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
