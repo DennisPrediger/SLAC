@@ -234,6 +234,21 @@ fn std_time() {
         execute_with_stdlib("date_from_rfc3339('2023-08-27T08:30:00Z')"),
         execute_with_stdlib("encode_date(2023,08,27) + encode_time(8,30,0)")
     );
+
+    assert_eq!(
+        Value::Number(18101.5),
+        execute_with_stdlib("string_to_datetime('2019-07-24 12:00:00')")
+    );
+
+    assert_eq!(
+        Value::Number(18101.0),
+        execute_with_stdlib("date(string_to_datetime('2019-07-24 12:00:00'))")
+    );
+
+    assert_eq!(
+        Value::Number(0.5),
+        execute_with_stdlib("time(string_to_datetime('2019-07-24 12:00:00'))")
+    );
 }
 
 #[test]

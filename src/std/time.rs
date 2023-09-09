@@ -38,11 +38,13 @@ use super::error::{NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with `time` conversion functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
+    env.add_native_func("date", Some(1), super::math::trunc);
+    env.add_native_func("time", Some(1), super::math::frac);
     env.add_native_func("date_to_string", Some(2), date_to_string);
     env.add_native_func("time_to_string", Some(2), date_to_string);
     env.add_native_func("string_to_date", Some(1), string_to_date);
     env.add_native_func("string_to_time", Some(1), string_to_time);
-    env.add_native_func("string_to_date_time", Some(1), string_to_date_time);
+    env.add_native_func("string_to_datetime", Some(1), string_to_datetime);
     env.add_native_func("day_of_week", Some(1), day_of_week);
     env.add_native_func("encode_date", Some(3), encode_date);
     env.add_native_func("encode_time", Some(3), encode_time);
@@ -158,7 +160,7 @@ pub fn string_to_time(params: &[Value]) -> NativeResult {
 ///
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
-pub fn string_to_date_time(params: &[Value]) -> NativeResult {
+pub fn string_to_datetime(params: &[Value]) -> NativeResult {
     match (
         params.get(0),
         params
@@ -421,9 +423,9 @@ mod test {
     }
 
     #[test]
-    fn time_string_to_date_time() {
+    fn time_string_to_datetime() {
         let date =
-            string_to_date_time(&vec![Value::String(String::from("2019-07-24 12:00:00"))]).unwrap();
+            string_to_datetime(&vec![Value::String(String::from("2019-07-24 12:00:00"))]).unwrap();
 
         assert_eq!(Value::Number(18101.5), date);
     }

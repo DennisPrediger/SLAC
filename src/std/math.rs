@@ -26,6 +26,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_native_func("frac", Some(1), frac);
     env.add_native_func("ln", Some(1), ln);
     env.add_native_func("sin", Some(1), sin);
+    env.add_native_func("trunc", Some(1), trunc);
     env.add_native_func("sqrt", Some(1), sqrt);
 
     env.add_native_func("int_to_hex", Some(1), int_to_hex);
@@ -66,6 +67,7 @@ generate_std_math_functions!(
     ln ln,
     sin sin,
     sqrt sqrt,
+    trunc trunc,
     round round
 );
 
