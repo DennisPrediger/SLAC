@@ -148,7 +148,7 @@ pub fn trim_right(params: &[Value]) -> NativeResult {
 
 #[cfg(test)]
 mod test {
-    use super::{chr, lowercase, ord, same_text, trim, trim_left, trim_right, uppercase};
+    use super::*;
     use crate::Value;
 
     #[test]

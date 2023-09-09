@@ -339,10 +339,7 @@ pub fn str(params: &[Value]) -> NativeResult {
 
 #[cfg(test)]
 mod test {
-    use super::{
-        all, any, bool, compare, contains, empty, float, if_then, insert, int, length, max, min,
-        str,
-    };
+    use super::*;
     use crate::value::Value;
 
     #[test]

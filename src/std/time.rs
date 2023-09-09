@@ -374,11 +374,7 @@ pub fn is_leap_year(params: &[Value]) -> NativeResult {
 mod test {
     use chrono::NaiveDateTime;
 
-    use super::{
-        date_from_rfc2822, date_from_rfc3339, date_to_rfc2822, date_to_rfc3339, date_to_string,
-        day_of_week, encode_date, encode_time, inc_month, is_leap_year, string_to_date,
-        string_to_date_time, string_to_time,
-    };
+    use super::*;
     use crate::Value;
 
     #[test]

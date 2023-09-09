@@ -148,7 +148,7 @@ pub fn random(params: &[Value]) -> NativeResult {
 
 #[cfg(test)]
 mod test {
-    use super::{abs, even, int_to_hex, odd, pow, random, round};
+    use super::*;
     use crate::Value;
 
     #[test]
