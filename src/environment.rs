@@ -36,6 +36,7 @@ pub trait ValidateEnvironment {
 pub struct Function {
     pub func: NativeFunction,
     pub arity: Option<usize>,
+    pub optionals: usize,
 }
 
 /// An [`Environment`] implementation in which all variables and functions are
@@ -56,9 +57,19 @@ impl StaticEnvironment {
     }
 
     /// Add or update a native function to the Environment.
-    pub fn add_native_func(&mut self, name: &str, arity: Option<usize>, func: NativeFunction) {
+    pub fn add_native_func(
+        &mut self,
+        name: &str,
+        arity: Option<usize>,
+        optionals: usize,
+        func: NativeFunction,
+    ) {
         let name = name.to_lowercase();
-        let value = Rc::new(Function { func, arity });
+        let value = Rc::new(Function {
+            func,
+            arity,
+            optionals,
+        });
 
         self.functions.insert(name, value);
     }
@@ -86,9 +97,16 @@ impl ValidateEnvironment for StaticEnvironment {
         match self.functions.get(&name.to_lowercase()) {
             Some(function) => {
                 match function.arity {
-                    Some(function_arity) if function_arity == arity => FunctionResult::Exists,
+                    Some(function_arity) => {
+                        let range = function_arity..=function_arity + function.optionals;
+
+                        if range.contains(&arity) {
+                            FunctionResult::Exists
+                        } else {
+                            FunctionResult::WrongArity(*range.end())
+                        }
+                    }
                     None => FunctionResult::Exists, // variadic
-                    Some(expected) => FunctionResult::WrongArity(expected),
                 }
             }
             None => FunctionResult::NotFound,

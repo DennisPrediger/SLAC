@@ -6,17 +6,17 @@ use super::error::{NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_native_func("chr", Some(1), chr);
-    env.add_native_func("ord", Some(1), ord);
-    env.add_native_func("lowercase", Some(1), lowercase);
-    env.add_native_func("uppercase", Some(1), uppercase);
-    env.add_native_func("replace", Some(3), replace);
-    env.add_native_func("same_text", Some(2), same_text);
-    env.add_native_func("split", Some(2), split);
-    env.add_native_func("split_csv", Some(1), split_csv);
-    env.add_native_func("trim", Some(1), trim);
-    env.add_native_func("trim_left", Some(1), trim_left);
-    env.add_native_func("trim_right", Some(1), trim_right);
+    env.add_native_func("chr", Some(1), 0, chr);
+    env.add_native_func("ord", Some(1), 0, ord);
+    env.add_native_func("lowercase", Some(1), 0, lowercase);
+    env.add_native_func("uppercase", Some(1), 0, uppercase);
+    env.add_native_func("replace", Some(3), 1, replace);
+    env.add_native_func("same_text", Some(2), 0, same_text);
+    env.add_native_func("split", Some(2), 0, split);
+    env.add_native_func("split_csv", Some(2), 1, split_csv);
+    env.add_native_func("trim", Some(1), 0, trim);
+    env.add_native_func("trim_left", Some(1), 0, trim_left);
+    env.add_native_func("trim_right", Some(1), 0, trim_right);
 }
 
 /// Converts a [`Value::Number`] into a [`Value::String`] containg a single
@@ -191,11 +191,11 @@ fn parse_csv(line: &str, separator: char) -> Vec<String> {
 /// Will return an error if not at least two parameters are supplied or the supplied
 /// [`Value`] are not of [`Value::String`].
 pub fn split_csv(params: &[Value]) -> NativeResult {
-    let seperator = params.get(1).and_then(char_from_value).unwrap_or(';');
+    let separator = params.get(1).and_then(char_from_value).unwrap_or(';');
 
     match params {
         [Value::String(line), ..] => {
-            let values = parse_csv(line, seperator)
+            let values = parse_csv(line, separator)
                 .into_iter()
                 .map(Value::String)
                 .collect();

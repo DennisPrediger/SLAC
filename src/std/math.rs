@@ -19,22 +19,22 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_var("e", Value::Number(E));
     env.add_var("tau", Value::Number(TAU));
 
-    env.add_native_func("abs", Some(1), abs);
-    env.add_native_func("arc_tan", Some(1), arc_tan);
-    env.add_native_func("cos", Some(1), cos);
-    env.add_native_func("exp", Some(1), exp);
-    env.add_native_func("frac", Some(1), frac);
-    env.add_native_func("round", Some(1), round);
-    env.add_native_func("ln", Some(1), ln);
-    env.add_native_func("sin", Some(1), sin);
-    env.add_native_func("sqrt", Some(1), sqrt);
-    env.add_native_func("trunc", Some(1), trunc);
+    env.add_native_func("abs", Some(1), 0, abs);
+    env.add_native_func("arc_tan", Some(1), 0, arc_tan);
+    env.add_native_func("cos", Some(1), 0, cos);
+    env.add_native_func("exp", Some(1), 0, exp);
+    env.add_native_func("frac", Some(1), 0, frac);
+    env.add_native_func("round", Some(1), 0, round);
+    env.add_native_func("ln", Some(1), 0, ln);
+    env.add_native_func("sin", Some(1), 0, sin);
+    env.add_native_func("sqrt", Some(1), 0, sqrt);
+    env.add_native_func("trunc", Some(1), 0, trunc);
 
-    env.add_native_func("int_to_hex", Some(1), int_to_hex);
-    env.add_native_func("even", Some(1), even);
-    env.add_native_func("odd", Some(1), odd);
-    env.add_native_func("pow", None, pow);
-    env.add_native_func("random", Some(1), random);
+    env.add_native_func("int_to_hex", Some(1), 0, int_to_hex);
+    env.add_native_func("even", Some(1), 0, even);
+    env.add_native_func("odd", Some(1), 0, odd);
+    env.add_native_func("pow", Some(2), 1, pow);
+    env.add_native_func("random", Some(1), 1, random);
 }
 
 macro_rules! generate_std_math_functions {

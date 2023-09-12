@@ -40,29 +40,29 @@ use super::error::{NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with `time` conversion functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_native_func("date", Some(1), super::math::trunc);
-    env.add_native_func("time", Some(1), super::math::frac);
-    env.add_native_func("date_to_string", Some(2), date_to_string);
-    env.add_native_func("time_to_string", Some(2), date_to_string);
-    env.add_native_func("string_to_date", Some(1), string_to_date);
-    env.add_native_func("string_to_time", Some(1), string_to_time);
-    env.add_native_func("string_to_datetime", Some(1), string_to_datetime);
-    env.add_native_func("day_of_week", Some(1), day_of_week);
-    env.add_native_func("encode_date", Some(3), encode_date);
-    env.add_native_func("encode_time", Some(3), encode_time);
-    env.add_native_func("inc_month", Some(1), inc_month);
-    env.add_native_func("is_leap_year", Some(1), is_leap_year);
-    env.add_native_func("date_from_rfc2822", Some(1), date_from_rfc2822);
-    env.add_native_func("date_from_rfc3339", Some(1), date_from_rfc3339);
-    env.add_native_func("date_to_rfc2822", Some(1), date_to_rfc3339);
-    env.add_native_func("date_to_rfc3339", Some(1), date_to_rfc3339);
-    env.add_native_func("year", Some(1), year);
-    env.add_native_func("month", Some(1), month);
-    env.add_native_func("day", Some(1), day);
-    env.add_native_func("hour", Some(1), hour);
-    env.add_native_func("minute", Some(1), minute);
-    env.add_native_func("second", Some(1), second);
-    env.add_native_func("millisecond", Some(1), millisecond);
+    env.add_native_func("date", Some(1), 0, super::math::trunc);
+    env.add_native_func("time", Some(1), 0, super::math::frac);
+    env.add_native_func("date_to_string", Some(2), 0, date_to_string);
+    env.add_native_func("time_to_string", Some(2), 0, date_to_string);
+    env.add_native_func("string_to_date", Some(2), 1, string_to_date);
+    env.add_native_func("string_to_time", Some(2), 1, string_to_time);
+    env.add_native_func("string_to_datetime", Some(2), 1, string_to_datetime);
+    env.add_native_func("day_of_week", Some(1), 0, day_of_week);
+    env.add_native_func("encode_date", Some(3), 0, encode_date);
+    env.add_native_func("encode_time", Some(4), 1, encode_time);
+    env.add_native_func("inc_month", Some(2), 1, inc_month);
+    env.add_native_func("is_leap_year", Some(1), 0, is_leap_year);
+    env.add_native_func("date_from_rfc2822", Some(1), 0, date_from_rfc2822);
+    env.add_native_func("date_from_rfc3339", Some(1), 0, date_from_rfc3339);
+    env.add_native_func("date_to_rfc2822", Some(1), 0, date_to_rfc3339);
+    env.add_native_func("date_to_rfc3339", Some(1), 0, date_to_rfc3339);
+    env.add_native_func("year", Some(1), 0, year);
+    env.add_native_func("month", Some(1), 0, month);
+    env.add_native_func("day", Some(1), 0, day);
+    env.add_native_func("hour", Some(1), 0, hour);
+    env.add_native_func("minute", Some(1), 0, minute);
+    env.add_native_func("second", Some(1), 0, second);
+    env.add_native_func("millisecond", Some(1), 0, millisecond);
 }
 
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;
