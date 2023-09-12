@@ -47,10 +47,10 @@ macro_rules! generate_std_math_functions {
         /// Returns an error if there is no parameter supplied or the parameter
         /// is not a [`Value::Number`].
         pub fn $func_name(params: &[Value]) -> NativeResult {
-            match params.get(0) {
-                Some(Value::Number(value)) => Ok(Value::Number(value.$std_func())),
-                Some(_) => Err(NativeError::WrongParameterType),
-                None => Err(NativeError::NotEnoughParameters(1)),
+            match params {
+                [Value::Number(value)] => Ok(Value::Number(value.$std_func())),
+                [_] => Err(NativeError::WrongParameterType),
+                _ => Err(NativeError::NotEnoughParameters(1)),
             }
         }
 
@@ -78,10 +78,10 @@ generate_std_math_functions!(
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
 pub fn int_to_hex(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::Number(value)) => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::Number(value)] => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -92,10 +92,10 @@ pub fn int_to_hex(params: &[Value]) -> NativeResult {
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
 pub fn even(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 == 0)),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 == 0)),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -106,10 +106,10 @@ pub fn even(params: &[Value]) -> NativeResult {
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
 pub fn odd(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::Number(value)) => Ok(Value::Boolean((*value as usize) % 2 != 0)),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 != 0)),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -124,9 +124,15 @@ pub fn odd(params: &[Value]) -> NativeResult {
 /// Returns an error if there are not enough parameters or the parameters are of
 /// the wrong [`Value`] type.
 pub fn pow(params: &[Value]) -> NativeResult {
-    match (params.get(0), params.get(1).unwrap_or(&Value::Number(2.0))) {
-        (Some(Value::Number(base)), Value::Number(exp)) => Ok(Value::Number(base.powf(*exp))),
-        (Some(_), _) => Err(NativeError::WrongParameterType),
+    let exponent = match params.get(1) {
+        Some(Value::Number(exponent)) => *exponent,
+        Some(_) => return Err(NativeError::WrongParameterType),
+        _ => 2.0,
+    };
+
+    match params {
+        [Value::Number(base), ..] => Ok(Value::Number(base.powf(exponent))),
+        [_, ..] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }

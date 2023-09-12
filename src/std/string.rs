@@ -28,13 +28,13 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 /// the wrong [`Value`] type.
 /// Returns an error if the supplied number is outside of ASCII character range.
 pub fn chr(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::Number(value)) if (0.0..127.0).contains(value) => Ok(Value::String(
+    match params {
+        [Value::Number(value)] if (0.0..127.0).contains(value) => Ok(Value::String(
             char::from_u32(*value as u32).unwrap_or('\0').to_string(),
         )),
-        Some(Value::Number(_)) => Err(NativeError::from("number is out of ASCII range")),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+        [Value::Number(_)] => Err(NativeError::from("number is out of ASCII range")),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -48,8 +48,8 @@ pub fn chr(params: &[Value]) -> NativeResult {
 /// Returns an error if the supplied [`Value::String`] is longer than one character
 /// or not an ASCII charachter.
 pub fn ord(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::String(value)) if value.chars().count() == 1 => {
+    match params {
+        [Value::String(value)] if value.chars().count() == 1 => {
             if value.is_ascii() {
                 Ok(Value::Number(f64::from(
                     value.chars().next().unwrap_or('\0') as u8,
@@ -58,9 +58,9 @@ pub fn ord(params: &[Value]) -> NativeResult {
                 Err(NativeError::from("character is out of ASCII range"))
             }
         }
-        Some(Value::String(_)) => Err(NativeError::from("string is too long")),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+        [Value::String(_)] => Err(NativeError::from("string is too long")),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -71,10 +71,10 @@ pub fn ord(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn lowercase(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::String(value)) => Ok(Value::String(value.to_lowercase())),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::String(value)] => Ok(Value::String(value.to_lowercase())),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -85,10 +85,10 @@ pub fn lowercase(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn uppercase(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::String(value)) => Ok(Value::String(value.to_uppercase())),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::String(value)] => Ok(Value::String(value.to_uppercase())),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -103,15 +103,17 @@ pub fn uppercase(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least three parameters are supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn replace(params: &[Value]) -> NativeResult {
-    match (
-        params.get(0),
-        params.get(1),
-        params.get(2).unwrap_or(&Value::String(String::new())),
-    ) {
-        (Some(Value::String(value)), Some(Value::String(from)), Value::String(to)) => {
+    let to = match params.get(2) {
+        Some(Value::String(replacement)) => replacement,
+        Some(_) => return Err(NativeError::WrongParameterType),
+        _ => "",
+    };
+
+    match params {
+        [Value::String(value), Value::String(from), ..] => {
             Ok(Value::String(value.replace(from, to)))
         }
-        (Some(_), Some(_), _) => Err(NativeError::WrongParameterType),
+        [_, _, ..] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(3)),
     }
 }
@@ -123,10 +125,11 @@ pub fn replace(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least two parameters are supplied or the supplied
 /// [`Value`] is not a [`Value::String`].
 pub fn same_text(params: &[Value]) -> NativeResult {
-    match (params.get(0), params.get(1)) {
-        (Some(Value::String(left)), Some(Value::String(right))) => {
+    match params {
+        [Value::String(left), Value::String(right)] => {
             Ok(Value::Boolean(left.to_lowercase() == right.to_lowercase()))
         }
+        [_, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(2)),
     }
 }
@@ -138,8 +141,8 @@ pub fn same_text(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least two parameters are supplied or the supplied
 /// [`Value`] are not of [`Value::String`].
 pub fn split(params: &[Value]) -> NativeResult {
-    match (params.get(0), params.get(1)) {
-        (Some(Value::String(line)), Some(Value::String(seperator))) => {
+    match params {
+        [Value::String(line), Value::String(seperator)] => {
             let values = line
                 .split(seperator)
                 .map(String::from)
@@ -148,7 +151,7 @@ pub fn split(params: &[Value]) -> NativeResult {
 
             Ok(Value::Array(values))
         }
-        (Some(_), Some(_)) => Err(NativeError::WrongParameterType),
+        [_, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
@@ -188,18 +191,17 @@ fn parse_csv(line: &str, separator: char) -> Vec<String> {
 /// Will return an error if not at least two parameters are supplied or the supplied
 /// [`Value`] are not of [`Value::String`].
 pub fn split_csv(params: &[Value]) -> NativeResult {
-    match (
-        params.get(0),
-        params.get(1).and_then(char_from_value).unwrap_or(';'),
-    ) {
-        (Some(Value::String(line)), seperator) => {
+    let seperator = params.get(1).and_then(char_from_value).unwrap_or(';');
+
+    match params {
+        [Value::String(line), ..] => {
             let values = parse_csv(line, seperator)
                 .into_iter()
                 .map(Value::String)
                 .collect();
             Ok(Value::Array(values))
         }
-        (Some(_), _) => Err(NativeError::WrongParameterType),
+        [_, ..] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
@@ -211,10 +213,10 @@ pub fn split_csv(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::String(value)) => Ok(Value::String(value.trim().to_string())),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::String(value)] => Ok(Value::String(value.trim().to_string())),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -225,10 +227,10 @@ pub fn trim(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim_left(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::String(value)) => Ok(Value::String(value.trim_start().to_string())),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::String(value)] => Ok(Value::String(value.trim_start().to_string())),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
@@ -239,10 +241,10 @@ pub fn trim_left(params: &[Value]) -> NativeResult {
 /// Will return an error if not at least one parameter is supplied or the supplied
 /// [`Value`] is not a [`Value::String`]
 pub fn trim_right(params: &[Value]) -> NativeResult {
-    match params.first() {
-        Some(Value::String(value)) => Ok(Value::String(value.trim_end().to_string())),
-        Some(_) => Err(NativeError::WrongParameterType),
-        None => Err(NativeError::NotEnoughParameters(1)),
+    match params {
+        [Value::String(value)] => Ok(Value::String(value.trim_end().to_string())),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::NotEnoughParameters(1)),
     }
 }
 
