@@ -126,8 +126,8 @@ impl<'a> TreeWalkingInterpreter<'a> {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, interpreter::TreeWalkingInterpreter, operator::Operator, std::common::max,
-        value::Value, StaticEnvironment,
+        ast::Expression, interpreter::TreeWalkingInterpreter, operator::Operator,
+        stdlib::common::max, value::Value, StaticEnvironment,
     };
 
     #[test]

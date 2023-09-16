@@ -28,7 +28,7 @@ mod usage {
 }
 
 mod interpreter {
-    use slac::{compile, execute, std::extend_environment, StaticEnvironment, Value};
+    use slac::{compile, execute, stdlib::extend_environment, StaticEnvironment, Value};
 
     #[test]
     fn test_interpreter() {

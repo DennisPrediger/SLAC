@@ -1,6 +1,6 @@
 use slac::{
     compile, execute,
-    std::{extend_environment, NativeResult},
+    stdlib::{extend_environment, NativeResult},
     StaticEnvironment, Value,
 };
 

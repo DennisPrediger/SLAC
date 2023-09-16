@@ -40,7 +40,7 @@ SLAC features a built-in [tree walk interpreter](https://en.wikipedia.org/wiki/I
 Create an `Environment` which houses the variables and user defined functions. Then use the `TreeWalkingInterpreter` class to execute the AST against the environment. Optional use `add_stdlib` to add some common functions.
 
 ```rust
-use slac::{compile, execute, std::extend_environment, StaticEnvironment, Value};
+use slac::{compile, execute, stdlib::extend_environment, StaticEnvironment, Value};
 
 fn main() {
     let ast = compile("max(some_var, 3) > 5").unwrap();

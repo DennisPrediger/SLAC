@@ -6,7 +6,7 @@
 //! # Example
 //! ```
 //! use slac::{check_variables_and_functions, compile, execute, StaticEnvironment, Value};
-//! use slac::std::extend_environment;
+//! use slac::stdlib::extend_environment;
 //!
 //! let ast = compile("max(10, 20) + 1").expect("compiles the ast");
 //! let mut env = StaticEnvironment::default();
@@ -31,7 +31,7 @@ mod error;
 mod interpreter;
 mod operator;
 mod scanner;
-pub mod std;
+pub mod stdlib;
 mod token;
 mod validate;
 mod value;

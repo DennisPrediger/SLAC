@@ -103,7 +103,7 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, environment::StaticEnvironment, operator::Operator, std::NativeResult,
+        ast::Expression, environment::StaticEnvironment, operator::Operator, stdlib::NativeResult,
         validate::Error, value::Value,
     };
 

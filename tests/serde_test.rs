@@ -3,7 +3,7 @@ mod test {
 
     use minify::json::minify;
     use slac::{
-        check_variables_and_functions, compile, std::NativeResult, Expression, Operator,
+        check_variables_and_functions, compile, stdlib::NativeResult, Expression, Operator,
         StaticEnvironment,
     };
 

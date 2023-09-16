@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{std::NativeFunction, value::Value};
+use crate::{stdlib::NativeFunction, value::Value};
 
 /// An enum signaling if a compatible function is provided by a [`ValidateEnvironment`].
 pub enum FunctionResult {
