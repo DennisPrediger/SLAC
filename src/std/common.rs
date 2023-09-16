@@ -72,7 +72,7 @@ pub fn between(params: &[Value]) -> NativeResult {
 
             Ok(Value::Boolean(result))
         }
-        _ => Err(NativeError::NotEnoughParameters(3)),
+        _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
 
@@ -97,7 +97,7 @@ pub fn bool(params: &[Value]) -> NativeResult {
         )),
         [Value::Array(v)] => Ok(Value::Boolean(!v.is_empty())), // [] => false, other => true
         [Value::Boolean(v)] => Ok(Value::Boolean(*v)),          // Boolean => Boolean
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -115,7 +115,7 @@ pub fn contains(params: &[Value]) -> NativeResult {
         [Value::String(haystack), Value::String(needle)] => haystack.contains(needle), // search in String
         [Value::Array(haystack), needle] => haystack.iter().any(|v| v == needle), // search in Array
         [_, _] => return Err(NativeError::WrongParameterType),
-        _ => return Err(NativeError::NotEnoughParameters(2)),
+        _ => return Err(NativeError::WrongParameterCount(2)),
     };
 
     Ok(Value::Boolean(found))
@@ -133,7 +133,7 @@ pub fn compare(params: &[Value]) -> NativeResult {
             left.partial_cmp(right)
                 .ok_or(NativeError::from("values not comparable"))? as i8,
         ))),
-        _ => Err(NativeError::NotEnoughParameters(2)),
+        _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
 
@@ -145,7 +145,7 @@ pub fn compare(params: &[Value]) -> NativeResult {
 pub fn empty(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::Boolean(value.is_empty())),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -165,7 +165,7 @@ pub fn float(params: &[Value]) -> NativeResult {
         }
         [Value::Number(v)] => Ok(Value::Number(*v)),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -186,7 +186,7 @@ pub fn if_then(params: &[Value]) -> NativeResult {
             }
         }
         [_, _] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(2)),
+        _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
 
@@ -223,7 +223,7 @@ pub fn insert(params: &[Value]) -> NativeResult {
             Ok(Value::String(before + source + &after))
         }
         [_, _, _] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(3)),
+        _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
 
@@ -250,7 +250,7 @@ pub fn int(params: &[Value]) -> NativeResult {
 pub fn length(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::Number(value.len() as f64)),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -273,7 +273,7 @@ pub fn max(params: &[Value]) -> NativeResult {
             }
         })
         .cloned()
-        .ok_or(NativeError::NotEnoughParameters(1))
+        .ok_or(NativeError::WrongParameterCount(1))
 }
 
 /// Returns the minimum [`Value`] of a [`Value::Array`].
@@ -295,7 +295,7 @@ pub fn min(params: &[Value]) -> NativeResult {
             }
         })
         .cloned()
-        .ok_or(NativeError::NotEnoughParameters(1))
+        .ok_or(NativeError::WrongParameterCount(1))
 }
 
 /// Reverses the items of a [`Value::Array`] or the characters of a [`Value::String`].
@@ -309,7 +309,7 @@ pub fn reverse(params: &[Value]) -> NativeResult {
         [Value::Array(values)] => Ok(Value::Array(values.iter().cloned().rev().collect())),
         [Value::String(value)] => Ok(Value::String(value.chars().rev().collect())),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -322,7 +322,7 @@ pub fn reverse(params: &[Value]) -> NativeResult {
 pub fn str(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::String(value.to_string())),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 

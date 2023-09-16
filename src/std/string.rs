@@ -34,7 +34,7 @@ pub fn chr(params: &[Value]) -> NativeResult {
         )),
         [Value::Number(_)] => Err(NativeError::from("number is out of ASCII range")),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -60,7 +60,7 @@ pub fn ord(params: &[Value]) -> NativeResult {
         }
         [Value::String(_)] => Err(NativeError::from("string is too long")),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -74,7 +74,7 @@ pub fn lowercase(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.to_lowercase())),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -88,7 +88,7 @@ pub fn uppercase(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.to_uppercase())),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -114,7 +114,7 @@ pub fn replace(params: &[Value]) -> NativeResult {
             Ok(Value::String(value.replace(from, to)))
         }
         [_, _, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(3)),
+        _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
 
@@ -130,7 +130,7 @@ pub fn same_text(params: &[Value]) -> NativeResult {
             Ok(Value::Boolean(left.to_lowercase() == right.to_lowercase()))
         }
         [_, _] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(2)),
+        _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
 
@@ -152,7 +152,7 @@ pub fn split(params: &[Value]) -> NativeResult {
             Ok(Value::Array(values))
         }
         [_, _] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -202,7 +202,7 @@ pub fn split_csv(params: &[Value]) -> NativeResult {
             Ok(Value::Array(values))
         }
         [_, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -216,7 +216,7 @@ pub fn trim(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.trim().to_string())),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -230,7 +230,7 @@ pub fn trim_left(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.trim_start().to_string())),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -244,7 +244,7 @@ pub fn trim_right(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.trim_end().to_string())),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 

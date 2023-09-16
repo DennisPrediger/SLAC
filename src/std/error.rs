@@ -6,7 +6,7 @@ use crate::Value;
 /// `NativeError::CustomError` can be used for general purpose errors.
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum NativeError {
-    NotEnoughParameters(usize),
+    WrongParameterCount(usize),
     WrongParameterType,
     IndexOutOfBounds(usize),
     CustomError(String),
@@ -17,7 +17,7 @@ impl error::Error for NativeError {}
 impl Display for NativeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NativeError::NotEnoughParameters(count) => {
+            NativeError::WrongParameterCount(count) => {
                 write!(f, "not enough parameters: {count} expected")
             }
             NativeError::WrongParameterType => write!(f, "wrong parameter type"),

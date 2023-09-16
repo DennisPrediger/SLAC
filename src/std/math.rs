@@ -42,7 +42,7 @@ macro_rules! generate_std_math_functions {
             match params {
                 [Value::Number(value)] => Ok(Value::Number(value.$std_func())),
                 [_] => Err(NativeError::WrongParameterType),
-                _ => Err(NativeError::NotEnoughParameters(1)),
+                _ => Err(NativeError::WrongParameterCount(1)),
             }
         }
 
@@ -73,7 +73,7 @@ pub fn int_to_hex(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -87,7 +87,7 @@ pub fn even(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 == 0)),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -101,7 +101,7 @@ pub fn odd(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 != 0)),
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -125,7 +125,7 @@ pub fn pow(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(base), ..] => Ok(Value::Number(base.powf(exponent))),
         [_, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 

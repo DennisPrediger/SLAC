@@ -106,7 +106,7 @@ pub fn date_to_string(params: &[Value]) -> NativeResult {
             Ok(Value::String(datetime.format(fmt).to_string()))
         }
         [_, _] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(2)),
+        _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
 
@@ -133,7 +133,7 @@ pub fn string_to_date(params: &[Value]) -> NativeResult {
             Ok(Value::from(datetime))
         }
         [_, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -160,7 +160,7 @@ pub fn string_to_time(params: &[Value]) -> NativeResult {
             Ok(Value::from(datetime))
         }
         [_, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -186,7 +186,7 @@ pub fn string_to_datetime(params: &[Value]) -> NativeResult {
             Ok(Value::from(datetime))
         }
         [_, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -207,7 +207,7 @@ pub fn date_from_rfc2822(params: &[Value]) -> NativeResult {
             Ok(Value::from(datetime))
         }
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -225,7 +225,7 @@ pub fn date_to_rfc2822(params: &[Value]) -> NativeResult {
 
             Ok(Value::String(Utc.from_utc_datetime(&datetime).to_rfc2822()))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -246,7 +246,7 @@ pub fn date_from_rfc3339(params: &[Value]) -> NativeResult {
             Ok(Value::from(datetime))
         }
         [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -264,7 +264,7 @@ pub fn date_to_rfc3339(params: &[Value]) -> NativeResult {
 
             Ok(Value::String(Utc.from_utc_datetime(&datetime).to_rfc3339()))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -280,7 +280,7 @@ pub fn day_of_week(params: &[Value]) -> NativeResult {
             let datetime = NaiveDateTime::try_from(value)?;
             Ok(Value::Number(f64::from(datetime.weekday() as u8)))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -299,7 +299,7 @@ pub fn encode_date(params: &[Value]) -> NativeResult {
                 .ok_or(NativeError::from("invalid date parameters"))
         }
         [_, _, _] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(3)),
+        _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
 
@@ -322,7 +322,7 @@ pub fn encode_time(params: &[Value]) -> NativeResult {
             .map(Value::from)
             .ok_or(NativeError::from("invalid time parameters")),
         [_, _, _, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::NotEnoughParameters(3)),
+        _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
 
@@ -361,7 +361,7 @@ pub fn inc_month(params: &[Value]) -> NativeResult {
 
             Ok(Value::from(datetime))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -380,7 +380,7 @@ pub fn is_leap_year(params: &[Value]) -> NativeResult {
 
             Ok(Value::Boolean(is_leap_year))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -397,7 +397,7 @@ pub fn year(params: &[Value]) -> NativeResult {
 
             Ok(Value::Number(datetime.year() as f64))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -414,7 +414,7 @@ pub fn month(params: &[Value]) -> NativeResult {
 
             Ok(Value::Number(datetime.month() as f64))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -431,7 +431,7 @@ pub fn day(params: &[Value]) -> NativeResult {
 
             Ok(Value::Number(datetime.day() as f64))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -448,7 +448,7 @@ pub fn hour(params: &[Value]) -> NativeResult {
 
             Ok(Value::Number(datetime.hour() as f64))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -465,7 +465,7 @@ pub fn minute(params: &[Value]) -> NativeResult {
 
             Ok(Value::Number(datetime.minute() as f64))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -482,7 +482,7 @@ pub fn second(params: &[Value]) -> NativeResult {
 
             Ok(Value::Number(datetime.second() as f64))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
@@ -499,7 +499,7 @@ pub fn millisecond(params: &[Value]) -> NativeResult {
 
             Ok(Value::Number((datetime.nanosecond() / 1_000_000) as f64))
         }
-        _ => Err(NativeError::NotEnoughParameters(1)),
+        _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
