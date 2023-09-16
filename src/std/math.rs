@@ -8,17 +8,9 @@ use std::{
 use super::error::{NativeError, NativeResult};
 use crate::{StaticEnvironment, Value};
 
-pub const PI: f64 = std::f64::consts::PI;
-pub const E: f64 = std::f64::consts::E;
-pub const TAU: f64 = std::f64::consts::TAU;
-
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::Number`]
 /// variables and various common mathematical constants.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_var("pi", Value::Number(PI));
-    env.add_var("e", Value::Number(E));
-    env.add_var("tau", Value::Number(TAU));
-
     env.add_native_func("abs", Some(1), 0, abs);
     env.add_native_func("arc_tan", Some(1), 0, arc_tan);
     env.add_native_func("cos", Some(1), 0, cos);
