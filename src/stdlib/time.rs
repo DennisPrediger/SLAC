@@ -347,7 +347,7 @@ pub fn inc_month(params: &[Value]) -> NativeResult {
     match params {
         [value, ..] => {
             let datetime = NaiveDateTime::try_from(value).and_then(|datetime| {
-                let delta = Months::new(increment.abs() as u32);
+                let delta = Months::new(increment.unsigned_abs());
                 if increment > 0 {
                     datetime
                         .checked_add_months(delta)
