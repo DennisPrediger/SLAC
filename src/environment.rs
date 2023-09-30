@@ -73,6 +73,11 @@ impl StaticEnvironment {
 
         self.functions.insert(name, value);
     }
+
+    /// Remove a registered native function and return its [`Function`] struct.
+    pub fn remove_function(&mut self, name: &str) -> Option<Rc<Function>> {
+        self.functions.remove(&name.to_lowercase())
+    }
 }
 
 impl Environment for StaticEnvironment {
