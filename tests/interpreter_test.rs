@@ -1,5 +1,5 @@
 use slac::{
-    compile, execute,
+    check_variables_and_functions, compile, execute,
     stdlib::{extend_environment, NativeResult},
     StaticEnvironment, Value,
 };
@@ -115,6 +115,7 @@ fn execute_with_stdlib(script: &str) -> Value {
     let ast = compile(script).unwrap();
     let mut env = StaticEnvironment::default();
     extend_environment(&mut env);
+    check_variables_and_functions(&env, &ast).unwrap();
 
     execute(&env, &ast).unwrap()
 }
@@ -296,5 +297,17 @@ fn empty_var_comparison() {
     assert_eq!(
         Some(Value::Boolean(false)),
         execute_raw("does_not_exist <> ''")
+    );
+}
+
+#[test]
+fn optional_params() {
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib("replace('Hello', 'o', 'p') = 'Hellp'")
+    );
+    assert_eq!(
+        Value::Boolean(true),
+        execute_with_stdlib("replace('Hello', 'o') = 'Hell'")
     );
 }

@@ -11,7 +11,7 @@ pub enum FunctionResult {
     /// No function with the given name was found.
     NotFound,
     /// A function with the same name but an incompatible arity was found.
-    WrongArity(usize),
+    WrongArity(usize, usize),
 }
 
 /// An environment used during the **excution** in the interpreter.
@@ -98,20 +98,22 @@ impl ValidateEnvironment for StaticEnvironment {
         self.variables.contains_key(&name.to_lowercase())
     }
 
-    fn function_exists(&self, name: &str, arity: usize) -> FunctionResult {
+    fn function_exists(&self, name: &str, param_count: usize) -> FunctionResult {
         match self.functions.get(&name.to_lowercase()) {
             Some(function) => {
-                match function.arity {
-                    Some(function_arity) => {
-                        let range = function_arity..=function_arity + function.optionals;
+                if let Some(arity) = function.arity {
+                    let lower = arity - function.optionals;
+                    let upper = arity;
 
-                        if range.contains(&arity) {
-                            FunctionResult::Exists
-                        } else {
-                            FunctionResult::WrongArity(*range.end())
-                        }
+                    if param_count < lower {
+                        FunctionResult::WrongArity(param_count, lower)
+                    } else if param_count > upper {
+                        FunctionResult::WrongArity(param_count, upper)
+                    } else {
+                        FunctionResult::Exists
                     }
-                    None => FunctionResult::Exists, // variadic
+                } else {
+                    FunctionResult::Exists // variadic Function
                 }
             }
             None => FunctionResult::NotFound,
