@@ -276,7 +276,7 @@ fn expensive_func(_params: &[Value]) -> NativeResult {
 #[test]
 fn short_circuit_bool() {
     let mut env = StaticEnvironment::default();
-    env.add_native_func("expensive", None, 0, expensive_func);
+    env.add_function("expensive", None, 0, expensive_func);
 
     let ast = compile("false and expensive()").unwrap();
     let result = execute(&env, &ast);

@@ -49,7 +49,7 @@ pub struct StaticEnvironment {
 
 impl StaticEnvironment {
     /// Add or update a variable to the Environment.
-    pub fn add_var(&mut self, name: &str, value: Value) {
+    pub fn add_variable(&mut self, name: &str, value: Value) {
         let name = name.to_lowercase();
         let value = Rc::new(value);
 
@@ -57,7 +57,7 @@ impl StaticEnvironment {
     }
 
     /// Add or update a native function to the Environment.
-    pub fn add_native_func(
+    pub fn add_function(
         &mut self,
         name: &str,
         arity: Option<usize>,

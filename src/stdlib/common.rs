@@ -8,22 +8,22 @@ use crate::{StaticEnvironment, Value};
 
 /// Extends a [`StaticEnvironment`] with `common` functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_native_func("all", None, 0, all);
-    env.add_native_func("any", None, 0, any);
-    env.add_native_func("between", Some(3), 0, between);
-    env.add_native_func("bool", Some(1), 0, bool);
-    env.add_native_func("contains", Some(2), 0, contains);
-    env.add_native_func("compare", Some(2), 0, compare);
-    env.add_native_func("empty", Some(1), 0, empty);
-    env.add_native_func("float", Some(1), 0, float);
-    env.add_native_func("if_then", Some(3), 1, if_then);
-    env.add_native_func("insert", Some(3), 0, insert);
-    env.add_native_func("int", Some(1), 0, int);
-    env.add_native_func("length", Some(1), 0, length);
-    env.add_native_func("max", None, 0, max);
-    env.add_native_func("min", None, 0, min);
-    env.add_native_func("reverse", Some(1), 0, reverse);
-    env.add_native_func("str", Some(1), 0, str);
+    env.add_function("all", None, 0, all);
+    env.add_function("any", None, 0, any);
+    env.add_function("between", Some(3), 0, between);
+    env.add_function("bool", Some(1), 0, bool);
+    env.add_function("contains", Some(2), 0, contains);
+    env.add_function("compare", Some(2), 0, compare);
+    env.add_function("empty", Some(1), 0, empty);
+    env.add_function("float", Some(1), 0, float);
+    env.add_function("if_then", Some(3), 1, if_then);
+    env.add_function("insert", Some(3), 0, insert);
+    env.add_function("int", Some(1), 0, int);
+    env.add_function("length", Some(1), 0, length);
+    env.add_function("max", None, 0, max);
+    env.add_function("min", None, 0, min);
+    env.add_function("reverse", Some(1), 0, reverse);
+    env.add_function("str", Some(1), 0, str);
 }
 
 /// Return the first parameter if it's an [`Value::Array`] or return all
