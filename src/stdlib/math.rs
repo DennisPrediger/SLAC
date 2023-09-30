@@ -36,8 +36,8 @@ macro_rules! generate_std_math_functions {
         ///
         /// # Errors
         ///
-        /// Returns an error if there is no parameter supplied or the parameter
-        /// is not a [`Value::Number`].
+        /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+        /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
         pub fn $func_name(params: &[Value]) -> NativeResult {
             match params {
                 [Value::Number(value)] => Ok(Value::Number(value.$std_func())),
@@ -67,8 +67,8 @@ generate_std_math_functions!(
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn int_to_hex(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
@@ -81,8 +81,8 @@ pub fn int_to_hex(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn even(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 == 0)),
@@ -95,8 +95,8 @@ pub fn even(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn odd(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 != 0)),
@@ -113,8 +113,8 @@ pub fn odd(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn pow(params: &[Value]) -> NativeResult {
     let exponent = match params.get(1) {
         Some(Value::Number(exponent)) => *exponent,
@@ -134,8 +134,8 @@ pub fn pow(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn random(params: &[Value]) -> NativeResult {
     match params.get(0).unwrap_or(&Value::Number(1.0)) {
         Value::Number(range) => {

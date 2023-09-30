@@ -24,9 +24,9 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
-/// Returns an error if the supplied number is outside of ASCII character range.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+/// Will return [`NativeError::CustomError`] if the supplied number is outside of ASCII character range.
 pub fn chr(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] if (0.0..127.0).contains(value) => Ok(Value::String(
@@ -43,10 +43,9 @@ pub fn chr(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
-/// Returns an error if the supplied [`Value::String`] is longer than one character
-/// or not an ASCII charachter.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+/// Will return [`NativeError::CustomError`] if the supplied number is outside of ASCII character range.
 pub fn ord(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] if value.chars().count() == 1 => {
@@ -89,8 +88,8 @@ pub fn copy(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or the supplied
-/// [`Value`] is not a [`Value::String`]
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn lowercase(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.to_lowercase())),
@@ -103,8 +102,8 @@ pub fn lowercase(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or the supplied
-/// [`Value`] is not a [`Value::String`]
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn uppercase(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.to_uppercase())),
@@ -121,8 +120,8 @@ pub fn uppercase(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least three parameters are supplied or the supplied
-/// [`Value`] is not a [`Value::String`]
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn replace(params: &[Value]) -> NativeResult {
     let to = match params.get(2) {
         Some(Value::String(replacement)) => replacement,
@@ -143,8 +142,8 @@ pub fn replace(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least two parameters are supplied or the supplied
-/// [`Value`] is not a [`Value::String`].
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn same_text(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(left), Value::String(right)] => {
@@ -159,8 +158,8 @@ pub fn same_text(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least two parameters are supplied or the supplied
-/// [`Value`] are not of [`Value::String`].
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn split(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(line), Value::String(seperator)] => {
@@ -209,8 +208,8 @@ fn parse_csv(line: &str, separator: char) -> Vec<String> {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least two parameters are supplied or the supplied
-/// [`Value`] are not of [`Value::String`].
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn split_csv(params: &[Value]) -> NativeResult {
     let separator = params.get(1).and_then(char_from_value).unwrap_or(';');
 
@@ -231,8 +230,8 @@ pub fn split_csv(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or the supplied
-/// [`Value`] is not a [`Value::String`]
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn trim(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.trim().to_string())),
@@ -245,8 +244,8 @@ pub fn trim(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or the supplied
-/// [`Value`] is not a [`Value::String`]
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn trim_left(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.trim_start().to_string())),
@@ -259,8 +258,8 @@ pub fn trim_left(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or the supplied
-/// [`Value`] is not a [`Value::String`]
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn trim_right(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => Ok(Value::String(value.trim_end().to_string())),

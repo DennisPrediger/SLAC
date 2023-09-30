@@ -64,7 +64,7 @@ pub fn any(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn between(params: &[Value]) -> NativeResult {
     match params {
         [value, lower, upper] => {
@@ -88,7 +88,7 @@ pub fn between(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn bool(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(v)] => Ok(Value::Boolean(v.to_lowercase() == "true")), // "true" => true, other => false
@@ -108,8 +108,8 @@ pub fn bool(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn contains(params: &[Value]) -> NativeResult {
     let found = match params {
         [Value::String(haystack), Value::String(needle)] => haystack.contains(needle), // search in String
@@ -125,8 +125,7 @@ pub fn contains(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the [`Value`] are
-/// not comparable.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn compare(params: &[Value]) -> NativeResult {
     match params {
         [left, right] => Ok(Value::Number(f64::from(
@@ -141,7 +140,7 @@ pub fn compare(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn empty(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::Boolean(value.is_empty())),
@@ -154,8 +153,8 @@ pub fn empty(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or if the [`Value`]
-/// can not be converted.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn float(params: &[Value]) -> NativeResult {
     match params {
         [Value::Boolean(v)] => Ok(Value::Number(f64::from(*v as i8))),
@@ -174,8 +173,8 @@ pub fn float(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn if_then(params: &[Value]) -> NativeResult {
     match params {
         [Value::Boolean(condition), first, ..] => {
@@ -196,8 +195,9 @@ pub fn if_then(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters, the parameters are of
-/// the wrong [`Value`] type or if the index is out of bounds.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+/// Will return [`NativeError::IndexOutOfBounds`] if the index parameter does not fit inside the supplied value length.
 pub fn insert(params: &[Value]) -> NativeResult {
     match params {
         [Value::Array(values), element, Value::Number(index)] => {
@@ -232,8 +232,8 @@ pub fn insert(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or if the [`Value`]
-/// can not be converted.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn int(params: &[Value]) -> NativeResult {
     match float(params)? {
         Value::Number(value) => Ok(Value::Number(value.trunc())),
@@ -246,7 +246,7 @@ pub fn int(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn length(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::Number(value.len() as f64)),
@@ -259,7 +259,7 @@ pub fn length(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if the [`Value::Array`] can not be sorted.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn max(params: &[Value]) -> NativeResult {
     smart_vec(params)
         .iter()
@@ -281,7 +281,7 @@ pub fn max(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if the [`Value::Array`] can not be sorted.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn min(params: &[Value]) -> NativeResult {
     smart_vec(params)
         .iter()
@@ -302,8 +302,8 @@ pub fn min(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or if the [`Value`]
-/// is not reversible.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn reverse(params: &[Value]) -> NativeResult {
     match params {
         [Value::Array(values)] => Ok(Value::Array(values.iter().cloned().rev().collect())),
@@ -317,8 +317,7 @@ pub fn reverse(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Will return an error if not at least one parameter is supplied or if the [`Value`]
-/// can not be converted.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn str(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::String(value.to_string())),

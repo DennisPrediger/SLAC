@@ -4,17 +4,18 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{stdlib::NativeFunction, value::Value};
 
-/// An enum signaling if a compatible function is provided by a [`ValidateEnvironment`].
+/// An enum signaling if a matching function is provided by a [`ValidateEnvironment`].
 pub enum FunctionResult {
-    /// A compatible function was found.
+    /// A matching function was found.
     Exists,
-    /// No function with the given name was found.
+    /// No function with was found matching the supplied name.
     NotFound,
-    /// A function with the same name but an incompatible arity was found.
+    /// A function with a matching name, but an incompatible arity was found.
     WrongArity(usize, usize),
 }
 
-/// An environment used during the **excution** in the interpreter.
+/// An environment used by the interpreter when executing an [`Expression`](crate::Expression).
+/// It provides access to variables and native function calls.
 pub trait Environment {
     /// Get a variable [`Value`] from the Environment.
     fn variable(&self, name: &str) -> Option<Rc<Value>>;
@@ -24,15 +25,15 @@ pub trait Environment {
 }
 
 /// An environment used during **validation** of the [`Expression`](crate::Expression).
-/// Only checks for existance.
 pub trait ValidateEnvironment {
-    /// Checks if a variable with a given name exists.
+    /// Checks if a variable with a matching name exists.
     fn variable_exists(&self, name: &str) -> bool;
 
-    /// Checks if a function with a given name and a compatible arity exists.
+    /// Checks if a function with a matchinbg name and compatible arity exists.
     fn function_exists(&self, name: &str, arity: usize) -> FunctionResult;
 }
 
+/// A wrapper to hold the [`NativeFunction`] and its arity.
 pub struct Function {
     pub func: NativeFunction,
     pub arity: Option<usize>,
@@ -48,7 +49,7 @@ pub struct StaticEnvironment {
 }
 
 impl StaticEnvironment {
-    /// Add or update a variable to the Environment.
+    /// Add or update an [`Environment`] variable.
     pub fn add_variable(&mut self, name: &str, value: Value) {
         let name = name.to_lowercase();
         let value = Rc::new(value);
@@ -56,7 +57,7 @@ impl StaticEnvironment {
         self.variables.insert(name, value);
     }
 
-    /// Add or update a native function to the Environment.
+    /// Add or update a [`NativeFunction`].
     pub fn add_function(
         &mut self,
         name: &str,
@@ -74,7 +75,7 @@ impl StaticEnvironment {
         self.functions.insert(name, value);
     }
 
-    /// Remove a registered native function and return its [`Function`] struct.
+    /// Remove a native function and return its [`Function`] struct if it exists.
     pub fn remove_function(&mut self, name: &str) -> Option<Rc<Function>> {
         self.functions.remove(&name.to_lowercase())
     }

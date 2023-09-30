@@ -96,8 +96,8 @@ impl From<NaiveDateTime> for Value {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn date_to_string(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(fmt), value] => {
@@ -115,8 +115,8 @@ pub fn date_to_string(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn string_to_date(params: &[Value]) -> NativeResult {
     let fmt = match params.get(1) {
         Some(Value::String(fmt)) => fmt,
@@ -142,8 +142,8 @@ pub fn string_to_date(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn string_to_time(params: &[Value]) -> NativeResult {
     let fmt = match params.get(1) {
         Some(Value::String(fmt)) => fmt,
@@ -169,8 +169,8 @@ pub fn string_to_time(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn string_to_datetime(params: &[Value]) -> NativeResult {
     let fmt = match params.get(1) {
         Some(Value::String(fmt)) => fmt,
@@ -195,8 +195,8 @@ pub fn string_to_datetime(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn date_from_rfc2822(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => {
@@ -216,8 +216,7 @@ pub fn date_from_rfc2822(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn date_to_rfc2822(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -234,8 +233,8 @@ pub fn date_to_rfc2822(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn date_from_rfc3339(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => {
@@ -255,8 +254,8 @@ pub fn date_from_rfc3339(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn date_to_rfc3339(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -272,8 +271,8 @@ pub fn date_to_rfc3339(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn day_of_week(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -288,8 +287,8 @@ pub fn day_of_week(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn encode_date(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(year), Value::Number(month), Value::Number(day)] => {
@@ -308,8 +307,8 @@ pub fn encode_date(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn encode_time(params: &[Value]) -> NativeResult {
     let milli = match params.get(3) {
         Some(Value::Number(milli)) => *milli,
@@ -335,8 +334,8 @@ pub fn encode_time(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn inc_month(params: &[Value]) -> NativeResult {
     let increment = match params.get(1) {
         Some(Value::Number(increment)) => *increment as i32,
@@ -369,8 +368,8 @@ pub fn inc_month(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if there are not enough parameters or the parameters are of
-/// the wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn is_leap_year(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -388,8 +387,8 @@ pub fn is_leap_year(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if no parameter is supplied or the parameters is of the
-/// wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn year(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -405,8 +404,8 @@ pub fn year(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if no parameter is supplied or the parameters is of the
-/// wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn month(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -422,8 +421,8 @@ pub fn month(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if no parameter is supplied or the parameters is of the
-/// wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn day(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -439,8 +438,8 @@ pub fn day(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if no parameter is supplied or the parameters is of the
-/// wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn hour(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -456,8 +455,8 @@ pub fn hour(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if no parameter is supplied or the parameters is of the
-/// wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn minute(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -473,8 +472,8 @@ pub fn minute(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if no parameter is supplied or the parameters is of the
-/// wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn second(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
@@ -490,8 +489,8 @@ pub fn second(params: &[Value]) -> NativeResult {
 ///
 /// # Errors
 ///
-/// Returns an error if no parameter is supplied or the parameters is of the
-/// wrong [`Value`] type.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn millisecond(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
