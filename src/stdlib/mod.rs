@@ -10,6 +10,8 @@ pub use self::error::NativeResult;
 pub mod common;
 pub mod error;
 pub mod math;
+#[cfg(feature = "regex")]
+pub mod regex;
 pub mod string;
 #[cfg(feature = "chrono")]
 pub mod time;
@@ -26,6 +28,10 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 
     #[cfg(feature = "chrono")]
     time::extend_environment(env);
+
+    #[cfg(feature = "regex")]
+    regex::extend_environment(env);
+}
 
 pub(crate) fn default_string<'a>(
     params: &'a [Value],

@@ -15,6 +15,23 @@ fn execute_test(script: &str) -> Value {
     execute_raw(script).unwrap_or(Value::Boolean(false))
 }
 
+fn execute_with_stdlib(script: &str) -> Value {
+    let ast = compile(script).unwrap();
+    let mut env = StaticEnvironment::default();
+    extend_environment(&mut env);
+    check_variables_and_functions(&env, &ast).unwrap();
+
+    execute(&env, &ast).unwrap()
+}
+
+fn assert_str(script: &str, result: &str) {
+    assert_eq!(execute_with_stdlib(script), execute_raw(result).unwrap());
+}
+
+fn assert_bool(expected: bool, script: &str) {
+    assert_eq!(Value::Boolean(expected), execute_with_stdlib(script));
+}
+
 #[test]
 fn add_number() {
     assert_eq!(Value::Number(2.0), execute_test("1 + 1 "));
@@ -109,15 +126,6 @@ fn invalid_operations() {
     assert!(execute_raw("1 / 'some_string'").is_none());
     assert!(execute_raw("1 mod 'some_string'").is_none());
     assert!(execute_raw("1 div 'some_string'").is_none());
-}
-
-fn execute_with_stdlib(script: &str) -> Value {
-    let ast = compile(script).unwrap();
-    let mut env = StaticEnvironment::default();
-    extend_environment(&mut env);
-    check_variables_and_functions(&env, &ast).unwrap();
-
-    execute(&env, &ast).unwrap()
 }
 
 #[test]
@@ -302,12 +310,61 @@ fn empty_var_comparison() {
 
 #[test]
 fn optional_params() {
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib("replace('Hello', 'o', 'p') = 'Hellp'")
+    assert_bool(true, "replace('Hello', 'o', 'p') = 'Hellp'");
+    assert_bool(true, "replace('Hello', 'o') = 'Hell'");
+    assert_bool(true, "pow(10) = 100");
+    assert_bool(true, "pow(10, 3) = 1000");
+}
+#[test]
+fn regex_is_match() {
+    assert_bool(true, "re_is_match('ABCDE', 'BC')");
+    assert_bool(false, "re_is_match('ABCDE', 'EF')");
+}
+
+#[test]
+fn regex_find() {
+    assert_str("re_find('ABCDE', 'BC')", "['BC']");
+    assert_str(
+        "re_find('an employer has an employee in employment', 'employ(er|ee|ment|ing|able)')",
+        "['employer', 'employee', 'employment']",
     );
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib("replace('Hello', 'o') = 'Hell'")
+    assert_str(
+        r"re_find('john.smith@example.com','([a-z0-9_\.\-]+)@([\da-z\.\-]+)\.([a-z\.]{2,5})')",
+        "['john.smith@example.com']",
     );
+
+    assert_str(r"re_find('12354', '\D')", "[]");
+    assert_str(r"re_find('ABCDE', '\D*')", "['ABCDE']");
+    assert_str(r"re_find('ABCDE', '\D')", "['A','B','C','D','E']");
+}
+
+#[test]
+fn regex_capture() {
+    assert_str(
+        r"re_capture('john.smith@example.com', '(.*)@(.*)\.(.*)')",
+        r"['john.smith@example.com', 'john.smith', 'example', 'com']",
+    );
+
+    assert_str(
+        r"re_capture('john.smith@example', '(.*)@(.*)\.?(.*)?')",
+        r"['john.smith@example', 'john.smith', 'example', '']",
+    );
+
+    assert_str(
+        r"re_capture('11 aa 22 bb', '(\d{2})\W(\D{2})')",
+        r"['11 aa', '11', 'aa']",
+    );
+
+    assert_str(r"re_capture('111', '(\D)(\D)')", r"['', '', '']");
+}
+
+#[test]
+fn regex_replace() {
+    assert_str(
+        r"re_replace('john.smith@example.com', '(.*)@(.*)\.(.*)', '$1@test.$3')",
+        r"'john.smith@test.com'",
+    );
+
+    assert_str(r"re_replace('AAAAAA', 'A', 'B')", r"'BBBBBB'");
+    assert_str(r"re_replace('AAAAAA', 'A', 'B', 3)", r"'BBBAAA'");
 }

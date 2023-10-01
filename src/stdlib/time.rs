@@ -28,7 +28,7 @@
 //!
 //! # Chrono
 //!
-//! This module uses the [`chrono`] library and can be included using
+//! This module uses the [`chrono`] crate and can be included using
 //! the `chrono` feature.
 use chrono::{
     DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc,
