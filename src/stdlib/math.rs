@@ -5,7 +5,10 @@ use std::{
     hash::{BuildHasher, Hasher},
 };
 
-use super::error::{NativeError, NativeResult};
+use super::{
+    default_number,
+    error::{NativeError, NativeResult},
+};
 use crate::{StaticEnvironment, Value};
 
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::Number`]
@@ -116,11 +119,7 @@ pub fn odd(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn pow(params: &[Value]) -> NativeResult {
-    let exponent = match params.get(1) {
-        Some(Value::Number(exponent)) => *exponent,
-        Some(_) => return Err(NativeError::WrongParameterType),
-        _ => 2.0,
-    };
+    let exponent = default_number(params, 1, 2.0)?;
 
     match params {
         [Value::Number(base), ..] => Ok(Value::Number(base.powf(exponent))),
@@ -137,13 +136,10 @@ pub fn pow(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn random(params: &[Value]) -> NativeResult {
-    match params.get(0).unwrap_or(&Value::Number(1.0)) {
-        Value::Number(range) => {
-            let random = RandomState::new().build_hasher().finish();
-            Ok(Value::Number((random as f64 / u64::MAX as f64) * range))
-        }
-        _ => Err(NativeError::WrongParameterType),
-    }
+    let range = default_number(params, 0, 1.0)?;
+
+    let random = RandomState::new().build_hasher().finish();
+    Ok(Value::Number((random as f64 / u64::MAX as f64) * range))
 }
 
 #[cfg(test)]

@@ -26,4 +26,27 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 
     #[cfg(feature = "chrono")]
     time::extend_environment(env);
+
+pub(crate) fn default_string<'a>(
+    params: &'a [Value],
+    index: usize,
+    default: &'a str,
+) -> Result<&'a str, NativeError> {
+    match params.get(index) {
+        Some(Value::String(value)) => Ok(value),
+        Some(_) => Err(NativeError::WrongParameterType),
+        _ => Ok(default),
+    }
+}
+
+pub(crate) fn default_number(
+    params: &[Value],
+    index: usize,
+    default: f64,
+) -> Result<f64, NativeError> {
+    match params.get(index) {
+        Some(Value::Number(value)) => Ok(value.clone()),
+        Some(_) => Err(NativeError::WrongParameterType),
+        _ => Ok(default),
+    }
 }

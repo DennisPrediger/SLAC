@@ -36,7 +36,10 @@ use chrono::{
 
 use crate::{StaticEnvironment, Value};
 
-use super::error::{NativeError, NativeResult};
+use super::{
+    default_number, default_string,
+    error::{NativeError, NativeResult},
+};
 
 /// Extends a [`StaticEnvironment`] with `time` conversion functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
@@ -118,11 +121,7 @@ pub fn date_to_string(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn string_to_date(params: &[Value]) -> NativeResult {
-    let fmt = match params.get(1) {
-        Some(Value::String(fmt)) => fmt,
-        Some(_) => return Err(NativeError::WrongParameterType),
-        _ => "%Y-%m-%d",
-    };
+    let fmt = default_string(params, 1, "%Y-%m-%d")?;
 
     match params {
         [Value::String(s), ..] => {
@@ -145,11 +144,7 @@ pub fn string_to_date(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn string_to_time(params: &[Value]) -> NativeResult {
-    let fmt = match params.get(1) {
-        Some(Value::String(fmt)) => fmt,
-        Some(_) => return Err(NativeError::WrongParameterType),
-        _ => "%H:%M:%S",
-    };
+    let fmt = default_string(params, 1, "%H:%M:%S")?;
 
     match params {
         [Value::String(s), ..] => {
@@ -172,11 +167,7 @@ pub fn string_to_time(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn string_to_datetime(params: &[Value]) -> NativeResult {
-    let fmt = match params.get(1) {
-        Some(Value::String(fmt)) => fmt,
-        Some(_) => return Err(NativeError::WrongParameterType),
-        _ => "%Y-%m-%d %H:%M:%S",
-    };
+    let fmt = default_string(params, 1, "%Y-%m-%d %H:%M:%S")?;
 
     match params {
         [Value::String(s), ..] => {
@@ -310,10 +301,7 @@ pub fn encode_date(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn encode_time(params: &[Value]) -> NativeResult {
-    let milli = match params.get(3) {
-        Some(Value::Number(milli)) => *milli,
-        _ => 0.0,
-    };
+    let milli = default_number(params, 3, 0.0)?;
 
     match params {
         [Value::Number(hour), Value::Number(min), Value::Number(sec), ..] => NaiveDate::default()
@@ -337,24 +325,23 @@ pub fn encode_time(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn inc_month(params: &[Value]) -> NativeResult {
-    let increment = match params.get(1) {
-        Some(Value::Number(increment)) => *increment as i32,
-        Some(_) => return Err(NativeError::WrongParameterType),
-        _ => 1,
-    };
+    let increment = default_number(params, 1, 1.0)?;
 
     match params {
         [value, ..] => {
             let datetime = NaiveDateTime::try_from(value).and_then(|datetime| {
-                let delta = Months::new(increment.unsigned_abs());
-                if increment > 0 {
+                let delta = Months::new((increment as i32).unsigned_abs());
+
+                if increment > 0.0 {
                     datetime
                         .checked_add_months(delta)
                         .ok_or(NativeError::from("inc_month increment overflow"))
-                } else {
+                } else if increment < 0.0 {
                     datetime
                         .checked_sub_months(delta)
                         .ok_or(NativeError::from("inc_month decrement underflow"))
+                } else {
+                    Ok(datetime)
                 }
             })?;
 

@@ -2,7 +2,10 @@
 
 use crate::{StaticEnvironment, Value};
 
-use super::error::{NativeError, NativeResult};
+use super::{
+    default_string,
+    error::{NativeError, NativeResult},
+};
 
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
 pub fn extend_environment(env: &mut StaticEnvironment) {
@@ -123,11 +126,7 @@ pub fn uppercase(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn replace(params: &[Value]) -> NativeResult {
-    let to = match params.get(2) {
-        Some(Value::String(replacement)) => replacement,
-        Some(_) => return Err(NativeError::WrongParameterType),
-        _ => "",
-    };
+    let to = default_string(params, 2, "")?;
 
     match params {
         [Value::String(value), Value::String(from), ..] => {
