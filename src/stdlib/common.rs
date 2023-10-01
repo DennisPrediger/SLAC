@@ -10,6 +10,7 @@ use crate::{StaticEnvironment, Value};
 pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_function("all", None, 0, all);
     env.add_function("any", None, 0, any);
+    env.add_function("at", Some(2), 0, at);
     env.add_function("between", Some(3), 0, between);
     env.add_function("bool", Some(1), 0, bool);
     env.add_function("contains", Some(2), 0, contains);
@@ -53,6 +54,21 @@ pub fn any(params: &[Value]) -> NativeResult {
     let result = values.iter().any(|v| v == &Value::Boolean(true));
 
     Ok(Value::Boolean(result))
+}
+
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+pub fn at(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::Array(values), Value::Number(index)] => match values.get(*index as usize) {
+            Some(value) => Ok(value.clone()),
+            None => return Err(NativeError::IndexOutOfBounds(*index as usize)),
+        },
+        [_, _] => return Err(NativeError::WrongParameterType),
+        _ => return Err(NativeError::WrongParameterCount(2)),
+    }
 }
 
 /// Returns a [`Value::Boolean`] indicating if the first parameter falls within

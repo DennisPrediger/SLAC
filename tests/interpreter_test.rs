@@ -368,3 +368,15 @@ fn regex_replace() {
     assert_str(r"re_replace('AAAAAA', 'A', 'B')", r"'BBBBBB'");
     assert_str(r"re_replace('AAAAAA', 'A', 'B', 3)", r"'BBBAAA'");
 }
+
+#[test]
+fn array_at() {
+    assert_str(r"at([1, 'Test', true], 0)", r"1");
+    assert_str(r"at([1, 'Test', true], 1)", r"'Test'");
+    assert_str(r"at([1, 'Test', true], 2)", r"true");
+
+    assert_str(
+        r"at(re_capture('john.smith@example.com', '(.*)@(.*)\.(.*)'), 2)",
+        r"'example'",
+    );
+}
