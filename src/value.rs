@@ -169,7 +169,8 @@ impl Value {
     }
 
     /// Returns an new empty [`Value`] of the same type as the callee.
-    pub fn empty(&self) -> Value {
+    #[must_use]
+    pub fn empty(&self) -> Self {
         match self {
             Value::Boolean(_) => Value::Boolean(false),
             Value::String(_) => Value::String(String::new()),

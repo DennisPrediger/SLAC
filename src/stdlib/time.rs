@@ -381,7 +381,7 @@ pub fn year(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::Number(datetime.year() as f64))
+            Ok(Value::Number(f64::from(datetime.year())))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -398,7 +398,7 @@ pub fn month(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::Number(datetime.month() as f64))
+            Ok(Value::Number(f64::from(datetime.month())))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -415,7 +415,7 @@ pub fn day(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::Number(datetime.day() as f64))
+            Ok(Value::Number(f64::from(datetime.day())))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -432,7 +432,7 @@ pub fn hour(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::Number(datetime.hour() as f64))
+            Ok(Value::Number(f64::from(datetime.hour())))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -449,7 +449,7 @@ pub fn minute(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::Number(datetime.minute() as f64))
+            Ok(Value::Number(f64::from(datetime.minute())))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -466,7 +466,7 @@ pub fn second(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::Number(datetime.second() as f64))
+            Ok(Value::Number(f64::from(datetime.second())))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -483,7 +483,7 @@ pub fn millisecond(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::Number((datetime.nanosecond() / 1_000_000) as f64))
+            Ok(Value::Number(f64::from(datetime.nanosecond() / 1_000_000)))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }

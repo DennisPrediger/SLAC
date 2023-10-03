@@ -70,19 +70,19 @@ pub fn at(params: &[Value]) -> NativeResult {
 
             match values.get(index) {
                 Some(value) => Ok(value.clone()),
-                None => return Err(NativeError::IndexOutOfBounds(index)),
+                None => Err(NativeError::IndexOutOfBounds(index)),
             }
         }
         [Value::String(values), Value::Number(index)] => {
             let index = get_index(index)?;
 
-            match values.chars().skip(index).next() {
+            match values.chars().nth(index) {
                 Some(char) => Ok(Value::String(char.to_string())),
-                None => return Err(NativeError::IndexOutOfBounds(index)),
+                None => Err(NativeError::IndexOutOfBounds(index)),
             }
         }
-        [_, _] => return Err(NativeError::WrongParameterType),
-        _ => return Err(NativeError::WrongParameterCount(2)),
+        [_, _] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
 
@@ -115,7 +115,7 @@ pub fn between(params: &[Value]) -> NativeResult {
 /// * [`Value::Boolean`]: stays the same
 /// * [`Value::Number`]: true = 1.0
 /// * [`Value::String`]: true = "true" (case insensitive)
-/// * [`Value::Array`]: true = !is_empty()
+/// * [`Value::Array`]: true = `!is_empty()`
 ///
 /// # Errors
 ///
@@ -188,7 +188,7 @@ pub fn empty(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn float(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Boolean(v)] => Ok(Value::Number(f64::from(*v as i8))),
+        [Value::Boolean(v)] => Ok(Value::Number(f64::from(i8::from(*v)))),
         [Value::String(v)] => {
             let float = v.parse::<f64>().map_err(|e| e.to_string())?;
             Ok(Value::Number(float))

@@ -51,7 +51,7 @@ pub(crate) fn default_number(
     default: f64,
 ) -> Result<f64, NativeError> {
     match params.get(index) {
-        Some(Value::Number(value)) => Ok(value.clone()),
+        Some(Value::Number(value)) => Ok(*value),
         Some(_) => Err(NativeError::WrongParameterType),
         _ => Ok(default),
     }
