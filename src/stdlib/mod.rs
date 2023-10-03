@@ -56,3 +56,11 @@ pub(crate) fn default_number(
         _ => Ok(default),
     }
 }
+
+pub(crate) fn get_index(index: &f64) -> Result<usize, NativeError> {
+    if index >= &0.0 {
+        Ok(*index as usize)
+    } else {
+        Err(NativeError::IndexNegative)
+    }
+}

@@ -3,7 +3,10 @@
 
 use std::cmp::Ordering;
 
-use super::error::{NativeError, NativeResult};
+use super::{
+    error::{NativeError, NativeResult},
+    get_index,
+};
 use crate::{StaticEnvironment, Value};
 
 /// Extends a [`StaticEnvironment`] with `common` functions.
@@ -62,10 +65,22 @@ pub fn any(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn at(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Array(values), Value::Number(index)] => match values.get(*index as usize) {
-            Some(value) => Ok(value.clone()),
-            None => return Err(NativeError::IndexOutOfBounds(*index as usize)),
-        },
+        [Value::Array(values), Value::Number(index)] => {
+            let index = get_index(index)?;
+
+            match values.get(index) {
+                Some(value) => Ok(value.clone()),
+                None => return Err(NativeError::IndexOutOfBounds(index)),
+            }
+        }
+        [Value::String(values), Value::Number(index)] => {
+            let index = get_index(index)?;
+
+            match values.chars().skip(index).next() {
+                Some(char) => Ok(Value::String(char.to_string())),
+                None => return Err(NativeError::IndexOutOfBounds(index)),
+            }
+        }
         [_, _] => return Err(NativeError::WrongParameterType),
         _ => return Err(NativeError::WrongParameterCount(2)),
     }
@@ -217,7 +232,7 @@ pub fn if_then(params: &[Value]) -> NativeResult {
 pub fn insert(params: &[Value]) -> NativeResult {
     match params {
         [Value::Array(values), element, Value::Number(index)] => {
-            let index = *index as usize;
+            let index = get_index(index)?;
             if index > values.len() {
                 return Err(NativeError::IndexOutOfBounds(index));
             }
@@ -228,7 +243,7 @@ pub fn insert(params: &[Value]) -> NativeResult {
             Ok(Value::Array(values))
         }
         [Value::String(target), Value::String(source), Value::Number(index)] => {
-            let index = *index as usize;
+            let index = get_index(index)?;
             if index > target.chars().count() {
                 return Err(NativeError::IndexOutOfBounds(index));
             }

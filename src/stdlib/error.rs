@@ -9,6 +9,7 @@ pub enum NativeError {
     WrongParameterCount(usize),
     WrongParameterType,
     IndexOutOfBounds(usize),
+    IndexNegative,
     CustomError(String),
 }
 
@@ -22,6 +23,7 @@ impl Display for NativeError {
             }
             NativeError::WrongParameterType => write!(f, "wrong parameter type"),
             NativeError::IndexOutOfBounds(index) => write!(f, "index {index} is out of bounds"),
+            NativeError::IndexNegative => write!(f, "index must not be negative"),
             NativeError::CustomError(msg) => write!(f, "{msg}"),
         }
     }

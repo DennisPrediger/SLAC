@@ -50,6 +50,10 @@ fn assert_num(expected: f64, script: &str) {
     assert_eq!(Some(Value::Number(expected)), execute_with_stdlib(script));
 }
 
+fn assert_err(script: &str) {
+    assert!(execute_with_stdlib(script).is_none());
+}
+
 #[test]
 fn add_number() {
     assert_eq!(Value::Number(2.0), execute_test("1 + 1 "));
@@ -346,4 +350,15 @@ fn array_at() {
         r"at(re_capture('john.smith@example.com', '(.*)@(.*)\.(.*)'), 2)",
         r"'example'",
     );
+
+    assert_err("at([1,2], 10)");
+    assert_err("at([1,2], -1)");
+}
+
+#[test]
+fn string_at() {
+    assert_execute("at('abc', 0)", "'a'");
+    assert_execute("at('abc', 1)", "'b'");
+    assert_err("at('123', 3)");
+    assert_err("at(123, 1)");
 }
