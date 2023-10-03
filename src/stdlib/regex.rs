@@ -2,8 +2,7 @@
 //!
 //! # Regex
 //!
-//! This moduzles uses the [`regex`] crate and can be included using
-//! the `regex` feature.
+//! This modules uses the [`regex`] crate and can be included using the `regex` feature.
 
 use regex::{Captures, Regex};
 
@@ -20,6 +19,12 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 }
 
 /// Checks if a regex matches a [`Value::String`].
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
 pub fn is_match(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(haystack), Value::String(needle)] => {
@@ -33,6 +38,12 @@ pub fn is_match(params: &[Value]) -> NativeResult {
 }
 
 /// Finds non overlapping matches for a given regex inside a [`Value::String`].
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
 pub fn find(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(haystack), Value::String(re)] => {
@@ -61,6 +72,12 @@ fn get_capture_groups(captures: Captures) -> Vec<Value> {
 }
 
 /// Returns the matches of all regex capture groups inside a [`Value::String`].
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
 pub fn capture(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(haystack), Value::String(re)] => {
@@ -79,6 +96,12 @@ pub fn capture(params: &[Value]) -> NativeResult {
 }
 
 /// Replaces all regex matches inside a [`Value::String`] with a replacement [`Value::String`].
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
 pub fn replace(params: &[Value]) -> NativeResult {
     let rep = default_string(params, 2, "")?;
     let limit = default_number(params, 3, 0.0)? as usize;
