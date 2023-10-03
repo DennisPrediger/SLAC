@@ -204,6 +204,7 @@ fn std_lib_full() {
 }
 
 #[test]
+#[cfg(feature = "chrono")]
 fn std_time() {
     assert_bool(
         true,
@@ -286,13 +287,16 @@ fn optional_params() {
     assert_bool(true, "pow(10) = 100");
     assert_bool(true, "pow(10, 3) = 1000");
 }
+
 #[test]
+#[cfg(feature = "regex")]
 fn regex_is_match() {
     assert_bool(true, "re_is_match('ABCDE', 'BC')");
     assert_bool(false, "re_is_match('ABCDE', 'EF')");
 }
 
 #[test]
+#[cfg(feature = "regex")]
 fn regex_find() {
     assert_execute("re_find('ABCDE', 'BC')", "['BC']");
     assert_execute(
@@ -310,6 +314,7 @@ fn regex_find() {
 }
 
 #[test]
+#[cfg(feature = "regex")]
 fn regex_capture() {
     assert_execute(
         r"re_capture('john.smith@example.com', '(.*)@(.*)\.(.*)')",
@@ -330,6 +335,7 @@ fn regex_capture() {
 }
 
 #[test]
+#[cfg(feature = "regex")]
 fn regex_replace() {
     assert_execute(
         r"re_replace('john.smith@example.com', '(.*)@(.*)\.(.*)', '$1@test.$3')",
@@ -346,6 +352,7 @@ fn array_at() {
     assert_execute(r"at([1, 'Test', true], 1)", r"'Test'");
     assert_execute(r"at([1, 'Test', true], 2)", r"true");
 
+    #[cfg(feature = "regex")]
     assert_execute(
         r"at(re_capture('john.smith@example.com', '(.*)@(.*)\.(.*)'), 2)",
         r"'example'",
