@@ -15,21 +15,39 @@ fn execute_test(script: &str) -> Value {
     execute_raw(script).unwrap_or(Value::Boolean(false))
 }
 
-fn execute_with_stdlib(script: &str) -> Value {
-    let ast = compile(script).unwrap();
+fn execute_with_stdlib(script: &str) -> Option<Value> {
+    let ast = compile(script).ok()?;
     let mut env = StaticEnvironment::default();
     extend_environment(&mut env);
-    check_variables_and_functions(&env, &ast).unwrap();
+    check_variables_and_functions(&env, &ast).ok()?;
 
-    execute(&env, &ast).unwrap()
+    let result = execute(&env, &ast);
+    result
 }
 
-fn assert_str(script: &str, result: &str) {
-    assert_eq!(execute_with_stdlib(script), execute_raw(result).unwrap());
+fn assert_execute(left: &str, right: &str) {
+    let left = execute_with_stdlib(left);
+    assert!(left.is_some());
+
+    let right = execute_with_stdlib(right);
+    assert!(right.is_some());
+
+    assert_eq!(left, right);
 }
 
 fn assert_bool(expected: bool, script: &str) {
-    assert_eq!(Value::Boolean(expected), execute_with_stdlib(script));
+    assert_eq!(Some(Value::Boolean(expected)), execute_with_stdlib(script));
+}
+
+fn assert_str(expected: &str, script: &str) {
+    assert_eq!(
+        Some(Value::String(expected.to_string())),
+        execute_with_stdlib(script)
+    );
+}
+
+fn assert_num(expected: f64, script: &str) {
+    assert_eq!(Some(Value::Number(expected)), execute_with_stdlib(script));
 }
 
 #[test]
@@ -130,65 +148,36 @@ fn invalid_operations() {
 
 #[test]
 fn std_lib_max_min() {
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib("max(10, 20) > min(50, 30, 10)")
-    );
+    assert_bool(true, "max(10, 20) > min(50, 30, 10)");
 
-    assert_eq!(Value::Number(20.0), execute_with_stdlib("max(-30, 20)"));
-    assert_eq!(Value::Number(-20.0), execute_with_stdlib("min(-20, 30)"));
+    assert_num(20.0, "max(-30, 20)");
+    assert_num(-20.0, "min(-20, 30)");
 }
 
 #[test]
 fn std_lib_contains() {
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib("contains([1,2,3], 1)")
-    );
-
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib("contains('something', 'thing')")
-    );
-
-    assert_eq!(
-        Value::Boolean(false),
-        execute_with_stdlib("contains('something', 'other')")
-    );
+    assert_bool(true, "contains([1,2,3], 1)");
+    assert_bool(true, "contains('something', 'thing')");
+    assert_bool(false, "contains('something', 'other')");
 }
 
 #[test]
 fn std_lib_lowercase_uppercase() {
-    assert_eq!(
-        Value::String(String::from("hello world 😀")),
-        execute_with_stdlib("lowercase('Hello World 😀')")
-    );
-
-    assert_eq!(
-        Value::String(String::from("HELLO WORLD 😀")),
-        execute_with_stdlib("uppercase('Hello World 😀')")
-    );
+    assert_str("hello world 😀", "lowercase('Hello World 😀')");
+    assert_str("HELLO WORLD 😀", "uppercase('Hello World 😀')");
 }
 
 #[test]
 fn std_str() {
-    assert_eq!(
-        Value::String(String::from("99")),
-        execute_with_stdlib("str(99)")
-    );
-
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib("str(true) = 'true'")
-    );
+    assert_str("99", "str(99)");
+    assert_bool(true, "str(true) = 'true'");
 }
 
 #[test]
 fn std_lib_full() {
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib(
-            "
+    assert_bool(
+        true,
+        "
             (abs(-11.2) = 11.2) and 
             all([true, true]) and 
             any([true, false]) and
@@ -206,75 +195,53 @@ fn std_lib_full() {
             (round(3.4) = round(2.5)) and
             (str(-10) = '-10') and
             (trim('  space   ') = 'space')
-             "
-        )
+             ",
     );
 }
 
 #[test]
 fn std_time() {
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib("string_to_date('2022-07-08') + 1 = string_to_date('2022-07-09')")
+    assert_bool(
+        true,
+        "string_to_date('2022-07-08') + 1 = string_to_date('2022-07-09')",
     );
 
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib(
-            "inc_month(string_to_date('2022-07-08')) = string_to_date('2022-08-08')"
-        )
+    assert_bool(
+        true,
+        "inc_month(string_to_date('2022-07-08')) = string_to_date('2022-08-08')",
     );
 
-    assert_eq!(
-        execute_with_stdlib("date_from_rfc3339('2023-08-27T08:30:00Z')"),
-        execute_with_stdlib("string_to_date('2023-08-27') + string_to_time('08:30:00')")
+    assert_execute(
+        "date_from_rfc3339('2023-08-27T08:30:00Z')",
+        "string_to_date('2023-08-27') + string_to_time('08:30:00')",
     );
 
-    assert_eq!(
-        Value::Number(6.0), // Sunday = 6
-        execute_with_stdlib("day_of_week(string_to_date('2023-08-27'))")
-    );
-    assert_eq!(
-        Value::Number(4.0), // Friday = 4
-        execute_with_stdlib("day_of_week(string_to_date('2023-08-27') + 5)")
+    assert_num(6.0, "day_of_week(string_to_date('2023-08-27'))"); // Sunday = 6
+    assert_num(4.0, "day_of_week(string_to_date('2023-08-27') + 5)"); // Friday = 4
+
+    assert_execute(
+        "date_from_rfc3339('2023-08-27T08:30:00Z')",
+        "encode_date(2023,08,27) + encode_time(8,30,0)",
     );
 
-    assert_eq!(
-        execute_with_stdlib("date_from_rfc3339('2023-08-27T08:30:00Z')"),
-        execute_with_stdlib("encode_date(2023,08,27) + encode_time(8,30,0)")
-    );
-
-    assert_eq!(
-        Value::Number(18101.5),
-        execute_with_stdlib("string_to_datetime('2019-07-24 12:00:00')")
-    );
-
-    assert_eq!(
-        Value::Number(18101.0),
-        execute_with_stdlib("date(string_to_datetime('2019-07-24 12:00:00'))")
-    );
-
-    assert_eq!(
-        Value::Number(0.5),
-        execute_with_stdlib("time(string_to_datetime('2019-07-24 12:00:00'))")
-    );
+    assert_num(18101.5, "string_to_datetime('2019-07-24 12:00:00')");
+    assert_num(18101.0, "date(string_to_datetime('2019-07-24 12:00:00'))");
+    assert_num(0.5, "time(string_to_datetime('2019-07-24 12:00:00'))");
 }
 
 #[test]
 fn operators_full() {
-    assert_eq!(
-        Value::Boolean(true),
-        execute_with_stdlib(
-            "(true and not false) and
-             (false or true) and
-             (true xor false) and
-             (10 + 20 - 30 < 50 * 5 / 25) and
-             (10 mod 3 <= 10 div 3) and
-             (round(2.5) > 2) and
-             (7 >= 8 or 9 <> 10) and
-             ('Apple' + 'Pen' = 'ApplePen')"
-        )
-    );
+    assert_bool(
+        true,
+        "(true and not false) and
+                 (false or true) and
+                 (true xor false) and
+                 (10 + 20 - 30 < 50 * 5 / 25) and
+                 (10 mod 3 <= 10 div 3) and
+                 (round(2.5) > 2) and
+                 (7 >= 8 or 9 <> 10) and
+                 ('Apple' + 'Pen' = 'ApplePen')",
+    )
 }
 
 fn expensive_func(_params: &[Value]) -> NativeResult {
@@ -323,59 +290,59 @@ fn regex_is_match() {
 
 #[test]
 fn regex_find() {
-    assert_str("re_find('ABCDE', 'BC')", "['BC']");
-    assert_str(
+    assert_execute("re_find('ABCDE', 'BC')", "['BC']");
+    assert_execute(
         "re_find('an employer has an employee in employment', 'employ(er|ee|ment|ing|able)')",
         "['employer', 'employee', 'employment']",
     );
-    assert_str(
+    assert_execute(
         r"re_find('john.smith@example.com','([a-z0-9_\.\-]+)@([\da-z\.\-]+)\.([a-z\.]{2,5})')",
         "['john.smith@example.com']",
     );
 
-    assert_str(r"re_find('12354', '\D')", "[]");
-    assert_str(r"re_find('ABCDE', '\D*')", "['ABCDE']");
-    assert_str(r"re_find('ABCDE', '\D')", "['A','B','C','D','E']");
+    assert_execute(r"re_find('12354', '\D')", "[]");
+    assert_execute(r"re_find('ABCDE', '\D*')", "['ABCDE']");
+    assert_execute(r"re_find('ABCDE', '\D')", "['A','B','C','D','E']");
 }
 
 #[test]
 fn regex_capture() {
-    assert_str(
+    assert_execute(
         r"re_capture('john.smith@example.com', '(.*)@(.*)\.(.*)')",
         r"['john.smith@example.com', 'john.smith', 'example', 'com']",
     );
 
-    assert_str(
+    assert_execute(
         r"re_capture('john.smith@example', '(.*)@(.*)\.?(.*)?')",
         r"['john.smith@example', 'john.smith', 'example', '']",
     );
 
-    assert_str(
+    assert_execute(
         r"re_capture('11 aa 22 bb', '(\d{2})\W(\D{2})')",
         r"['11 aa', '11', 'aa']",
     );
 
-    assert_str(r"re_capture('111', '(\D)(\D)')", r"['', '', '']");
+    assert_execute(r"re_capture('111', '(\D)(\D)')", r"['', '', '']");
 }
 
 #[test]
 fn regex_replace() {
-    assert_str(
+    assert_execute(
         r"re_replace('john.smith@example.com', '(.*)@(.*)\.(.*)', '$1@test.$3')",
         r"'john.smith@test.com'",
     );
 
-    assert_str(r"re_replace('AAAAAA', 'A', 'B')", r"'BBBBBB'");
-    assert_str(r"re_replace('AAAAAA', 'A', 'B', 3)", r"'BBBAAA'");
+    assert_execute(r"re_replace('AAAAAA', 'A', 'B')", r"'BBBBBB'");
+    assert_execute(r"re_replace('AAAAAA', 'A', 'B', 3)", r"'BBBAAA'");
 }
 
 #[test]
 fn array_at() {
-    assert_str(r"at([1, 'Test', true], 0)", r"1");
-    assert_str(r"at([1, 'Test', true], 1)", r"'Test'");
-    assert_str(r"at([1, 'Test', true], 2)", r"true");
+    assert_execute(r"at([1, 'Test', true], 0)", r"1");
+    assert_execute(r"at([1, 'Test', true], 1)", r"'Test'");
+    assert_execute(r"at([1, 'Test', true], 2)", r"true");
 
-    assert_str(
+    assert_execute(
         r"at(re_capture('john.smith@example.com', '(.*)@(.*)\.(.*)'), 2)",
         r"'example'",
     );
