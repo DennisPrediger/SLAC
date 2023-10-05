@@ -2,9 +2,9 @@
 //!
 //! # Regex
 //!
-//! This modules uses the [`regex`] crate and can be included using the `regex` feature.
+//! This modules uses the [`regex_lite`] crate and can be included using the `regex` feature.
 
-use regex::{Captures, Regex};
+use regex_lite::{Captures, Regex};
 
 use crate::{StaticEnvironment, Value};
 
@@ -24,7 +24,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn is_match(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(haystack), Value::String(needle)] => {
@@ -38,12 +38,13 @@ pub fn is_match(params: &[Value]) -> NativeResult {
 }
 
 /// Finds non overlapping matches for a given regex inside a [`Value::String`].
+/// Returns a [`Value::Array`] containing all matches.
 ///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn find(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(haystack), Value::String(re)] => {
@@ -61,8 +62,8 @@ pub fn find(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Extract a [`Value::Array`] from a [`Captures`] struct while preserving
-/// empty captures as empty strings.
+/// Extract a [`Value::Array`] from a [`Captures`] struct while preserving empty captures
+/// as empty strings.
 fn get_capture_groups(captures: Captures) -> Vec<Value> {
     captures
         .iter()
@@ -71,13 +72,14 @@ fn get_capture_groups(captures: Captures) -> Vec<Value> {
         .collect()
 }
 
-/// Returns the matches of all regex capture groups inside a [`Value::String`].
+/// Returns the matches of all regex capture groups inside a [`Value::Array`]. The first element is the full match.
+/// Index 1 to N are the capture groups.
 ///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn capture(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(haystack), Value::String(re)] => {
@@ -101,7 +103,7 @@ pub fn capture(params: &[Value]) -> NativeResult {
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the [`regex`] produces an error.
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn replace(params: &[Value]) -> NativeResult {
     let rep = default_string(params, 2, "")?;
     let limit = default_number(params, 3, 0.0)? as usize;
