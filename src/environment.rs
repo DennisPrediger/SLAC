@@ -63,6 +63,11 @@ impl StaticEnvironment {
         self.variables.insert(key, value);
     }
 
+    /// Remove a variable and return its [`Rc<Value>`] if it existed.
+    pub fn remove_variable(&mut self, name: &str) -> Option<Rc<Value>> {
+        self.variables.remove(&get_env_key(name))
+    }
+
     /// Add or update a [`NativeFunction`].
     pub fn add_function(
         &mut self,

@@ -369,3 +369,15 @@ fn string_at() {
     assert_err("at('123', 3)");
     assert_err("at(123, 1)");
 }
+
+#[test]
+fn env_remove_variable() {
+    let mut env = StaticEnvironment::default();
+
+    env.add_variable("some_var", Value::Number(42.0));
+    let ast = compile("some_var = 42").unwrap();
+    assert_eq!(Some(Value::Boolean(true)), execute(&env, &ast));
+
+    env.remove_variable("some_var");
+    assert_eq!(Some(Value::Boolean(false)), execute(&env, &ast));
+}
