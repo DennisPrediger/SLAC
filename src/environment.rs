@@ -68,6 +68,11 @@ impl StaticEnvironment {
         self.variables.remove(&get_env_key(name))
     }
 
+    /// Clear all variables.
+    pub fn clear_variables(&mut self) {
+        self.variables.clear();
+    }
+
     /// Add or update a [`NativeFunction`].
     pub fn add_function(
         &mut self,

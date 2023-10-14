@@ -381,3 +381,15 @@ fn env_remove_variable() {
     env.remove_variable("some_var");
     assert_eq!(Some(Value::Boolean(false)), execute(&env, &ast));
 }
+
+#[test]
+fn env_clear_variables() {
+    let mut env = StaticEnvironment::default();
+
+    env.add_variable("some_test", Value::Number(11.0));
+    let ast = compile("some_test = 11").unwrap();
+    assert_eq!(Some(Value::Boolean(true)), execute(&env, &ast));
+
+    env.clear_variables();
+    assert_eq!(Some(Value::Boolean(false)), execute(&env, &ast));
+}
