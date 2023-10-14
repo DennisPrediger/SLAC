@@ -158,14 +158,9 @@ impl Value {
         }
     }
 
-    /// Returns a boolean if the [`Value::String`] or [`Value::Array`] are empty,
-    /// otherwise return false.
+    /// Checks if the value is equal to the result of [`Value::empty()`].
     pub fn is_empty(&self) -> bool {
-        match self {
-            Value::String(v) => v.is_empty(),
-            Value::Array(v) => v.is_empty(),
-            _ => false,
-        }
+        self == &Value::empty(self)
     }
 
     /// Returns an new empty [`Value`] of the same type as the callee.
@@ -330,8 +325,10 @@ mod test {
 
     #[test]
     fn is_empty() {
-        assert_eq!(false, Value::Boolean(false).is_empty());
-        assert_eq!(false, Value::Number(0.0).is_empty());
+        assert_eq!(true, Value::Boolean(false).is_empty());
+        assert_eq!(false, Value::Boolean(true).is_empty());
+        assert_eq!(true, Value::Number(0.0).is_empty());
+        assert_eq!(false, Value::Number(1.0).is_empty());
 
         assert_eq!(true, Value::String(String::new()).is_empty());
         assert_eq!(false, Value::String(String::from("something")).is_empty());
