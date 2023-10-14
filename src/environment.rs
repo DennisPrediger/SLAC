@@ -48,13 +48,19 @@ pub struct StaticEnvironment {
     functions: HashMap<String, Rc<Function>>,
 }
 
+/// Handle all variable and function names case-insensitive.
+#[inline(always)]
+fn get_env_key(name: &str) -> String {
+    name.to_lowercase()
+}
+
 impl StaticEnvironment {
-    /// Add or update an [`Environment`] variable.
+    /// Add or update a variable.
     pub fn add_variable(&mut self, name: &str, value: Value) {
-        let name = name.to_lowercase();
+        let key = get_env_key(name);
         let value = Rc::new(value);
 
-        self.variables.insert(name, value);
+        self.variables.insert(key, value);
     }
 
     /// Add or update a [`NativeFunction`].
@@ -65,29 +71,29 @@ impl StaticEnvironment {
         optionals: usize,
         func: NativeFunction,
     ) {
-        let name = name.to_lowercase();
+        let key = get_env_key(name);
         let value = Rc::new(Function {
             func,
             arity,
             optionals,
         });
 
-        self.functions.insert(name, value);
+        self.functions.insert(key, value);
     }
 
-    /// Remove a native function and return its [`Function`] struct if it exists.
+    /// Remove a native function and return its [`Rc<Function>`] struct if it existed.
     pub fn remove_function(&mut self, name: &str) -> Option<Rc<Function>> {
-        self.functions.remove(&name.to_lowercase())
+        self.functions.remove(&get_env_key(name))
     }
 }
 
 impl Environment for StaticEnvironment {
     fn variable(&self, name: &str) -> Option<Rc<Value>> {
-        self.variables.get(&name.to_lowercase()).cloned()
+        self.variables.get(&get_env_key(name)).cloned()
     }
 
     fn call(&self, name: &str, params: &[Value]) -> Option<Value> {
-        let function = self.functions.get(&name.to_lowercase())?;
+        let function = self.functions.get(&get_env_key(name))?;
         let call = function.func;
 
         call(params).ok()
@@ -96,28 +102,27 @@ impl Environment for StaticEnvironment {
 
 impl ValidateEnvironment for StaticEnvironment {
     fn variable_exists(&self, name: &str) -> bool {
-        self.variables.contains_key(&name.to_lowercase())
+        self.variables.contains_key(&get_env_key(name))
     }
 
     fn function_exists(&self, name: &str, param_count: usize) -> FunctionResult {
-        match self.functions.get(&name.to_lowercase()) {
-            Some(function) => {
-                if let Some(arity) = function.arity {
-                    let lower = arity - function.optionals;
-                    let upper = arity;
+        if let Some(function) = self.functions.get(&get_env_key(name)) {
+            if let Some(arity) = function.arity {
+                let lower = arity - function.optionals;
+                let upper = arity;
 
-                    if param_count < lower {
-                        FunctionResult::WrongArity(param_count, lower)
-                    } else if param_count > upper {
-                        FunctionResult::WrongArity(param_count, upper)
-                    } else {
-                        FunctionResult::Exists
-                    }
+                if param_count < lower {
+                    FunctionResult::WrongArity(param_count, lower)
+                } else if param_count > upper {
+                    FunctionResult::WrongArity(param_count, upper)
                 } else {
-                    FunctionResult::Exists // variadic Function
+                    FunctionResult::Exists
                 }
+            } else {
+                FunctionResult::Exists // variadic Function
             }
-            None => FunctionResult::NotFound,
+        } else {
+            FunctionResult::NotFound
         }
     }
 }
