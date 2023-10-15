@@ -4,6 +4,7 @@ use std::fmt::Display;
 use std::result;
 
 use crate::operator::Operator;
+use crate::stdlib::NativeError;
 use crate::token::Token;
 
 /// The error type for failures while scanning, compiling or validation slac
@@ -30,6 +31,9 @@ pub enum Error {
     InvalidUnaryOperator(Operator),
     InvalidBinaryOperator(Operator),
     LiteralNotBoolean,
+    // runtime errors
+    UndefinedVariable(String),
+    NativeFunctionError(NativeError),
 }
 
 impl error::Error for Error {}
@@ -58,25 +62,29 @@ impl Display for Error {
             Error::TokenNotAnOperator(token) => {
                 write!(f, "\"{token:?}\" is not a valid operator")
             }
-            Error::MissingVariable(name) => writeln!(f, "missing variable \"{name}\""),
-            Error::MissingFunction(name) => writeln!(f, "missing function \"{name}\""),
-            Error::ParamCountMismatch(name, expected, found) => writeln!(
+            Error::MissingVariable(name) => write!(f, "missing variable \"{name}\""),
+            Error::MissingFunction(name) => write!(f, "missing function \"{name}\""),
+            Error::ParamCountMismatch(name, expected, found) => write!(
                 f,
                 "expected {expected} parameters but got {found} for function \"{name}\""
             ),
             Error::InvalidUnaryOperator(operator) => {
-                writeln!(f, "invalid unary operator \"{operator:?}\"")
+                write!(f, "invalid unary operator \"{operator:?}\"")
             }
             Error::InvalidBinaryOperator(operator) => {
-                writeln!(f, "invalid binary operator \"{operator:?}\"")
+                write!(f, "invalid binary operator \"{operator:?}\"")
             }
             Error::LiteralNotBoolean => {
-                writeln!(f, "top level expression does not return a boolean value")
+                write!(f, "top level expression does not return a boolean value")
+            }
+            Error::UndefinedVariable(name) => write!(f, "undefined variable \"{name}\""),
+            Error::NativeFunctionError(error) => {
+                write!(f, "native function encountered an error {error}")
             }
         }
     }
 }
 
-/// A specialized [`Result`] type for errors during the scanning, compiling or
+/// A specialized [`Result`] type for [`Errors`](Error) during the scanning, compiling or
 /// validation phase.
 pub type Result<T> = result::Result<T, Error>;

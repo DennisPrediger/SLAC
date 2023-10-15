@@ -1,6 +1,6 @@
-use std::vec;
-
-use crate::{ast::Expression, environment::Environment, operator::Operator, value::Value};
+use crate::{
+    ast::Expression, environment::Environment, operator::Operator, value::Value, Error, Result,
+};
 
 /// A tree walking interpreter which given an [`Environment`] and an [`AST`](Expression)
 /// recursivly walks the tree and computes a single [`Value`].
@@ -13,11 +13,11 @@ impl<'a> TreeWalkingInterpreter<'a> {
         Self { environment }
     }
 
-    pub fn interprete(env: &dyn Environment, expression: &Expression) -> Option<Value> {
+    pub fn interprete(env: &dyn Environment, expression: &Expression) -> Result<Value> {
         TreeWalkingInterpreter::new(env).expression(expression)
     }
 
-    fn expression(&self, expression: &Expression) -> Option<Value> {
+    fn expression(&self, expression: &Expression) -> Result<Value> {
         match expression {
             Expression::Unary { right, operator } => self.unary(right, operator),
             Expression::Binary {
@@ -26,100 +26,120 @@ impl<'a> TreeWalkingInterpreter<'a> {
                 operator,
             } => self.binary(left, right, operator),
             Expression::Array { expressions } => self.array(expressions),
-            Expression::Literal { value } => Some(value.clone()),
+            Expression::Literal { value } => Ok(value.clone()),
             Expression::Variable { name } => self.variable(name),
             Expression::Call { name, params } => self.call(name, params),
         }
     }
 
-    fn unary(&self, right: &Expression, operator: &Operator) -> Option<Value> {
+    fn unary(&self, right: &Expression, operator: &Operator) -> Result<Value> {
         let right = self.expression(right);
 
         match (operator, right) {
-            (Operator::Minus, Some(rhs)) => -rhs,
-            (Operator::Not, Some(rhs)) => !rhs,
-            _ => None,
+            (Operator::Minus, Ok(rhs)) => -rhs,
+            (Operator::Not, Ok(rhs)) => !rhs,
+            _ => Err(Error::InvalidUnaryOperator(*operator)),
         }
     }
 
-    fn binary(&self, left: &Expression, right: &Expression, operator: &Operator) -> Option<Value> {
+    fn binary(&self, left: &Expression, right: &Expression, operator: &Operator) -> Result<Value> {
         let left = self.expression(left);
 
         match (operator, left) {
-            (Operator::And, Some(left)) => self.boolean(left, right, true),
-            (Operator::Or, Some(left)) => self.boolean(left, right, false),
-            (_, Some(left)) => {
+            (Operator::And, Ok(left)) => self.boolean(left, right, true),
+            (Operator::Or, Ok(left)) => self.boolean(left, right, false),
+            (_, Ok(left)) => {
                 let right = self.expression(right);
 
                 match (operator, right) {
-                    (Operator::Plus, Some(right)) => left + right,
-                    (Operator::Minus, Some(right)) => left - right,
-                    (Operator::Multiply, Some(right)) => left * right,
-                    (Operator::Divide, Some(right)) => left / right,
-                    (Operator::Div, Some(right)) => left.div_int(right),
-                    (Operator::Mod, Some(right)) => left % right,
-                    (Operator::Xor, Some(right)) => left ^ right,
-                    (Operator::Greater, Some(right)) => Some(Value::Boolean(left > right)),
-                    (Operator::GreaterEqual, Some(right)) => Some(Value::Boolean(left >= right)),
-                    (Operator::Less, Some(right)) => Some(Value::Boolean(left < right)),
-                    (Operator::LessEqual, Some(right)) => Some(Value::Boolean(left <= right)),
-                    (Operator::Equal, Some(right)) => Some(Value::Boolean(left == right)),
-                    (Operator::NotEqual, Some(right)) => Some(Value::Boolean(left != right)),
-                    (Operator::Equal, None) => Some(Value::Boolean(left.is_empty())),
-                    (Operator::NotEqual, None) => Some(Value::Boolean(!left.is_empty())),
-                    _ => None,
+                    (Operator::Plus, Ok(right)) => left + right,
+                    (Operator::Minus, Ok(right)) => left - right,
+                    (Operator::Multiply, Ok(right)) => left * right,
+                    (Operator::Divide, Ok(right)) => left / right,
+                    (Operator::Div, Ok(right)) => left.div_int(right),
+                    (Operator::Mod, Ok(right)) => left % right,
+                    (Operator::Xor, Ok(right)) => left ^ right,
+                    (Operator::Greater, Ok(right)) => Ok(Value::Boolean(left > right)),
+                    (Operator::GreaterEqual, Ok(right)) => Ok(Value::Boolean(left >= right)),
+                    (Operator::Less, Ok(right)) => Ok(Value::Boolean(left < right)),
+                    (Operator::LessEqual, Ok(right)) => Ok(Value::Boolean(left <= right)),
+                    (Operator::Equal, Ok(right)) => Ok(Value::Boolean(left == right)),
+                    (Operator::NotEqual, Ok(right)) => Ok(Value::Boolean(left != right)),
+                    (Operator::Equal, Err(Error::UndefinedVariable(_))) => {
+                        // Check if the left expression is equal to empty
+                        Ok(Value::Boolean(left.is_empty()))
+                    }
+                    (Operator::NotEqual, Err(Error::UndefinedVariable(_))) => {
+                        // Check if the left expression is not equal to empty
+                        Ok(Value::Boolean(!left.is_empty()))
+                    }
+                    (_, Err(right)) => Err(right),
+                    (operator, _) => Err(Error::InvalidBinaryOperator(*operator)),
                 }
             }
-            (Operator::Equal, None) => match self.expression(right) {
-                Some(right) => Some(Value::Boolean(right.is_empty())),
-                None => Some(Value::Boolean(true)),
-            },
-            (Operator::NotEqual, None) => match self.expression(right) {
-                Some(right) => Some(Value::Boolean(!right.is_empty())),
-                None => Some(Value::Boolean(true)),
-            },
-            _ => None,
+            (Operator::Equal, Err(Error::UndefinedVariable(_))) => {
+                // Check if the right expression is equal to empty
+                match self.expression(right) {
+                    Ok(right) => Ok(Value::Boolean(right.is_empty())),
+                    // check `empty = empty -> true`
+                    Err(Error::UndefinedVariable(_)) => Ok(Value::Boolean(true)),
+                    Err(right) => Err(right),
+                }
+            }
+            (Operator::NotEqual, Err(Error::UndefinedVariable(_))) => {
+                // Check if the right expression is not equal to empty
+                match self.expression(right) {
+                    Ok(right) => Ok(Value::Boolean(!right.is_empty())),
+                    // check `empty <> empty -> true`
+                    Err(Error::UndefinedVariable(_)) => Ok(Value::Boolean(false)),
+                    Err(right) => Err(right),
+                }
+            }
+            (_, Err(left)) => Err(left),
         }
     }
 
-    fn boolean(&self, left: Value, right: &Expression, full_evaluate_on: bool) -> Option<Value> {
+    fn boolean(&self, left: Value, right: &Expression, full_evaluate_on: bool) -> Result<Value> {
         match left {
             Value::Boolean(left) => {
                 if left == full_evaluate_on {
                     // if `left` is not the result we need, evaluate `right`
-                    match self.expression(right) {
-                        Some(Value::Boolean(right)) => Some(Value::Boolean(right)),
-                        _ => None,
+                    match self.expression(right)? {
+                        Value::Boolean(right) => Ok(Value::Boolean(right)),
+                        _ => Err(Error::InvalidBinaryOperator(Operator::And)),
                     }
                 } else {
-                    Some(Value::Boolean(left)) // short circuit
+                    Ok(Value::Boolean(left)) // short circuit
                 }
             }
-            _ => None,
+            _ => Err(Error::InvalidBinaryOperator(Operator::And)),
         }
     }
 
-    fn array(&self, expressions: &Vec<Expression>) -> Option<Value> {
-        let mut values: Vec<Value> = vec![];
-
-        for expression in expressions {
-            values.push(self.expression(expression)?);
-        }
-
-        Some(Value::Array(values))
-    }
-
-    fn variable(&self, name: &str) -> Option<Value> {
-        self.environment.variable(name).map(|v| (*v).clone())
-    }
-
-    fn call(&self, name: &str, params: &[Expression]) -> Option<Value> {
-        let params: Option<Vec<Value>> = params
+    fn get_values(&self, expressions: &[Expression]) -> Result<Vec<Value>> {
+        expressions
             .iter()
             .map(|expression| self.expression(expression))
-            .collect();
+            .collect::<Result<_>>()
+    }
 
-        self.environment.call(name, &params?)
+    fn array(&self, expressions: &[Expression]) -> Result<Value> {
+        let values = self.get_values(expressions)?;
+        Ok(Value::Array(values))
+    }
+
+    fn variable(&self, name: &str) -> Result<Value> {
+        self.environment
+            .variable(name)
+            .map(|v| (*v).clone())
+            .ok_or(Error::UndefinedVariable(name.to_string()))
+    }
+
+    fn call(&self, name: &str, expressions: &[Expression]) -> Result<Value> {
+        let params = self.get_values(expressions)?;
+        self.environment
+            .call(name, &params)
+            .map_err(Error::NativeFunctionError)
     }
 }
 

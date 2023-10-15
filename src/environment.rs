@@ -2,7 +2,10 @@
 
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{stdlib::NativeFunction, value::Value};
+use crate::{
+    stdlib::{NativeError, NativeFunction, NativeResult},
+    value::Value,
+};
 
 /// An enum signaling if a matching function is provided by a [`ValidateEnvironment`].
 pub enum FunctionResult {
@@ -21,7 +24,7 @@ pub trait Environment {
     fn variable(&self, name: &str) -> Option<Rc<Value>>;
 
     /// Call a [`Function`] and may return a [`Value`].
-    fn call(&self, name: &str, params: &[Value]) -> Option<Value>;
+    fn call(&self, name: &str, params: &[Value]) -> NativeResult;
 }
 
 /// An environment used during **validation** of the [`Expression`](crate::Expression).
@@ -102,11 +105,14 @@ impl Environment for StaticEnvironment {
         self.variables.get(&get_env_key(name)).cloned()
     }
 
-    fn call(&self, name: &str, params: &[Value]) -> Option<Value> {
-        let function = self.functions.get(&get_env_key(name))?;
-        let call = function.func;
+    fn call(&self, name: &str, params: &[Value]) -> NativeResult {
+        let function = self
+            .functions
+            .get(&get_env_key(name))
+            .ok_or(NativeError::FunctionNotFound(name.to_string()))?;
 
-        call(params).ok()
+        let call = function.func;
+        call(params)
     }
 }
 

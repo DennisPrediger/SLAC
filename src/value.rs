@@ -6,6 +6,11 @@ use std::{
     ops::{Add, BitXor, Div, Mul, Neg, Not, Rem, Sub},
 };
 
+use crate::{
+    error::{self, Error},
+    Operator,
+};
+
 /// Wrapper for the four different possible variable types.
 #[derive(Debug, PartialOrd, Clone)]
 pub enum Value {
@@ -28,91 +33,91 @@ impl PartialEq for Value {
 }
 
 impl Neg for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn neg(self) -> Self::Output {
         match self {
-            Value::Number(value) => Some(Value::Number(-value)),
-            _ => None,
+            Value::Number(value) => Ok(Value::Number(-value)),
+            _ => Err(Error::InvalidUnaryOperator(Operator::Minus)),
         }
     }
 }
 
 impl Not for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn not(self) -> Self::Output {
         match self {
-            Value::Boolean(value) => Some(Value::Boolean(!value)),
-            _ => None,
+            Value::Boolean(value) => Ok(Value::Boolean(!value)),
+            _ => Err(Error::InvalidUnaryOperator(Operator::Not)),
         }
     }
 }
 
 impl Add for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::String(lhs), Value::String(rhs)) => Some(Value::String(lhs + &rhs)),
-            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs + rhs)),
-            (Value::Array(lhs), Value::Array(rhs)) => Some(Value::Array([lhs, rhs].concat())),
-            _ => None,
+            (Value::String(lhs), Value::String(rhs)) => Ok(Value::String(lhs + &rhs)),
+            (Value::Number(lhs), Value::Number(rhs)) => Ok(Value::Number(lhs + rhs)),
+            (Value::Array(lhs), Value::Array(rhs)) => Ok(Value::Array([lhs, rhs].concat())),
+            _ => Err(Error::InvalidBinaryOperator(Operator::Plus)),
         }
     }
 }
 
 impl Sub for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs - rhs)),
-            _ => None,
+            (Value::Number(lhs), Value::Number(rhs)) => Ok(Value::Number(lhs - rhs)),
+            _ => Err(Error::InvalidBinaryOperator(Operator::Minus)),
         }
     }
 }
 
 impl Mul for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn mul(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs * rhs)),
-            _ => None,
+            (Value::Number(lhs), Value::Number(rhs)) => Ok(Value::Number(lhs * rhs)),
+            _ => Err(Error::InvalidBinaryOperator(Operator::Multiply)),
         }
     }
 }
 
 impl Div for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs / rhs)),
-            _ => None,
+            (Value::Number(lhs), Value::Number(rhs)) => Ok(Value::Number(lhs / rhs)),
+            _ => Err(Error::InvalidBinaryOperator(Operator::Divide)),
         }
     }
 }
 
 impl Rem for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn rem(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number(lhs % rhs)),
-            _ => None,
+            (Value::Number(lhs), Value::Number(rhs)) => Ok(Value::Number(lhs % rhs)),
+            _ => Err(Error::InvalidBinaryOperator(Operator::Mod)),
         }
     }
 }
 
 impl BitXor for Value {
-    type Output = Option<Value>;
+    type Output = error::Result<Value>;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Value::Boolean(lhs), Value::Boolean(rhs)) => Some(Value::Boolean(lhs ^ rhs)),
-            _ => None,
+            (Value::Boolean(lhs), Value::Boolean(rhs)) => Ok(Value::Boolean(lhs ^ rhs)),
+            _ => Err(Error::InvalidBinaryOperator(Operator::Xor)),
         }
     }
 }
@@ -139,12 +144,12 @@ impl Value {
     /// let a = Value::Number(10.0);
     /// let b = Value::Number(3.0);
     ///
-    /// assert_eq!(Some(Value::Number(3.0)), a.div_int(b));
+    /// assert_eq!(Ok(Value::Number(3.0)), a.div_int(b));
     /// ```
-    pub fn div_int(self, rhs: Self) -> Option<Self> {
+    pub fn div_int(self, rhs: Self) -> error::Result<Self> {
         match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Some(Value::Number((lhs / rhs).trunc())),
-            _ => None,
+            (Value::Number(lhs), Value::Number(rhs)) => Ok(Value::Number((lhs / rhs).trunc())),
+            _ => Err(Error::InvalidBinaryOperator(Operator::Div)),
         }
     }
 
@@ -274,6 +279,8 @@ impl<'de> Visitor<'de> for ValueVisitor {
 
 #[cfg(test)]
 mod test {
+    use crate::{Error, Operator};
+
     use super::Value;
 
     fn test_div_int(divisor: f64) -> Value {
@@ -339,31 +346,42 @@ mod test {
 
     #[test]
     fn invalid_operations() {
-        assert_eq!(None, -Value::String(String::from("a string")));
-        assert_eq!(None, !Value::String(String::from("a string")));
-
         assert_eq!(
-            None,
+            Err(Error::InvalidUnaryOperator(Operator::Minus)),
+            -Value::String(String::from("a string"))
+        );
+        assert_eq!(
+            Err(Error::InvalidUnaryOperator(Operator::Not)),
+            !Value::String(String::from("a string"))
+        );
+        assert_eq!(
+            Err(Error::InvalidBinaryOperator(Operator::Plus)),
             Value::Number(10.0) + Value::String(String::from("a string"))
         );
         assert_eq!(
-            None,
+            Err(Error::InvalidBinaryOperator(Operator::Minus)),
             Value::Number(10.0) - Value::String(String::from("a string"))
         );
         assert_eq!(
-            None,
+            Err(Error::InvalidBinaryOperator(Operator::Multiply)),
             Value::Number(10.0) * Value::String(String::from("a string"))
         );
         assert_eq!(
-            None,
+            Err(Error::InvalidBinaryOperator(Operator::Divide)),
             Value::Number(10.0) / Value::String(String::from("a string"))
         );
         assert_eq!(
-            None,
+            Err(Error::InvalidBinaryOperator(Operator::Mod)),
             Value::Number(10.0) % Value::String(String::from("a string"))
         );
-        assert_eq!(None, Value::Number(10.0).div_int(Value::Boolean(false)));
-        assert_eq!(None, Value::Number(10.0) ^ Value::Boolean(false));
+        assert_eq!(
+            Err(Error::InvalidBinaryOperator(Operator::Div)),
+            Value::Number(10.0).div_int(Value::Boolean(false))
+        );
+        assert_eq!(
+            Err(Error::InvalidBinaryOperator(Operator::Xor)),
+            Value::Number(10.0) ^ Value::Boolean(false)
+        );
     }
 }
 

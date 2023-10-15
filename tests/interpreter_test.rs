@@ -1,10 +1,10 @@
 use slac::{
     check_variables_and_functions, compile, execute,
     stdlib::{extend_environment, NativeResult},
-    StaticEnvironment, Value,
+    Result, StaticEnvironment, Value,
 };
 
-fn execute_raw(script: &str) -> Option<Value> {
+fn execute_raw(script: &str) -> Result<Value> {
     let ast = compile(script).unwrap();
     let env = StaticEnvironment::default();
 
@@ -15,43 +15,42 @@ fn execute_test(script: &str) -> Value {
     execute_raw(script).unwrap_or(Value::Boolean(false))
 }
 
-fn execute_with_stdlib(script: &str) -> Option<Value> {
-    let ast = compile(script).ok()?;
+fn execute_with_stdlib(script: &str) -> Result<Value> {
+    let ast = compile(script)?;
     let mut env = StaticEnvironment::default();
     extend_environment(&mut env);
-    check_variables_and_functions(&env, &ast).ok()?;
+    check_variables_and_functions(&env, &ast)?;
 
-    let result = execute(&env, &ast);
-    result
+    execute(&env, &ast)
 }
 
 fn assert_execute(left: &str, right: &str) {
     let left = execute_with_stdlib(left);
-    assert!(left.is_some());
+    assert!(left.is_ok());
 
     let right = execute_with_stdlib(right);
-    assert!(right.is_some());
+    assert!(right.is_ok());
 
     assert_eq!(left, right);
 }
 
 fn assert_bool(expected: bool, script: &str) {
-    assert_eq!(Some(Value::Boolean(expected)), execute_with_stdlib(script));
+    assert_eq!(Ok(Value::Boolean(expected)), execute_with_stdlib(script));
 }
 
 fn assert_str(expected: &str, script: &str) {
     assert_eq!(
-        Some(Value::String(expected.to_string())),
+        Ok(Value::String(expected.to_string())),
         execute_with_stdlib(script)
     );
 }
 
 fn assert_num(expected: f64, script: &str) {
-    assert_eq!(Some(Value::Number(expected)), execute_with_stdlib(script));
+    assert_eq!(Ok(Value::Number(expected)), execute_with_stdlib(script));
 }
 
 fn assert_err(script: &str) {
-    assert!(execute_with_stdlib(script).is_none());
+    assert!(execute_with_stdlib(script).is_err());
 }
 
 #[test]
@@ -142,12 +141,12 @@ fn array_combination() {
 
 #[test]
 fn invalid_operations() {
-    assert!(execute_raw("1 + 'some_string'").is_none());
-    assert!(execute_raw("1 - 'some_string'").is_none());
-    assert!(execute_raw("1 * 'some_string'").is_none());
-    assert!(execute_raw("1 / 'some_string'").is_none());
-    assert!(execute_raw("1 mod 'some_string'").is_none());
-    assert!(execute_raw("1 div 'some_string'").is_none());
+    assert!(execute_raw("1 + 'some_string'").is_err());
+    assert!(execute_raw("1 - 'some_string'").is_err());
+    assert!(execute_raw("1 * 'some_string'").is_err());
+    assert!(execute_raw("1 / 'some_string'").is_err());
+    assert!(execute_raw("1 mod 'some_string'").is_err());
+    assert!(execute_raw("1 div 'some_string'").is_err());
 }
 
 #[test]
@@ -250,8 +249,7 @@ fn operators_full() {
 }
 
 fn expensive_func(_params: &[Value]) -> NativeResult {
-    assert!(false);
-    Ok(Value::Boolean(false))
+    panic!()
 }
 
 #[test]
@@ -261,21 +259,18 @@ fn short_circuit_bool() {
 
     let ast = compile("false and expensive()").unwrap();
     let result = execute(&env, &ast);
-    assert_eq!(Some(Value::Boolean(false)), result);
+    assert_eq!(Ok(Value::Boolean(false)), result);
 
     let ast = compile("true or expensive()").unwrap();
     let result = execute(&env, &ast);
-    assert_eq!(Some(Value::Boolean(true)), result);
+    assert_eq!(Ok(Value::Boolean(true)), result);
 }
 
 #[test]
 fn empty_var_comparison() {
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("does_not_exist = ''"));
     assert_eq!(
-        Some(Value::Boolean(true)),
-        execute_raw("does_not_exist = ''")
-    );
-    assert_eq!(
-        Some(Value::Boolean(false)),
+        Ok(Value::Boolean(false)),
         execute_raw("does_not_exist <> ''")
     );
 }
@@ -376,10 +371,10 @@ fn env_remove_variable() {
 
     env.add_variable("some_var", Value::Number(42.0));
     let ast = compile("some_var = 42").unwrap();
-    assert_eq!(Some(Value::Boolean(true)), execute(&env, &ast));
+    assert_eq!(Ok(Value::Boolean(true)), execute(&env, &ast));
 
     env.remove_variable("some_var");
-    assert_eq!(Some(Value::Boolean(false)), execute(&env, &ast));
+    assert_eq!(Ok(Value::Boolean(false)), execute(&env, &ast));
 }
 
 #[test]
@@ -388,8 +383,8 @@ fn env_clear_variables() {
 
     env.add_variable("some_test", Value::Number(11.0));
     let ast = compile("some_test = 11").unwrap();
-    assert_eq!(Some(Value::Boolean(true)), execute(&env, &ast));
+    assert_eq!(Ok(Value::Boolean(true)), execute(&env, &ast));
 
     env.clear_variables();
-    assert_eq!(Some(Value::Boolean(false)), execute(&env, &ast));
+    assert_eq!(Ok(Value::Boolean(false)), execute(&env, &ast));
 }

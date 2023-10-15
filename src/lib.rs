@@ -109,15 +109,15 @@ pub fn compile(source: &str) -> Result<Expression> {
 ///     operator: Operator::Plus,
 /// };
 ///
-/// assert_eq!(Some(Value::Number(42.0)), execute(&env, &ast));
+/// assert_eq!(Ok(Value::Number(42.0)), execute(&env, &ast));
 /// ```
 ///
 /// # Remarks
 /// * Currently uses an `TreeWalkingInterpreter` to evaluate the AST.
 /// * Will [short-circuit](https://en.wikipedia.org/wiki/Short-circuit_evaluation) boolean expression.
-/// * Invalid operations will be evaluated to [`Option::None`].
-/// * Comparison of empty Values against [`Option::None`] is a valid operation
-///   * e.g: `empty_var = ''` is valid
-pub fn execute(env: &dyn Environment, ast: &Expression) -> Option<Value> {
+/// * Invalid operations will be evaluated to an [`Error`].
+/// * Comparison of empty Values ([`Value::empty()`]) against [`Error::RuntimeMissingVariable`] is a valid operation
+///   * e.g: `undefined_var = ''` is valid
+pub fn execute(env: &dyn Environment, ast: &Expression) -> Result<Value> {
     interpreter::TreeWalkingInterpreter::interprete(env, ast)
 }
