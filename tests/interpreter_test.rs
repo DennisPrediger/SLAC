@@ -414,3 +414,10 @@ fn common_replace() {
     );
     assert_execute("replace([1, 2, 3], 1)", "[2, 3]");
 }
+
+#[test]
+fn common_remove() {
+    assert_execute("remove([1, 2, 3], 2)", "[1, 3]");
+    assert_execute("remove('Hello World', 'l')", "'Heo Word'");
+    assert_err("remove([1, 2, 3], 1, 2)");
+}

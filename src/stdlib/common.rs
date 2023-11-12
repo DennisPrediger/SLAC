@@ -30,6 +30,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_function("max", None, 0, max);
     env.add_function("min", None, 0, min);
     env.add_function("replace", Some(3), 1, replace);
+    env.add_function("remove", Some(2), 0, replace); // replace with only 2 parameters acts as remove
     env.add_function("reverse", Some(1), 0, reverse);
     env.add_function("str", Some(1), 0, str);
 }
