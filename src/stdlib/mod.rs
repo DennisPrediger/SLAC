@@ -64,3 +64,11 @@ pub(crate) fn get_index(index: &f64) -> Result<usize, NativeError> {
         Err(NativeError::IndexNegative)
     }
 }
+
+pub(crate) fn get_string_index(index: &f64) -> Result<usize, NativeError> {
+    get_index(index).map(|index| index - 1)
+}
+
+pub(crate) fn add_string_index_offset(index: usize) -> usize {
+    index + 1
+}

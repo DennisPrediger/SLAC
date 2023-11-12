@@ -4,8 +4,9 @@
 use std::cmp::Ordering;
 
 use super::{
+    add_string_index_offset,
     error::{NativeError, NativeResult},
-    get_index,
+    get_index, get_string_index,
 };
 use crate::{StaticEnvironment, Value};
 
@@ -70,7 +71,7 @@ pub fn any(params: &[Value]) -> NativeResult {
 pub fn at(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(values), Value::Number(index)] => {
-            let index = get_index(index)?;
+            let index = get_string_index(index)?;
 
             match values.chars().nth(index) {
                 Some(char) => Ok(Value::String(char.to_string())),
@@ -183,7 +184,7 @@ pub fn copy(params: &[Value]) -> NativeResult {
         [Value::String(source), Value::Number(start), Value::Number(count)] => Ok(Value::String(
             source
                 .chars()
-                .skip(get_index(start)?)
+                .skip(get_string_index(start)?)
                 .take(count.trunc() as usize)
                 .collect(),
         )),
@@ -221,15 +222,14 @@ pub fn empty(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn find(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(haystack), Value::String(needle)] => {
-            Ok(haystack.find(needle).map_or(Value::Number(0.0), |index| {
-                Value::Number((index + 1) as f64)
-            }))
-        }
+        [Value::String(haystack), Value::String(needle)] => Ok(haystack
+            .find(needle)
+            .map(add_string_index_offset)
+            .map_or(Value::Number(0.0), |index| Value::Number((index) as f64))),
         [Value::Array(haystack), needle] => Ok(haystack
             .iter()
             .position(|v| v == needle)
-            .map_or(Value::Number(0.0), |index| Value::Number(index as f64))),
+            .map_or(Value::Number(-1.0), |index| Value::Number(index as f64))),
         [_, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(2)),
     }
@@ -288,7 +288,8 @@ pub fn if_then(params: &[Value]) -> NativeResult {
 pub fn insert(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(target), Value::String(source), Value::Number(index)] => {
-            let index = get_index(index)?;
+            let index = get_string_index(index)?;
+
             if index > target.chars().count() {
                 return Err(NativeError::IndexOutOfBounds(index));
             }
@@ -722,11 +723,20 @@ mod test {
         );
 
         assert_eq!(
+            Ok(Value::String(String::from("12A345"))),
+            insert(&vec![
+                Value::String(String::from("12345")),
+                Value::String(String::from("A")),
+                Value::Number(3.0)
+            ])
+        );
+
+        assert_eq!(
             Ok(Value::String(String::from("Hello middle world"))),
             insert(&vec![
                 Value::String(String::from("Hello world")),
                 Value::String(String::from("middle ")),
-                Value::Number(6.0)
+                Value::Number(7.0)
             ])
         );
     }
@@ -866,7 +876,7 @@ mod test {
             Ok(Value::String(String::from("Worl"))),
             copy(&vec![
                 Value::String(String::from("Hello World")),
-                Value::Number(6.0),
+                Value::Number(7.0),
                 Value::Number(4.0)
             ])
         );
@@ -892,7 +902,7 @@ mod test {
             Ok(Value::String(String::from("b"))),
             at(&vec![
                 Value::String(String::from("abcde")),
-                Value::Number(1.0)
+                Value::Number(2.0)
             ])
         );
 
@@ -912,7 +922,7 @@ mod test {
     #[test]
     fn std_find() {
         assert_eq!(
-            Ok(Value::Number(3.0)),
+            Ok(Value::Number(4.0)),
             find(&vec![
                 Value::String(String::from("abcde")),
                 Value::String(String::from("de"))
@@ -920,7 +930,7 @@ mod test {
         );
 
         assert_eq!(
-            Ok(Value::Number(-1.0)),
+            Ok(Value::Number(0.0)),
             find(&vec![
                 Value::String(String::from("abcde")),
                 Value::String(String::from("f"))

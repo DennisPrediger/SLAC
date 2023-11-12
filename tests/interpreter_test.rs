@@ -359,10 +359,24 @@ fn array_at() {
 
 #[test]
 fn string_at() {
-    assert_execute("at('abc', 0)", "'a'");
-    assert_execute("at('abc', 1)", "'b'");
-    assert_err("at('123', 3)");
+    assert_execute("at('abc', 1)", "'a'");
+    assert_execute("at('abc', 2)", "'b'");
+    assert_err("at('123', 4)");
     assert_err("at(123, 1)");
+}
+
+#[test]
+fn string_find() {
+    assert_execute("find('ABC', 'B')", "2");
+    assert_execute("find('ABCD', 'BC')", "2");
+    assert_execute("find('ABCD', 'E')", "0");
+}
+
+#[test]
+fn string_copy() {
+    assert_bool(true, "copy('Test', 2, 2) = 'es'");
+    assert_bool(true, "copy('Test', 2, 20) = 'est'");
+    assert_bool(true, "copy('Test', find('Test', 'e'), 1) = 'e'");
 }
 
 #[test]
