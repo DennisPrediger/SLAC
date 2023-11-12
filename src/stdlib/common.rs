@@ -4,7 +4,7 @@
 use std::cmp::Ordering;
 
 use super::{
-    add_string_index_offset,
+    add_string_index_offset, default_string,
     error::{NativeError, NativeResult},
     get_index, get_string_index,
 };
@@ -29,6 +29,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_function("length", Some(1), 0, length);
     env.add_function("max", None, 0, max);
     env.add_function("min", None, 0, min);
+    env.add_function("replace", Some(3), 1, replace);
     env.add_function("reverse", Some(1), 0, reverse);
     env.add_function("str", Some(1), 0, str);
 }
@@ -394,6 +395,43 @@ pub fn reverse(params: &[Value]) -> NativeResult {
         [Value::String(value)] => Ok(Value::String(value.chars().rev().collect())),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
+    }
+}
+
+/// Replaces all matches of a pattern with another string.
+///
+/// # Remarks
+///
+/// If a third parameter is not supplied the replacement will be an empty string.
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+pub fn replace(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::String(value), Value::String(from), ..] => {
+            let to = default_string(params, 2, "")?;
+            Ok(Value::String(value.replace(from, to)))
+        }
+        [Value::Array(values), from, ..] => {
+            let to = params.get(2).cloned();
+
+            Ok(Value::Array(
+                values
+                    .iter()
+                    .filter_map(|value| {
+                        if value == from {
+                            to.clone()
+                        } else {
+                            Some(value.clone())
+                        }
+                    })
+                    .collect(),
+            ))
+        }
+        [_, _, ..] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
 
@@ -954,6 +992,64 @@ mod test {
                     Value::Boolean(true)
                 ]),
                 Value::String(String::from("abc"))
+            ])
+        );
+    }
+
+    #[test]
+    fn std_replace_string() {
+        assert_eq!(
+            Ok(Value::String(String::from("Hello Moon"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from("World")),
+                Value::String(String::from("Moon"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("Heiio Worid"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from("l")),
+                Value::String(String::from("i"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("Hello"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from(" World")),
+                Value::String(String::from(""))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::String(String::from("Hello"))),
+            replace(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from(" World"))
+            ])
+        );
+    }
+
+    #[test]
+    fn std_replace_array() {
+        assert_eq!(
+            Ok(Value::Array(vec![
+                Value::Number(1.0),
+                Value::Number(1.0),
+                Value::Number(3.0)
+            ])),
+            replace(&vec![
+                Value::Array(vec![
+                    Value::Number(1.0),
+                    Value::Number(1.0),
+                    Value::Number(3.0)
+                ]),
+                Value::Number(2.0),
+                Value::Number(1.0)
             ])
         );
     }

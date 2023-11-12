@@ -402,3 +402,15 @@ fn env_clear_variables() {
     env.clear_variables();
     assert_eq!(Ok(Value::Boolean(false)), execute(&env, &ast));
 }
+
+#[test]
+fn common_replace() {
+    assert_execute("replace([1, 2, 3], 1, 2)", "[2, 2, 3]");
+    assert_execute("replace([1, 1, 1], 1, 2)", "[2, 2, 2]");
+    assert_execute("replace([3, 3, 3], 1, 2)", "[3, 3, 3]");
+    assert_execute(
+        "replace(['Hello', 'World'], 'Hello', 'Goodbye')",
+        "['Goodbye', 'World']",
+    );
+    assert_execute("replace([1, 2, 3], 1)", "[2, 3]");
+}

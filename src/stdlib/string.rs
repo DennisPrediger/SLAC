@@ -2,10 +2,7 @@
 
 use crate::{StaticEnvironment, Value};
 
-use super::{
-    default_string,
-    error::{NativeError, NativeResult},
-};
+use super::error::{NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
 pub fn extend_environment(env: &mut StaticEnvironment) {
@@ -13,7 +10,6 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_function("ord", Some(1), 0, ord);
     env.add_function("lowercase", Some(1), 0, lowercase);
     env.add_function("uppercase", Some(1), 0, uppercase);
-    env.add_function("replace", Some(3), 1, replace);
     env.add_function("same_text", Some(2), 0, same_text);
     env.add_function("split", Some(2), 0, split);
     env.add_function("split_csv", Some(2), 1, split_csv);
@@ -91,28 +87,6 @@ pub fn uppercase(params: &[Value]) -> NativeResult {
         [Value::String(value)] => Ok(Value::String(value.to_uppercase())),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
-    }
-}
-
-/// Replaces all matches of a pattern with another string.
-///
-/// # Remarks
-///
-/// If a third parameter is not supplied the replacement will be an empty string.
-///
-/// # Errors
-///
-/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
-/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-pub fn replace(params: &[Value]) -> NativeResult {
-    let to = default_string(params, 2, "")?;
-
-    match params {
-        [Value::String(value), Value::String(from), ..] => {
-            Ok(Value::String(value.replace(from, to)))
-        }
-        [_, _, ..] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
 
@@ -306,44 +280,6 @@ mod test {
 
         assert!(uppercase(&vec![]).is_err());
         assert!(uppercase(&vec![Value::Boolean(true)]).is_err());
-    }
-
-    #[test]
-    fn string_replace() {
-        assert_eq!(
-            Ok(Value::String(String::from("Hello Moon"))),
-            replace(&vec![
-                Value::String(String::from("Hello World")),
-                Value::String(String::from("World")),
-                Value::String(String::from("Moon"))
-            ])
-        );
-
-        assert_eq!(
-            Ok(Value::String(String::from("Heiio Worid"))),
-            replace(&vec![
-                Value::String(String::from("Hello World")),
-                Value::String(String::from("l")),
-                Value::String(String::from("i"))
-            ])
-        );
-
-        assert_eq!(
-            Ok(Value::String(String::from("Hello"))),
-            replace(&vec![
-                Value::String(String::from("Hello World")),
-                Value::String(String::from(" World")),
-                Value::String(String::from(""))
-            ])
-        );
-
-        assert_eq!(
-            Ok(Value::String(String::from("Hello"))),
-            replace(&vec![
-                Value::String(String::from("Hello World")),
-                Value::String(String::from(" World"))
-            ])
-        );
     }
 
     #[test]
