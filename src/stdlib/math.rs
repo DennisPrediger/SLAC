@@ -19,8 +19,8 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_function("cos", Some(1), 0, cos);
     env.add_function("exp", Some(1), 0, exp);
     env.add_function("frac", Some(1), 0, frac);
-    env.add_function("round", Some(1), 0, round);
     env.add_function("ln", Some(1), 0, ln);
+    env.add_function("round", Some(1), 0, round);
     env.add_function("sin", Some(1), 0, sin);
     env.add_function("sqrt", Some(1), 0, sqrt);
     env.add_function("trunc", Some(1), 0, trunc);

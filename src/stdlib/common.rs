@@ -103,11 +103,7 @@ pub fn at(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn between(params: &[Value]) -> NativeResult {
     match params {
-        [value, lower, upper] => {
-            let result = value >= lower && value <= upper;
-
-            Ok(Value::Boolean(result))
-        }
+        [value, lower, upper] => Ok(Value::Boolean((value >= lower) && (value <= upper))),
         _ => Err(NativeError::WrongParameterCount(3)),
     }
 }
