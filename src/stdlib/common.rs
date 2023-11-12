@@ -66,19 +66,19 @@ pub fn any(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn at(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Array(values), Value::Number(index)] => {
-            let index = get_index(index)?;
-
-            match values.get(index) {
-                Some(value) => Ok(value.clone()),
-                None => Err(NativeError::IndexOutOfBounds(index)),
-            }
-        }
         [Value::String(values), Value::Number(index)] => {
             let index = get_index(index)?;
 
             match values.chars().nth(index) {
                 Some(char) => Ok(Value::String(char.to_string())),
+                None => Err(NativeError::IndexOutOfBounds(index)),
+            }
+        }
+        [Value::Array(values), Value::Number(index)] => {
+            let index = get_index(index)?;
+
+            match values.get(index) {
+                Some(value) => Ok(value.clone()),
                 None => Err(NativeError::IndexOutOfBounds(index)),
             }
         }
@@ -261,17 +261,6 @@ pub fn if_then(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::IndexOutOfBounds`] if the index parameter does not fit inside the supplied value length.
 pub fn insert(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Array(values), element, Value::Number(index)] => {
-            let index = get_index(index)?;
-            if index > values.len() {
-                return Err(NativeError::IndexOutOfBounds(index));
-            }
-
-            let mut values = values.clone();
-            values.insert(index, element.clone());
-
-            Ok(Value::Array(values))
-        }
         [Value::String(target), Value::String(source), Value::Number(index)] => {
             let index = get_index(index)?;
             if index > target.chars().count() {
@@ -282,6 +271,17 @@ pub fn insert(params: &[Value]) -> NativeResult {
             let after: String = target.chars().skip(index).collect();
 
             Ok(Value::String(before + source + &after))
+        }
+        [Value::Array(values), element, Value::Number(index)] => {
+            let index = get_index(index)?;
+            if index > values.len() {
+                return Err(NativeError::IndexOutOfBounds(index));
+            }
+
+            let mut values = values.clone();
+            values.insert(index, element.clone());
+
+            Ok(Value::Array(values))
         }
         [_, _, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(3)),
