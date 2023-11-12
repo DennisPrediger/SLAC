@@ -66,27 +66,6 @@ pub fn ord(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Copys part of [`Value::String`]. The first parameter sets the start index,
-/// the second the number of characters to copy.
-///
-/// # Errors
-///
-/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
-/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-pub fn copy(params: &[Value]) -> NativeResult {
-    match params {
-        [Value::String(source), Value::Number(start), Value::Number(count)] => Ok(Value::String(
-            source
-                .chars()
-                .skip(start.trunc() as usize)
-                .take(count.trunc() as usize)
-                .collect(),
-        )),
-        [_, _, _] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::WrongParameterCount(3)),
-    }
-}
-
 /// Converts a [`Value::String`] to lowercase.
 ///
 /// # Errors
@@ -305,18 +284,6 @@ mod test {
         );
 
         assert!(chr(&vec![Value::Number(256.0)]).is_err());
-    }
-
-    #[test]
-    fn string_copy() {
-        assert_eq!(
-            Ok(Value::String(String::from("Worl"))),
-            copy(&vec![
-                Value::String(String::from("Hello World")),
-                Value::Number(6.0),
-                Value::Number(4.0)
-            ])
-        );
     }
 
     #[test]
