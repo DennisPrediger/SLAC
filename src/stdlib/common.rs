@@ -20,6 +20,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_function("compare", Some(2), 0, compare);
     env.add_function("copy", Some(3), 0, copy);
     env.add_function("empty", Some(1), 0, empty);
+    env.add_function("find", Some(2), 0, find);
     env.add_function("float", Some(1), 0, float);
     env.add_function("if_then", Some(3), 1, if_then);
     env.add_function("insert", Some(3), 0, insert);
@@ -60,6 +61,8 @@ pub fn any(params: &[Value]) -> NativeResult {
     Ok(Value::Boolean(result))
 }
 
+/// Returns the item at the specified index.
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
@@ -206,6 +209,29 @@ pub fn empty(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::Boolean(value.is_empty())),
         _ => Err(NativeError::WrongParameterCount(1)),
+    }
+}
+
+/// Finds the index of a [`Value`] inside an [`Value::Array`] or the position of a substring inside
+/// a [`Value::String`].
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+pub fn find(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::String(haystack), Value::String(needle)] => {
+            Ok(haystack.find(needle).map_or(Value::Number(0.0), |index| {
+                Value::Number((index + 1) as f64)
+            }))
+        }
+        [Value::Array(haystack), needle] => Ok(haystack
+            .iter()
+            .position(|v| v == needle)
+            .map_or(Value::Number(0.0), |index| Value::Number(index as f64))),
+        [_, _] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
 
@@ -856,6 +882,72 @@ mod test {
                 ]),
                 Value::Number(1.0),
                 Value::Number(2.0)
+            ])
+        );
+    }
+
+    #[test]
+    fn std_at() {
+        assert_eq!(
+            Ok(Value::String(String::from("b"))),
+            at(&vec![
+                Value::String(String::from("abcde")),
+                Value::Number(1.0)
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(2.0)),
+            at(&vec![
+                Value::Array(vec![
+                    Value::Number(1.0),
+                    Value::Number(2.0),
+                    Value::Number(3.0)
+                ]),
+                Value::Number(1.0)
+            ])
+        );
+    }
+
+    #[test]
+    fn std_find() {
+        assert_eq!(
+            Ok(Value::Number(3.0)),
+            find(&vec![
+                Value::String(String::from("abcde")),
+                Value::String(String::from("de"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(-1.0)),
+            find(&vec![
+                Value::String(String::from("abcde")),
+                Value::String(String::from("f"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(1.0)),
+            find(&vec![
+                Value::Array(vec![
+                    Value::Boolean(true),
+                    Value::Boolean(false),
+                    Value::Boolean(true)
+                ]),
+                Value::Boolean(false)
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(-1.0)),
+            find(&vec![
+                Value::Array(vec![
+                    Value::Boolean(true),
+                    Value::Boolean(false),
+                    Value::Boolean(true)
+                ]),
+                Value::String(String::from("abc"))
             ])
         );
     }
