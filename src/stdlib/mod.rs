@@ -16,6 +16,12 @@ pub mod string;
 #[cfg(feature = "chrono")]
 pub mod time;
 
+#[cfg(feature = "zero_based_strings")]
+pub const STRING_OFFSET: f64 = 0.0;
+
+#[cfg(not(feature = "zero_based_strings"))]
+pub const STRING_OFFSET: f64 = 1.0;
+
 /// A function pointer used to execute native Rust functions.
 /// All parameters to the function are inside a single Vec<[`Value`]>.
 pub type NativeFunction = fn(&[Value]) -> NativeResult;
@@ -66,9 +72,5 @@ pub(crate) fn get_index(index: &f64) -> Result<usize, NativeError> {
 }
 
 pub(crate) fn get_string_index(index: &f64) -> Result<usize, NativeError> {
-    get_index(index).map(|index| index - 1)
-}
-
-pub(crate) fn add_string_index_offset(index: usize) -> usize {
-    index + 1
+    get_index(index).map(|index| index - STRING_OFFSET as usize)
 }

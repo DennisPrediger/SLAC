@@ -12,9 +12,11 @@ readme = "README.md"
 
 [features]
 default = ["serde", "chrono", "regex"]
+
 serde = ["dep:serde"]
 chrono = ["dep:chrono"]
 regex = ["dep:regex-lite"]
+zero_based_strings = []
 
 [dependencies]
 chrono = { version = "0.4", optional = true, features = ["std"] }

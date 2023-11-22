@@ -4,9 +4,9 @@
 use std::cmp::Ordering;
 
 use super::{
-    add_string_index_offset, default_string,
+    default_string,
     error::{NativeError, NativeResult},
-    get_index, get_string_index,
+    get_index, get_string_index, STRING_OFFSET,
 };
 use crate::{StaticEnvironment, Value};
 
@@ -222,8 +222,9 @@ pub fn find(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(haystack), Value::String(needle)] => Ok(haystack
             .find(needle)
-            .map(add_string_index_offset)
-            .map_or(Value::Number(0.0), |index| Value::Number((index) as f64))),
+            .map_or(Value::Number(-1.0 + STRING_OFFSET), |index| {
+                Value::Number((index as f64) + STRING_OFFSET)
+            })),
         [Value::Array(haystack), needle] => Ok(haystack
             .iter()
             .position(|v| v == needle)
@@ -762,7 +763,7 @@ mod test {
             insert(&vec![
                 Value::String(String::from("12345")),
                 Value::String(String::from("A")),
-                Value::Number(3.0)
+                Value::Number(2.0 + STRING_OFFSET)
             ])
         );
 
@@ -771,7 +772,7 @@ mod test {
             insert(&vec![
                 Value::String(String::from("Hello world")),
                 Value::String(String::from("middle ")),
-                Value::Number(7.0)
+                Value::Number(6.0 + STRING_OFFSET)
             ])
         );
     }
@@ -911,7 +912,7 @@ mod test {
             Ok(Value::String(String::from("Worl"))),
             copy(&vec![
                 Value::String(String::from("Hello World")),
-                Value::Number(7.0),
+                Value::Number(6.0 + STRING_OFFSET),
                 Value::Number(4.0)
             ])
         );
@@ -937,7 +938,7 @@ mod test {
             Ok(Value::String(String::from("b"))),
             at(&vec![
                 Value::String(String::from("abcde")),
-                Value::Number(2.0)
+                Value::Number(1.0 + STRING_OFFSET)
             ])
         );
 
@@ -957,7 +958,7 @@ mod test {
     #[test]
     fn std_find() {
         assert_eq!(
-            Ok(Value::Number(4.0)),
+            Ok(Value::Number(3.0 + STRING_OFFSET)),
             find(&vec![
                 Value::String(String::from("abcde")),
                 Value::String(String::from("de"))
@@ -965,7 +966,7 @@ mod test {
         );
 
         assert_eq!(
-            Ok(Value::Number(0.0)),
+            Ok(Value::Number(-1.0 + STRING_OFFSET)),
             find(&vec![
                 Value::String(String::from("abcde")),
                 Value::String(String::from("f"))
