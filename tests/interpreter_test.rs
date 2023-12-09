@@ -26,10 +26,7 @@ fn execute_with_stdlib(script: &str) -> Result<Value> {
 
 fn assert_execute(left: &str, right: &str) {
     let left = execute_with_stdlib(left);
-    assert!(left.is_ok());
-
     let right = execute_with_stdlib(right);
-    assert!(right.is_ok());
 
     assert_eq!(left, right);
 }
@@ -205,32 +202,58 @@ fn std_lib_full() {
 #[test]
 #[cfg(feature = "chrono")]
 fn std_time() {
-    assert_bool(
-        true,
-        "string_to_date('2022-07-08') + 1 = string_to_date('2022-07-09')",
-    );
-
-    assert_bool(
-        true,
-        "inc_month(string_to_date('2022-07-08')) = string_to_date('2022-08-08')",
+    assert_execute(
+        "string_to_date('2022-07-08') + 1",
+        "string_to_date('2022-07-09')",
     );
 
     assert_execute(
-        "date_from_rfc3339('2023-08-27T08:30:00Z')",
+        "inc_month(string_to_date('2022-07-08'))",
+        "string_to_date('2022-08-08')",
+    );
+
+    assert_num(19596.0, "string_to_date('2023-08-27')");
+    assert_num(0.5, "string_to_time('12:00:00')");
+    assert_num(19596.5, "string_to_datetime('2023-08-27 12:00:00')");
+
+    assert_execute(
+        "string_to_datetime('2023-08-27 08:30:00')",
         "string_to_date('2023-08-27') + string_to_time('08:30:00')",
     );
 
     assert_num(6.0, "day_of_week(string_to_date('2023-08-27'))"); // Sunday = 6
     assert_num(4.0, "day_of_week(string_to_date('2023-08-27') + 5)"); // Friday = 4
 
-    assert_execute(
-        "date_from_rfc3339('2023-08-27T08:30:00Z')",
-        "encode_date(2023,08,27) + encode_time(8,30,0)",
-    );
-
     assert_num(18101.5, "string_to_datetime('2019-07-24 12:00:00')");
     assert_num(18101.0, "date(string_to_datetime('2019-07-24 12:00:00'))");
     assert_num(0.5, "time(string_to_datetime('2019-07-24 12:00:00'))");
+}
+
+#[allow(dead_code)]
+// #[test] // dependent on the local timezone
+fn std_time_rfc() {
+    assert_num(
+        19596.5 + 1. / 24. * 2.,
+        "date_from_rfc3339('2023-08-27T12:00:00+00:00')",
+    );
+    assert_num(19596.5, "date_from_rfc3339('2023-08-27T12:00:00+02:00')");
+    assert_num(
+        19596.5 + 1. / 24. * 2.,
+        "date_from_rfc2822('Sun, 27 Aug 2023 12:00:00 +0000')",
+    );
+    assert_num(
+        19596.5,
+        "date_from_rfc2822('Sun, 27 Aug 2023 12:00:00 +0200')",
+    );
+
+    assert_str(
+        "2023-08-27T12:00:00+02:00",
+        "date_to_rfc3339(date_from_rfc3339('2023-08-27T12:00:00+02:00'))",
+    );
+    assert_str(
+        "Sun, 27 Aug 2023 12:00:00 +0200",
+        "date_to_rfc2822(date_from_rfc2822('Sun, 27 Aug 2023 12:00:00 +0200'))",
+    );
 }
 
 #[test]

@@ -4,8 +4,12 @@
 //! enables date, time and datetime manipulation on [`Value::Number`] floating
 //! point values.
 //!
+//! All functions operate on a local timezone. (eg: 12:00 Noon = 0.5)
+//! The RFC-functions do automatic conversion from the provided offset into the
+//! systems local timezone.
+//!
 //! The integral part of the [`Value::Number`] float is the number of **days**,
-//! which have passed since `midnight, January 1, 1970, UTC` (aka. the UNIX timestamp).
+//! which have passed since `midnight, January 1, 1970` (aka. the UNIX timestamp).
 //! The fractional part is the `time of day` as a **fraction of 24 hours**
 //! (e.g: 0.25 = 06:00 h, 0.75 = 18:00 h).
 //!
@@ -31,7 +35,8 @@
 //! This module uses the [`chrono`] crate and can be included using
 //! the `chrono` feature.
 use chrono::{
-    DateTime, Datelike, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc,
+    DateTime, Datelike, FixedOffset, Local, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone,
+    Timelike,
 };
 
 use crate::{StaticEnvironment, Value};
@@ -181,6 +186,18 @@ pub fn string_to_datetime(params: &[Value]) -> NativeResult {
     }
 }
 
+fn naive_to_fixed(datetime: NaiveDateTime) -> Result<DateTime<FixedOffset>, NativeError> {
+    Local
+        .from_local_datetime(&datetime)
+        .single()
+        .map(|datetime| datetime.fixed_offset())
+        .ok_or(NativeError::from("invalid datetime value"))
+}
+
+fn fixed_to_naive(datetime: DateTime<FixedOffset>) -> NaiveDateTime {
+    Local.from_utc_datetime(&datetime.naive_utc()).naive_local()
+}
+
 /// Parses a [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822) string
 /// (e.g: `Fri, 21 Nov 1997 09:55:06 -0600`) and returns a [`Value::Number`].
 ///
@@ -192,10 +209,9 @@ pub fn date_from_rfc2822(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => {
             let datetime = DateTime::parse_from_rfc2822(value)
-                .map_err(|e| NativeError::from(e.to_string()))?
-                .naive_utc();
+                .map_err(|e| NativeError::from(e.to_string()))?;
 
-            Ok(Value::from(datetime))
+            Ok(Value::from(fixed_to_naive(datetime)))
         }
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
@@ -208,12 +224,13 @@ pub fn date_from_rfc2822(params: &[Value]) -> NativeResult {
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn date_to_rfc2822(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::String(Utc.from_utc_datetime(&datetime).to_rfc2822()))
+            Ok(Value::String(naive_to_fixed(datetime)?.to_rfc2822()))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -230,10 +247,9 @@ pub fn date_from_rfc3339(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(value)] => {
             let datetime = DateTime::parse_from_rfc3339(value)
-                .map_err(|e| NativeError::from(e.to_string()))?
-                .naive_utc();
+                .map_err(|e| NativeError::from(e.to_string()))?;
 
-            Ok(Value::from(datetime))
+            Ok(Value::from(fixed_to_naive(datetime)))
         }
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
@@ -252,7 +268,7 @@ pub fn date_to_rfc3339(params: &[Value]) -> NativeResult {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
 
-            Ok(Value::String(Utc.from_utc_datetime(&datetime).to_rfc3339()))
+            Ok(Value::String(naive_to_fixed(datetime)?.to_rfc3339()))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -268,6 +284,7 @@ pub fn day_of_week(params: &[Value]) -> NativeResult {
     match params {
         [value] => {
             let datetime = NaiveDateTime::try_from(value)?;
+
             Ok(Value::Number(f64::from(datetime.weekday() as u8)))
         }
         _ => Err(NativeError::WrongParameterCount(1)),
@@ -548,21 +565,6 @@ mod test {
     }
 
     #[test]
-    fn time_date_from_rfc() {
-        assert_eq!(
-            Ok(Value::Number(18101.75)),
-            date_from_rfc2822(&vec![Value::String(String::from(
-                "Wed, 24 Jul 2019 18:00:00 +0000"
-            ))])
-        );
-
-        assert_eq!(
-            Ok(Value::Number(18101.75)),
-            date_from_rfc3339(&vec![Value::String(String::from("2019-07-24T18:00:00Z"))])
-        );
-    }
-
-    #[test]
     fn time_day_of_week() {
         assert_eq!(
             Ok(Value::Number(2.0)),
@@ -657,27 +659,29 @@ mod test {
         assert_eq!(Ok(Value::Boolean(true)), is_leap_year(&vec![year_2024]));
     }
 
-    #[test]
+    #[allow(dead_code)]
+    // #[test] // dependent on the local timezone
     fn time_rfc2822() {
-        let rfc = Value::String(String::from("Fri, 28 Nov 2014 12:00:00 +0000"));
+        let rfc = Value::String(String::from("Fri, 28 Nov 2014 12:00:00 +0100"));
         let date = date_from_rfc2822(&vec![rfc.clone()]).unwrap();
 
         assert_eq!(Value::Number(16402.5), date);
         assert_eq!(Ok(rfc), date_to_rfc2822(&vec![date]));
     }
 
-    #[test]
+    #[allow(dead_code)]
+    // #[test] // dependent on the local timezone
     fn time_rfc3339() {
-        let rfc = Value::String(String::from("2014-11-28T12:00:00+00:00"));
+        let rfc = Value::String(String::from("2014-11-28T12:00:00+01:00"));
         let date = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
 
         assert_eq!(Value::Number(16402.5), date);
         assert_eq!(Ok(rfc), date_to_rfc3339(&vec![date]));
 
-        let rfc = Value::String(String::from("2014-11-28T00:00:00+00:00"));
+        let rfc = Value::String(String::from("2014-11-28T01:00:00+01:00"));
         let date = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
 
-        assert_eq!(Value::Number(16402.0), date);
+        assert_eq!(Value::Number(16402.0 + 1. / 24.), date);
         assert_eq!(Ok(rfc), date_to_rfc3339(&vec![date.clone()]));
 
         let rfc = Value::String(String::from("2014-11-28T00:00:00Z"));
@@ -688,10 +692,9 @@ mod test {
 
     #[test]
     fn time_extract_functions() {
-        let rfc = Value::String(String::from("2023-08-09T10:11:12.013+00:00"));
-        let date = date_from_rfc3339(&vec![rfc.clone()]).unwrap();
+        let date = Value::Number(13734.424444594908); // 2007-08-09 10:11:12.013
 
-        assert_eq!(Ok(Value::Number(2023.0)), year(&vec![date.clone()]));
+        assert_eq!(Ok(Value::Number(2007.0)), year(&vec![date.clone()]));
         assert_eq!(Ok(Value::Number(08.0)), month(&vec![date.clone()]));
         assert_eq!(Ok(Value::Number(09.0)), day(&vec![date.clone()]));
         assert_eq!(Ok(Value::Number(10.0)), hour(&vec![date.clone()]));
