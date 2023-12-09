@@ -57,7 +57,7 @@ pub fn extend_environment(env: &mut StaticEnvironment) {
     env.add_function("is_leap_year", Some(1), 0, is_leap_year);
     env.add_function("date_from_rfc2822", Some(1), 0, date_from_rfc2822);
     env.add_function("date_from_rfc3339", Some(1), 0, date_from_rfc3339);
-    env.add_function("date_to_rfc2822", Some(1), 0, date_to_rfc3339);
+    env.add_function("date_to_rfc2822", Some(1), 0, date_to_rfc2822);
     env.add_function("date_to_rfc3339", Some(1), 0, date_to_rfc3339);
     env.add_function("year", Some(1), 0, year);
     env.add_function("month", Some(1), 0, month);
