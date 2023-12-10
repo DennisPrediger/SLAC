@@ -6,16 +6,16 @@ use super::error::{NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("chr", Some(1), 0, chr);
-    env.add_function("ord", Some(1), 0, ord);
-    env.add_function("lowercase", Some(1), 0, lowercase);
-    env.add_function("uppercase", Some(1), 0, uppercase);
-    env.add_function("same_text", Some(2), 0, same_text);
-    env.add_function("split", Some(2), 0, split);
-    env.add_function("split_csv", Some(2), 1, split_csv);
-    env.add_function("trim", Some(1), 0, trim);
-    env.add_function("trim_left", Some(1), 0, trim_left);
-    env.add_function("trim_right", Some(1), 0, trim_right);
+    env.add_function("chr", chr, Some(1), 0);
+    env.add_function("ord", ord, Some(1), 0);
+    env.add_function("lowercase", lowercase, Some(1), 0);
+    env.add_function("uppercase", uppercase, Some(1), 0);
+    env.add_function("same_text", same_text, Some(2), 0);
+    env.add_function("split", split, Some(2), 0);
+    env.add_function("split_csv", split_csv, Some(2), 1);
+    env.add_function("trim", trim, Some(1), 0);
+    env.add_function("trim_left", trim_left, Some(1), 0);
+    env.add_function("trim_right", trim_right, Some(1), 0);
 }
 
 /// Converts a [`Value::Number`] into a [`Value::String`] containg a single

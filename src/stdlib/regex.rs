@@ -12,10 +12,10 @@ use super::{default_number, default_string, NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with `regex` functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("re_is_match", Some(2), 0, is_match);
-    env.add_function("re_find", Some(2), 0, find);
-    env.add_function("re_capture", Some(2), 0, capture);
-    env.add_function("re_replace", Some(4), 2, replace);
+    env.add_function("re_is_match", is_match, Some(2), 0);
+    env.add_function("re_find", find, Some(2), 0);
+    env.add_function("re_capture", capture, Some(2), 0);
+    env.add_function("re_replace", replace, Some(4), 2);
 }
 
 /// Checks if a regex matches a [`Value::String`].

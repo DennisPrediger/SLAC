@@ -80,9 +80,9 @@ impl StaticEnvironment {
     pub fn add_function(
         &mut self,
         name: &str,
+        func: NativeFunction,
         arity: Option<usize>,
         optionals: usize,
-        func: NativeFunction,
     ) {
         let key = get_env_key(name);
         let value = Rc::new(Function {

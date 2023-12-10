@@ -28,8 +28,8 @@ mod test {
     fn test_validate(script: &str) {
         let input = compile(script).unwrap();
         let mut env = StaticEnvironment::default();
-        env.add_function("max", Some(2), 0, dummy_func);
-        env.add_function("some_func", Some(1), 0, dummy_func);
+        env.add_function("max", dummy_func, Some(2), 0);
+        env.add_function("some_func", dummy_func, Some(1), 0);
         env.add_variable("some_var", slac::Value::Boolean(false));
 
         assert!(check_variables_and_functions(&env, &input).is_ok());

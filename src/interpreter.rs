@@ -280,7 +280,7 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function("max", Some(2), 0, max);
+        env.add_function("max", max, Some(2), 0);
 
         let result = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
         let expected = Value::Number(20.0);

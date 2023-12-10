@@ -48,29 +48,29 @@ use super::{
 
 /// Extends a [`StaticEnvironment`] with `time` conversion functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("date", Some(1), 0, super::math::trunc);
-    env.add_function("time", Some(1), 0, super::math::frac);
-    env.add_function("date_to_string", Some(2), 0, date_to_string);
-    env.add_function("time_to_string", Some(2), 0, date_to_string);
-    env.add_function("string_to_date", Some(2), 1, string_to_date);
-    env.add_function("string_to_time", Some(2), 1, string_to_time);
-    env.add_function("string_to_datetime", Some(2), 1, string_to_datetime);
-    env.add_function("day_of_week", Some(1), 0, day_of_week);
-    env.add_function("encode_date", Some(3), 0, encode_date);
-    env.add_function("encode_time", Some(4), 1, encode_time);
-    env.add_function("inc_month", Some(2), 1, inc_month);
-    env.add_function("is_leap_year", Some(1), 0, is_leap_year);
-    env.add_function("date_from_rfc2822", Some(1), 0, date_from_rfc2822);
-    env.add_function("date_from_rfc3339", Some(1), 0, date_from_rfc3339);
-    env.add_function("date_to_rfc2822", Some(1), 0, date_to_rfc2822);
-    env.add_function("date_to_rfc3339", Some(1), 0, date_to_rfc3339);
-    env.add_function("year", Some(1), 0, year);
-    env.add_function("month", Some(1), 0, month);
-    env.add_function("day", Some(1), 0, day);
-    env.add_function("hour", Some(1), 0, hour);
-    env.add_function("minute", Some(1), 0, minute);
-    env.add_function("second", Some(1), 0, second);
-    env.add_function("millisecond", Some(1), 0, millisecond);
+    env.add_function("date", super::math::trunc, Some(1), 0);
+    env.add_function("time", super::math::frac, Some(1), 0);
+    env.add_function("date_to_string", date_to_string, Some(2), 0);
+    env.add_function("time_to_string", date_to_string, Some(2), 0);
+    env.add_function("string_to_date", string_to_date, Some(2), 1);
+    env.add_function("string_to_time", string_to_time, Some(2), 1);
+    env.add_function("string_to_datetime", string_to_datetime, Some(2), 1);
+    env.add_function("day_of_week", day_of_week, Some(1), 0);
+    env.add_function("encode_date", encode_date, Some(3), 0);
+    env.add_function("encode_time", encode_time, Some(4), 1);
+    env.add_function("inc_month", inc_month, Some(2), 1);
+    env.add_function("is_leap_year", is_leap_year, Some(1), 0);
+    env.add_function("date_from_rfc2822", date_from_rfc2822, Some(1), 0);
+    env.add_function("date_from_rfc3339", date_from_rfc3339, Some(1), 0);
+    env.add_function("date_to_rfc2822", date_to_rfc2822, Some(1), 0);
+    env.add_function("date_to_rfc3339", date_to_rfc3339, Some(1), 0);
+    env.add_function("year", year, Some(1), 0);
+    env.add_function("month", month, Some(1), 0);
+    env.add_function("day", day, Some(1), 0);
+    env.add_function("hour", hour, Some(1), 0);
+    env.add_function("minute", minute, Some(1), 0);
+    env.add_function("second", second, Some(1), 0);
+    env.add_function("millisecond", millisecond, Some(1), 0);
 }
 
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;

@@ -200,7 +200,7 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function("max", Some(2), 0, dummy_function);
+        env.add_function("max", dummy_function, Some(2), 0);
 
         let result = check_variables_and_functions(&env, &ast);
 
@@ -220,7 +220,7 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function("func", None, 0, dummy_function);
+        env.add_function("func", dummy_function, None, 0);
 
         let result = check_variables_and_functions(&env, &ast);
 

@@ -12,27 +12,27 @@ use crate::{StaticEnvironment, Value};
 
 /// Extends a [`StaticEnvironment`] with `common` functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("all", None, 0, all);
-    env.add_function("any", None, 0, any);
-    env.add_function("at", Some(2), 0, at);
-    env.add_function("between", Some(3), 0, between);
-    env.add_function("bool", Some(1), 0, bool);
-    env.add_function("contains", Some(2), 0, contains);
-    env.add_function("compare", Some(2), 0, compare);
-    env.add_function("copy", Some(3), 0, copy);
-    env.add_function("empty", Some(1), 0, empty);
-    env.add_function("find", Some(2), 0, find);
-    env.add_function("float", Some(1), 0, float);
-    env.add_function("if_then", Some(3), 1, if_then);
-    env.add_function("insert", Some(3), 0, insert);
-    env.add_function("int", Some(1), 0, int);
-    env.add_function("length", Some(1), 0, length);
-    env.add_function("max", None, 0, max);
-    env.add_function("min", None, 0, min);
-    env.add_function("replace", Some(3), 1, replace);
-    env.add_function("remove", Some(2), 0, replace); // replace with only 2 parameters acts as remove
-    env.add_function("reverse", Some(1), 0, reverse);
-    env.add_function("str", Some(1), 0, str);
+    env.add_function("all", all, None, 0);
+    env.add_function("any", any, None, 0);
+    env.add_function("at", at, Some(2), 0);
+    env.add_function("between", between, Some(3), 0);
+    env.add_function("bool", bool, Some(1), 0);
+    env.add_function("contains", contains, Some(2), 0);
+    env.add_function("compare", compare, Some(2), 0);
+    env.add_function("copy", copy, Some(3), 0);
+    env.add_function("empty", empty, Some(1), 0);
+    env.add_function("find", find, Some(2), 0);
+    env.add_function("float", float, Some(1), 0);
+    env.add_function("if_then", if_then, Some(3), 1);
+    env.add_function("insert", insert, Some(3), 0);
+    env.add_function("int", int, Some(1), 0);
+    env.add_function("length", length, Some(1), 0);
+    env.add_function("max", max, None, 0);
+    env.add_function("min", min, None, 0);
+    env.add_function("replace", replace, Some(3), 1);
+    env.add_function("remove", replace, Some(2), 0); // replace with only 2 parameters acts as remove
+    env.add_function("reverse", reverse, Some(1), 0);
+    env.add_function("str", str, Some(1), 0);
 }
 
 /// Return the first parameter if it's an [`Value::Array`] or return all
