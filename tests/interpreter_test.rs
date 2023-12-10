@@ -435,30 +435,6 @@ mod test_strings {
 }
 
 #[test]
-fn env_remove_variable() {
-    let mut env = StaticEnvironment::default();
-
-    env.add_variable("some_var", Value::Number(42.0));
-    let ast = compile("some_var = 42").unwrap();
-    assert_eq!(Ok(Value::Boolean(true)), execute(&env, &ast));
-
-    env.remove_variable("some_var");
-    assert_eq!(Ok(Value::Boolean(false)), execute(&env, &ast));
-}
-
-#[test]
-fn env_clear_variables() {
-    let mut env = StaticEnvironment::default();
-
-    env.add_variable("some_test", Value::Number(11.0));
-    let ast = compile("some_test = 11").unwrap();
-    assert_eq!(Ok(Value::Boolean(true)), execute(&env, &ast));
-
-    env.clear_variables();
-    assert_eq!(Ok(Value::Boolean(false)), execute(&env, &ast));
-}
-
-#[test]
 fn common_replace() {
     assert_execute("replace([1, 2, 3], 1, 2)", "[2, 2, 3]");
     assert_execute("replace([1, 1, 1], 1, 2)", "[2, 2, 2]");

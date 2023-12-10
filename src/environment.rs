@@ -38,6 +38,7 @@ pub trait ValidateEnvironment {
 
 /// A wrapper to hold the [`NativeFunction`] and its arity.
 pub struct Function {
+    pub name: String,
     pub func: NativeFunction,
     pub arity: Option<usize>,
     pub optionals: usize,
@@ -52,7 +53,6 @@ pub struct StaticEnvironment {
 }
 
 /// Handle all variable and function names case-insensitive.
-#[inline(always)]
 fn get_env_key(name: &str) -> String {
     name.to_lowercase()
 }
@@ -60,10 +60,7 @@ fn get_env_key(name: &str) -> String {
 impl StaticEnvironment {
     /// Add or update a variable.
     pub fn add_variable(&mut self, name: &str, value: Value) {
-        let key = get_env_key(name);
-        let value = Rc::new(value);
-
-        self.variables.insert(key, value);
+        self.variables.insert(get_env_key(name), Rc::new(value));
     }
 
     /// Remove a variable and return its [`Rc<Value>`] if it existed.
@@ -84,19 +81,25 @@ impl StaticEnvironment {
         arity: Option<usize>,
         optionals: usize,
     ) {
-        let key = get_env_key(name);
-        let value = Rc::new(Function {
-            func,
-            arity,
-            optionals,
-        });
-
-        self.functions.insert(key, value);
+        self.functions.insert(
+            get_env_key(name),
+            Rc::new(Function {
+                name: name.to_string(),
+                func,
+                arity,
+                optionals,
+            }),
+        );
     }
 
-    /// Remove a native function and return its [`Rc<Function>`] struct if it existed.
+    /// Remove a native function and return its [`Function`] if it existed.
     pub fn remove_function(&mut self, name: &str) -> Option<Rc<Function>> {
         self.functions.remove(&get_env_key(name))
+    }
+
+    /// Output all currently registered [`Function`] structs.
+    pub fn list_functions(&self) -> Vec<Rc<Function>> {
+        self.functions.values().cloned().collect()
     }
 }
 
@@ -140,5 +143,48 @@ impl ValidateEnvironment for StaticEnvironment {
         } else {
             FunctionResult::NotFound
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use crate::{compile, execute};
+
+    #[test]
+    fn static_variables() {
+        let mut env = StaticEnvironment::default();
+
+        env.add_variable("some_var", Value::Number(42.0));
+        let ast = compile("some_var = 42").unwrap();
+        assert_eq!(Ok(Value::Boolean(true)), execute(&env, &ast));
+
+        env.remove_variable("some_var");
+        assert_eq!(Ok(Value::Boolean(false)), execute(&env, &ast));
+
+        env.add_variable("some_var", Value::Number(42.0));
+        let ast = compile("some_var = 42").unwrap();
+        assert_eq!(Ok(Value::Boolean(true)), execute(&env, &ast));
+
+        env.clear_variables();
+        assert_eq!(Ok(Value::Boolean(false)), execute(&env, &ast));
+    }
+
+    #[test]
+    fn static_functions() {
+        fn test_func(_params: &[Value]) -> NativeResult {
+            unreachable!()
+        }
+        let mut env = StaticEnvironment::default();
+
+        env.add_function("test", test_func, None, 0);
+
+        let registered = env.list_functions();
+        assert_eq!(1, registered.len());
+        assert_eq!("test", registered.first().unwrap().name);
+        let removed = env.remove_function("test").unwrap();
+
+        assert_eq!(removed.name, registered.first().unwrap().name);
     }
 }
