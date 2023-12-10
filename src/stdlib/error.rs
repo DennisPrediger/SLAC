@@ -19,12 +19,12 @@ impl error::Error for NativeError {}
 impl Display for NativeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NativeError::FunctionNotFound(name) => write!(f, "function {name} not found"),
+            NativeError::FunctionNotFound(name) => write!(f, "function \"{name}\" not found"),
             NativeError::WrongParameterCount(count) => {
-                write!(f, "not enough parameters: {count} expected")
+                write!(f, "not enough parameters: \"{count}\" expected")
             }
             NativeError::WrongParameterType => write!(f, "wrong parameter type"),
-            NativeError::IndexOutOfBounds(index) => write!(f, "index {index} is out of bounds"),
+            NativeError::IndexOutOfBounds(index) => write!(f, "index \"{index}\" is out of bounds"),
             NativeError::IndexNegative => write!(f, "index must not be negative"),
             NativeError::CustomError(msg) => write!(f, "{msg}"),
         }

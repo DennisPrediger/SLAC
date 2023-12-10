@@ -79,7 +79,7 @@ impl Display for Error {
             }
             Error::UndefinedVariable(name) => write!(f, "undefined variable \"{name}\""),
             Error::NativeFunctionError(error) => {
-                write!(f, "native function encountered an error {error}")
+                write!(f, "native function encountered an error: \"{error}\"")
             }
         }
     }
