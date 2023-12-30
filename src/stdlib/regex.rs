@@ -6,16 +6,17 @@
 
 use regex_lite::{Captures, Regex};
 
-use crate::{StaticEnvironment, Value};
+use crate::{environment::Arity, StaticEnvironment, Value};
 
 use super::{default_number, default_string, NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with `regex` functions.
+#[rustfmt::skip]
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("re_is_match", is_match, Some(2), 0);
-    env.add_function("re_find", find, Some(2), 0);
-    env.add_function("re_capture", capture, Some(2), 0);
-    env.add_function("re_replace", replace, Some(4), 2);
+    env.add_function("re_is_match", is_match, Arity::required(2));
+    env.add_function("re_find", find, Arity::required(2));
+    env.add_function("re_capture", capture, Arity::required(2));
+    env.add_function("re_replace", replace, Arity::optional(2, 2));
 }
 
 /// Checks if a regex matches a [`Value::String`].

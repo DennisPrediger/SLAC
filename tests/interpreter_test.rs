@@ -1,5 +1,7 @@
 use slac::{
-    check_variables_and_functions, compile, execute,
+    check_variables_and_functions, compile,
+    environment::Arity,
+    execute,
     stdlib::{extend_environment, NativeResult},
     Result, StaticEnvironment, Value,
 };
@@ -278,7 +280,7 @@ fn expensive_func(_params: &[Value]) -> NativeResult {
 #[test]
 fn short_circuit_bool() {
     let mut env = StaticEnvironment::default();
-    env.add_function("expensive", expensive_func, None, 0);
+    env.add_function("expensive", expensive_func, Arity::None);
 
     let ast = compile("false and expensive()").unwrap();
     let result = execute(&env, &ast);

@@ -36,12 +36,30 @@ pub trait ValidateEnvironment {
     fn function_exists(&self, name: &str, arity: usize) -> FunctionResult;
 }
 
+pub enum Arity {
+    Polyadic { required: usize, optional: usize },
+    Variadic,
+    None,
+}
+
+impl Arity {
+    pub fn required(required: usize) -> Self {
+        Self::Polyadic {
+            required,
+            optional: 0,
+        }
+    }
+
+    pub fn optional(required: usize, optional: usize) -> Self {
+        Self::Polyadic { required, optional }
+    }
+}
+
 /// A wrapper to hold the [`NativeFunction`] and its arity.
 pub struct Function {
     pub name: String,
     pub func: NativeFunction,
-    pub arity: Option<usize>,
-    pub optionals: usize,
+    pub arity: Arity,
 }
 
 /// An [`Environment`] implementation in which all variables and functions are
@@ -74,20 +92,13 @@ impl StaticEnvironment {
     }
 
     /// Add or update a [`NativeFunction`].
-    pub fn add_function(
-        &mut self,
-        name: &str,
-        func: NativeFunction,
-        arity: Option<usize>,
-        optionals: usize,
-    ) {
+    pub fn add_function(&mut self, name: &str, func: NativeFunction, arity: Arity) {
         self.functions.insert(
             get_env_key(name),
             Rc::new(Function {
                 name: name.to_string(),
                 func,
                 arity,
-                optionals,
             }),
         );
     }
@@ -126,19 +137,21 @@ impl ValidateEnvironment for StaticEnvironment {
 
     fn function_exists(&self, name: &str, param_count: usize) -> FunctionResult {
         if let Some(function) = self.functions.get(&get_env_key(name)) {
-            if let Some(arity) = function.arity {
-                let lower = arity - function.optionals;
-                let upper = arity;
+            match function.arity {
+                Arity::Polyadic { required, optional } => {
+                    let lower = required;
+                    let upper = required + optional;
 
-                if param_count < lower {
-                    FunctionResult::WrongArity(param_count, lower)
-                } else if param_count > upper {
-                    FunctionResult::WrongArity(param_count, upper)
-                } else {
-                    FunctionResult::Exists
+                    if param_count < lower {
+                        FunctionResult::WrongArity(param_count, lower)
+                    } else if param_count > upper {
+                        FunctionResult::WrongArity(param_count, upper)
+                    } else {
+                        FunctionResult::Exists
+                    }
                 }
-            } else {
-                FunctionResult::Exists // variadic Function
+                Arity::Variadic => FunctionResult::Exists,
+                Arity::None => FunctionResult::WrongArity(param_count, 0),
             }
         } else {
             FunctionResult::NotFound
@@ -178,7 +191,7 @@ mod test {
         }
         let mut env = StaticEnvironment::default();
 
-        env.add_function("test", test_func, None, 0);
+        env.add_function("test", test_func, Arity::Variadic);
 
         let registered = env.list_functions();
         assert_eq!(1, registered.len());

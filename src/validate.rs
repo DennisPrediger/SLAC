@@ -101,8 +101,12 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, environment::StaticEnvironment, operator::Operator, stdlib::NativeResult,
-        validate::Error, value::Value,
+        ast::Expression,
+        environment::{Arity, StaticEnvironment},
+        operator::Operator,
+        stdlib::NativeResult,
+        validate::Error,
+        value::Value,
     };
 
     use super::check_variables_and_functions;
@@ -200,7 +204,14 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function("max", dummy_function, Some(2), 0);
+        env.add_function(
+            "max",
+            dummy_function,
+            Arity::Polyadic {
+                required: 2,
+                optional: 0,
+            },
+        );
 
         let result = check_variables_and_functions(&env, &ast);
 
@@ -220,7 +231,7 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function("func", dummy_function, None, 0);
+        env.add_function("func", dummy_function, Arity::Variadic);
 
         let result = check_variables_and_functions(&env, &ast);
 

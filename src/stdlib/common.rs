@@ -8,31 +8,32 @@ use super::{
     error::{NativeError, NativeResult},
     get_index, get_string_index, STRING_OFFSET,
 };
-use crate::{StaticEnvironment, Value};
+use crate::{environment::Arity, StaticEnvironment, Value};
 
 /// Extends a [`StaticEnvironment`] with `common` functions.
+#[rustfmt::skip]
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("all", all, None, 0);
-    env.add_function("any", any, None, 0);
-    env.add_function("at", at, Some(2), 0);
-    env.add_function("between", between, Some(3), 0);
-    env.add_function("bool", bool, Some(1), 0);
-    env.add_function("contains", contains, Some(2), 0);
-    env.add_function("compare", compare, Some(2), 0);
-    env.add_function("copy", copy, Some(3), 0);
-    env.add_function("empty", empty, Some(1), 0);
-    env.add_function("find", find, Some(2), 0);
-    env.add_function("float", float, Some(1), 0);
-    env.add_function("if_then", if_then, Some(3), 1);
-    env.add_function("insert", insert, Some(3), 0);
-    env.add_function("int", int, Some(1), 0);
-    env.add_function("length", length, Some(1), 0);
-    env.add_function("max", max, None, 0);
-    env.add_function("min", min, None, 0);
-    env.add_function("replace", replace, Some(3), 1);
-    env.add_function("remove", replace, Some(2), 0); // replace with only 2 parameters acts as remove
-    env.add_function("reverse", reverse, Some(1), 0);
-    env.add_function("str", str, Some(1), 0);
+    env.add_function("all", all, Arity::Variadic);
+    env.add_function("any", any, Arity::Variadic);
+    env.add_function("at", at, Arity::required(2));
+    env.add_function("between", between, Arity::required(3));
+    env.add_function("bool", bool, Arity::required(1));
+    env.add_function("contains", contains, Arity::required(2));
+    env.add_function("compare", compare, Arity::required(2));
+    env.add_function("copy", copy, Arity::required(3));
+    env.add_function("empty", empty, Arity::required(1));
+    env.add_function("find", find, Arity::required(2));
+    env.add_function("float", float, Arity::required(1));
+    env.add_function("if_then", if_then, Arity::optional(2, 1));
+    env.add_function("insert", insert, Arity::required(3));
+    env.add_function("int", int, Arity::required(1));
+    env.add_function("length", length, Arity::required(1));
+    env.add_function("max", max, Arity::Variadic);
+    env.add_function("min", min, Arity::Variadic);
+    env.add_function("replace", replace, Arity::optional(2, 1));
+    env.add_function("remove", replace, Arity::required(2)); // replace with only 2 parameters acts as remove
+    env.add_function("reverse", reverse, Arity::required(1));
+    env.add_function("str", str, Arity::required(1));
 }
 
 /// Return the first parameter if it's an [`Value::Array`] or return all

@@ -9,27 +9,28 @@ use super::{
     default_number,
     error::{NativeError, NativeResult},
 };
-use crate::{StaticEnvironment, Value};
+use crate::{environment::Arity, StaticEnvironment, Value};
 
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::Number`]
 /// variables and various common mathematical constants.
+#[rustfmt::skip]
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("abs", abs, Some(1), 0);
-    env.add_function("arc_tan", arc_tan, Some(1), 0);
-    env.add_function("cos", cos, Some(1), 0);
-    env.add_function("exp", exp, Some(1), 0);
-    env.add_function("frac", frac, Some(1), 0);
-    env.add_function("ln", ln, Some(1), 0);
-    env.add_function("round", round, Some(1), 0);
-    env.add_function("sin", sin, Some(1), 0);
-    env.add_function("sqrt", sqrt, Some(1), 0);
-    env.add_function("trunc", trunc, Some(1), 0);
+    env.add_function("abs", abs, Arity::required(1));
+    env.add_function("arc_tan", arc_tan, Arity::required(1));
+    env.add_function("cos", cos, Arity::required(1));
+    env.add_function("exp", exp, Arity::required(1));
+    env.add_function("frac", frac, Arity::required(1));
+    env.add_function("ln", ln, Arity::required(1));
+    env.add_function("round", round, Arity::required(1));
+    env.add_function("sin", sin, Arity::required(1));
+    env.add_function("sqrt", sqrt, Arity::required(1));
+    env.add_function("trunc", trunc, Arity::required(1));
 
-    env.add_function("int_to_hex", int_to_hex, Some(1), 0);
-    env.add_function("even", even, Some(1), 0);
-    env.add_function("odd", odd, Some(1), 0);
-    env.add_function("pow", pow, Some(2), 1);
-    env.add_function("random", random, Some(1), 1);
+    env.add_function("int_to_hex", int_to_hex, Arity::required(1));
+    env.add_function("even", even, Arity::required(1));
+    env.add_function("odd", odd, Arity::required(1));
+    env.add_function("pow", pow, Arity::optional(1, 1));
+    env.add_function("random", random, Arity::optional(0, 1));
 }
 
 macro_rules! generate_std_math_functions {

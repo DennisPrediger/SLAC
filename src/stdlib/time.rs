@@ -39,7 +39,7 @@ use chrono::{
     Timelike,
 };
 
-use crate::{StaticEnvironment, Value};
+use crate::{environment::Arity, StaticEnvironment, Value};
 
 use super::{
     default_number, default_string,
@@ -47,30 +47,31 @@ use super::{
 };
 
 /// Extends a [`StaticEnvironment`] with `time` conversion functions.
+#[rustfmt::skip]
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("date", super::math::trunc, Some(1), 0);
-    env.add_function("time", super::math::frac, Some(1), 0);
-    env.add_function("date_to_string", date_to_string, Some(2), 0);
-    env.add_function("time_to_string", date_to_string, Some(2), 0);
-    env.add_function("string_to_date", string_to_date, Some(2), 1);
-    env.add_function("string_to_time", string_to_time, Some(2), 1);
-    env.add_function("string_to_datetime", string_to_datetime, Some(2), 1);
-    env.add_function("day_of_week", day_of_week, Some(1), 0);
-    env.add_function("encode_date", encode_date, Some(3), 0);
-    env.add_function("encode_time", encode_time, Some(4), 1);
-    env.add_function("inc_month", inc_month, Some(2), 1);
-    env.add_function("is_leap_year", is_leap_year, Some(1), 0);
-    env.add_function("date_from_rfc2822", date_from_rfc2822, Some(1), 0);
-    env.add_function("date_from_rfc3339", date_from_rfc3339, Some(1), 0);
-    env.add_function("date_to_rfc2822", date_to_rfc2822, Some(1), 0);
-    env.add_function("date_to_rfc3339", date_to_rfc3339, Some(1), 0);
-    env.add_function("year", year, Some(1), 0);
-    env.add_function("month", month, Some(1), 0);
-    env.add_function("day", day, Some(1), 0);
-    env.add_function("hour", hour, Some(1), 0);
-    env.add_function("minute", minute, Some(1), 0);
-    env.add_function("second", second, Some(1), 0);
-    env.add_function("millisecond", millisecond, Some(1), 0);
+    env.add_function("date", super::math::trunc, Arity::required(1) );
+    env.add_function("time", super::math::frac, Arity::required(1) );
+    env.add_function("date_to_string", date_to_string, Arity::required(2) );
+    env.add_function("time_to_string", date_to_string, Arity::required(2) );
+    env.add_function("string_to_date", string_to_date, Arity::optional(1, 1) );
+    env.add_function("string_to_time", string_to_time, Arity::optional(1, 1) );
+    env.add_function("string_to_datetime", string_to_datetime, Arity::optional(1, 1) );
+    env.add_function("day_of_week", day_of_week, Arity::required(1) );
+    env.add_function("encode_date", encode_date, Arity::required(3) );
+    env.add_function("encode_time", encode_time, Arity::optional(3, 1) );
+    env.add_function("inc_month", inc_month, Arity::optional(1, 1) );
+    env.add_function("is_leap_year", is_leap_year, Arity::required(1) );
+    env.add_function("date_from_rfc2822", date_from_rfc2822, Arity::required(1) );
+    env.add_function("date_from_rfc3339", date_from_rfc3339, Arity::required(1) );
+    env.add_function("date_to_rfc2822", date_to_rfc2822, Arity::required(1) );
+    env.add_function("date_to_rfc3339", date_to_rfc3339, Arity::required(1) );
+    env.add_function("year", year, Arity::required(1) );
+    env.add_function("month", month, Arity::required(1) );
+    env.add_function("day", day, Arity::required(1) );
+    env.add_function("hour", hour, Arity::required(1) );
+    env.add_function("minute", minute, Arity::required(1) );
+    env.add_function("second", second, Arity::required(1) );
+    env.add_function("millisecond", millisecond, Arity::required(1) );
 }
 
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;

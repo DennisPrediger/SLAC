@@ -1,21 +1,22 @@
 //! Functions to manipulate [`Value::String`] variables.
 
-use crate::{StaticEnvironment, Value};
+use crate::{environment::Arity, StaticEnvironment, Value};
 
 use super::error::{NativeError, NativeResult};
 
 /// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
+#[rustfmt::skip]
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("chr", chr, Some(1), 0);
-    env.add_function("ord", ord, Some(1), 0);
-    env.add_function("lowercase", lowercase, Some(1), 0);
-    env.add_function("uppercase", uppercase, Some(1), 0);
-    env.add_function("same_text", same_text, Some(2), 0);
-    env.add_function("split", split, Some(2), 0);
-    env.add_function("split_csv", split_csv, Some(2), 1);
-    env.add_function("trim", trim, Some(1), 0);
-    env.add_function("trim_left", trim_left, Some(1), 0);
-    env.add_function("trim_right", trim_right, Some(1), 0);
+    env.add_function("chr", chr, Arity::Polyadic { required: (1), optional: (0) });
+    env.add_function("ord", ord, Arity::Polyadic { required: (1), optional: (0) });
+    env.add_function("lowercase", lowercase, Arity::Polyadic { required: (1), optional: (0) });
+    env.add_function("uppercase", uppercase, Arity::Polyadic { required: (1), optional: (0) });
+    env.add_function("same_text", same_text, Arity::Polyadic { required: (2), optional: (0) });
+    env.add_function("split", split, Arity::Polyadic { required: (2), optional: (0) });
+    env.add_function("split_csv", split_csv, Arity::Polyadic { required: (1), optional: (1) });
+    env.add_function("trim", trim, Arity::Polyadic { required: (1), optional: (0) });
+    env.add_function("trim_left", trim_left, Arity::Polyadic { required: (1), optional: (0) });
+    env.add_function("trim_right", trim_right, Arity::Polyadic { required: (1), optional: (0) });
 }
 
 /// Converts a [`Value::Number`] into a [`Value::String`] containg a single
