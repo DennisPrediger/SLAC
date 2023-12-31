@@ -39,39 +39,44 @@ use chrono::{
     Timelike,
 };
 
-use crate::{environment::Arity, StaticEnvironment, Value};
+use crate::{
+    environment::{Arity, Function},
+    Value,
+};
 
 use super::{
     default_number, default_string,
     error::{NativeError, NativeResult},
 };
 
-/// Extends a [`StaticEnvironment`] with `time` conversion functions.
+/// Returns all time functions as a fixed size array.
 #[rustfmt::skip]
-pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("date", super::math::trunc, Arity::required(1) );
-    env.add_function("time", super::math::frac, Arity::required(1) );
-    env.add_function("date_to_string", date_to_string, Arity::required(2) );
-    env.add_function("time_to_string", date_to_string, Arity::required(2) );
-    env.add_function("string_to_date", string_to_date, Arity::optional(1, 1) );
-    env.add_function("string_to_time", string_to_time, Arity::optional(1, 1) );
-    env.add_function("string_to_datetime", string_to_datetime, Arity::optional(1, 1) );
-    env.add_function("day_of_week", day_of_week, Arity::required(1) );
-    env.add_function("encode_date", encode_date, Arity::required(3) );
-    env.add_function("encode_time", encode_time, Arity::optional(3, 1) );
-    env.add_function("inc_month", inc_month, Arity::optional(1, 1) );
-    env.add_function("is_leap_year", is_leap_year, Arity::required(1) );
-    env.add_function("date_from_rfc2822", date_from_rfc2822, Arity::required(1) );
-    env.add_function("date_from_rfc3339", date_from_rfc3339, Arity::required(1) );
-    env.add_function("date_to_rfc2822", date_to_rfc2822, Arity::required(1) );
-    env.add_function("date_to_rfc3339", date_to_rfc3339, Arity::required(1) );
-    env.add_function("year", year, Arity::required(1) );
-    env.add_function("month", month, Arity::required(1) );
-    env.add_function("day", day, Arity::required(1) );
-    env.add_function("hour", hour, Arity::required(1) );
-    env.add_function("minute", minute, Arity::required(1) );
-    env.add_function("second", second, Arity::required(1) );
-    env.add_function("millisecond", millisecond, Arity::required(1) );
+pub fn functions() -> Vec<Function> {
+    vec![
+        Function::new(super::math::trunc, Arity::required(1), "date(datetime: Number): Number"),
+        Function::new(super::math::frac, Arity::required(1), "time(datetime: Number): Number"),
+        Function::new(date_to_string, Arity::required(2), "date_to_string(fmt: String, datetime: Number): String"),
+        Function::new(date_to_string, Arity::required(2), "time_to_string(fmt: String, datetime: Number): String"),
+        Function::new(string_to_date, Arity::optional(1, 1), "string_to_date(date: String, format: String = '%Y-%m-%d'): Number"),
+        Function::new(string_to_time, Arity::optional(1, 1), "string_to_time(time: String, format: String = '%H:%M:%S'): Number"),
+        Function::new(string_to_datetime, Arity::optional(1, 1), "string_to_datetime(datetime: String, format: String = '%Y-%m-%d %H:%M:%S'): Number"),
+        Function::new(date_from_rfc2822, Arity::required(1), "date_from_rfc2822(datetime: String): Number"),
+        Function::new(date_from_rfc3339, Arity::required(1), "date_from_rfc3339(datetime: String): Number"),
+        Function::new(date_to_rfc2822, Arity::required(1), "date_to_rfc2822(datetime: Number): String"),
+        Function::new(date_to_rfc3339, Arity::required(1), "date_to_rfc3339(datetime: Number): String"),
+        Function::new(day_of_week, Arity::required(1), "day_of_week(datetime: Number): Number"),
+        Function::new(encode_date, Arity::required(3), "encode_date(year: Number, month: Number, day: Number): Number"),
+        Function::new(encode_time, Arity::optional(3, 1), "encode_time(hour: Number, minute: Number, second: Number, millisecond: Number = 0): Number"),
+        Function::new(inc_month, Arity::optional(1, 1), "inc_month(datetime: Number, increment: Number = 1): Number"),
+        Function::new(is_leap_year, Arity::required(1), "is_leap_year(datetime: Number): Number"),
+        Function::new(year, Arity::required(1), "year(datetime: Number): Number"),
+        Function::new(month, Arity::required(1), "month(datetime: Number): Number"),
+        Function::new(day, Arity::required(1), "day(datetime: Number): Number"),
+        Function::new(hour, Arity::required(1), "hour(datetime: Number): Number"),
+        Function::new(minute, Arity::required(1), "minute(datetime: Number): Number"),
+        Function::new(second, Arity::required(1), "second(datetime: Number): Number"),
+        Function::new(millisecond, Arity::required(1), "millisecond(datetime: Number): Number"),
+    ]
 }
 
 const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;

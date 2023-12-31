@@ -36,6 +36,7 @@ pub trait ValidateEnvironment {
     fn function_exists(&self, name: &str, arity: usize) -> FunctionResult;
 }
 
+#[derive(Clone, Copy)]
 pub enum Arity {
     Polyadic { required: usize, optional: usize },
     Variadic,
@@ -43,23 +44,48 @@ pub enum Arity {
 }
 
 impl Arity {
-    pub fn required(required: usize) -> Self {
+    pub const fn required(required: usize) -> Self {
         Self::Polyadic {
             required,
             optional: 0,
         }
     }
 
-    pub fn optional(required: usize, optional: usize) -> Self {
+    pub const fn optional(required: usize, optional: usize) -> Self {
         Self::Polyadic { required, optional }
     }
 }
 
 /// A wrapper to hold the [`NativeFunction`] and its arity.
+#[derive(Clone)]
 pub struct Function {
     pub name: String,
     pub func: NativeFunction,
     pub arity: Arity,
+    pub params: String,
+}
+
+impl Function {
+    /// Creates a new `Function` from  a declaration.
+    /// Example: "max(left: Number, right: Number): Number")
+    ///
+    /// # Remarks
+    ///
+    /// If the declaration does not contain an opening brace, the whole string
+    /// is used as name and the params are left empty.
+    pub fn new(func: NativeFunction, arity: Arity, declaration: &str) -> Self {
+        let (name, params) = declaration
+            .split_once('(')
+            .map(|(name, param)| (name, format!("({param}")))
+            .unwrap_or((declaration, String::new()));
+
+        Self {
+            name: name.trim().to_string(),
+            func,
+            arity,
+            params,
+        }
+    }
 }
 
 /// An [`Environment`] implementation in which all variables and functions are
@@ -92,15 +118,15 @@ impl StaticEnvironment {
     }
 
     /// Add or update a [`NativeFunction`].
-    pub fn add_function(&mut self, name: &str, func: NativeFunction, arity: Arity) {
-        self.functions.insert(
-            get_env_key(name),
-            Rc::new(Function {
-                name: name.to_string(),
-                func,
-                arity,
-            }),
-        );
+    pub fn add_function(&mut self, func: Function) {
+        self.functions
+            .insert(get_env_key(&func.name), Rc::new(func));
+    }
+
+    pub fn add_functions(&mut self, functions: Vec<Function>) {
+        for func in functions {
+            self.add_function(func);
+        }
     }
 
     /// Remove a native function and return its [`Function`] if it existed.
@@ -191,7 +217,7 @@ mod test {
         }
         let mut env = StaticEnvironment::default();
 
-        env.add_function("test", test_func, Arity::Variadic);
+        env.add_function(Function::new(test_func, Arity::Variadic, "test(...)"));
 
         let registered = env.list_functions();
         assert_eq!(1, registered.len());
@@ -199,5 +225,20 @@ mod test {
         let removed = env.remove_function("test").unwrap();
 
         assert_eq!(removed.name, registered.first().unwrap().name);
+    }
+
+    #[test]
+    fn new_function() {
+        fn test_func(_params: &[Value]) -> NativeResult {
+            unreachable!()
+        }
+
+        let func = Function::new(test_func, Arity::None, "some_name(param: Number): Number");
+        assert_eq!("some_name", func.name);
+        assert_eq!("(param: Number): Number", func.params);
+
+        let func = Function::new(test_func, Arity::None, "only_name");
+        assert_eq!("only_name", func.name);
+        assert_eq!("", func.params);
     }
 }

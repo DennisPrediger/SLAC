@@ -102,7 +102,7 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
 mod test {
     use crate::{
         ast::Expression,
-        environment::{Arity, StaticEnvironment},
+        environment::{Arity, Function, StaticEnvironment},
         operator::Operator,
         stdlib::NativeResult,
         validate::Error,
@@ -187,7 +187,7 @@ mod test {
     }
 
     fn dummy_function(_params: &[Value]) -> NativeResult {
-        Ok(Value::Boolean(true))
+        unreachable!()
     }
 
     #[test]
@@ -204,14 +204,14 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function(
-            "max",
+        env.add_function(Function::new(
             dummy_function,
             Arity::Polyadic {
                 required: 2,
                 optional: 0,
             },
-        );
+            "max(left: Number, right: Number): Number",
+        ));
 
         let result = check_variables_and_functions(&env, &ast);
 
@@ -231,7 +231,11 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function("func", dummy_function, Arity::Variadic);
+        env.add_function(Function::new(
+            dummy_function,
+            Arity::Variadic,
+            "func(...): Number",
+        ));
 
         let result = check_variables_and_functions(&env, &ast);
 

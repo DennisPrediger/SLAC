@@ -146,8 +146,13 @@ impl<'a> TreeWalkingInterpreter<'a> {
 #[cfg(test)]
 mod test {
     use crate::{
-        ast::Expression, environment::Arity, interpreter::TreeWalkingInterpreter,
-        operator::Operator, stdlib::common::max, value::Value, StaticEnvironment,
+        ast::Expression,
+        environment::{Arity, Function},
+        interpreter::TreeWalkingInterpreter,
+        operator::Operator,
+        stdlib::common::max,
+        value::Value,
+        StaticEnvironment,
     };
 
     #[test]
@@ -280,14 +285,14 @@ mod test {
         };
 
         let mut env = StaticEnvironment::default();
-        env.add_function(
-            "max",
+        env.add_function(Function::new(
             max,
             Arity::Polyadic {
                 required: 2,
                 optional: 0,
             },
-        );
+            "max(left: Number, right: Number): Number",
+        ));
 
         let result = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
         let expected = Value::Number(20.0);

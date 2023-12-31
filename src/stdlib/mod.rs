@@ -28,15 +28,13 @@ pub type NativeFunction = fn(&[Value]) -> NativeResult;
 
 /// Extends a [`StaticEnvironment`] with all standard library functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    common::extend_environment(env);
-    math::extend_environment(env);
-    string::extend_environment(env);
-
+    env.add_functions(common::functions());
+    env.add_functions(math::functions());
+    env.add_functions(string::functions());
     #[cfg(feature = "chrono")]
-    time::extend_environment(env);
-
+    env.add_functions(time::functions());
     #[cfg(feature = "regex")]
-    regex::extend_environment(env);
+    env.add_functions(regex::functions());
 }
 
 pub(crate) fn default_string<'a>(

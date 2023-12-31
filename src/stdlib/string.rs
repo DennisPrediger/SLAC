@@ -1,22 +1,27 @@
 //! Functions to manipulate [`Value::String`] variables.
 
-use crate::{environment::Arity, StaticEnvironment, Value};
+use crate::{
+    environment::{Arity, Function},
+    Value,
+};
 
 use super::error::{NativeError, NativeResult};
 
-/// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::String`] variables.
+/// Returns all string functions as a fixed size array.
 #[rustfmt::skip]
-pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("chr", chr, Arity::Polyadic { required: (1), optional: (0) });
-    env.add_function("ord", ord, Arity::Polyadic { required: (1), optional: (0) });
-    env.add_function("lowercase", lowercase, Arity::Polyadic { required: (1), optional: (0) });
-    env.add_function("uppercase", uppercase, Arity::Polyadic { required: (1), optional: (0) });
-    env.add_function("same_text", same_text, Arity::Polyadic { required: (2), optional: (0) });
-    env.add_function("split", split, Arity::Polyadic { required: (2), optional: (0) });
-    env.add_function("split_csv", split_csv, Arity::Polyadic { required: (1), optional: (1) });
-    env.add_function("trim", trim, Arity::Polyadic { required: (1), optional: (0) });
-    env.add_function("trim_left", trim_left, Arity::Polyadic { required: (1), optional: (0) });
-    env.add_function("trim_right", trim_right, Arity::Polyadic { required: (1), optional: (0) });
+pub fn functions() -> Vec<Function> {
+    vec![
+        Function::new(chr, Arity::required(1), "chr(ord: Number): String"),
+        Function::new(ord, Arity::required(1), "ord(char: String): Number"),
+        Function::new(lowercase, Arity::required(1), "lowercase(text: String): String"),
+        Function::new(uppercase, Arity::required(1), "uppercase(text: String): String"),
+        Function::new(same_text, Arity::required(2), "same_text(left: String, right: String): Boolean"),
+        Function::new(split, Arity::required(2), "split(line: String, separator: String): Array<String>"),
+        Function::new(split_csv, Arity::optional(1, 1), "split_csv(line: String, separator: String = ';'): Array<String>"),
+        Function::new(trim, Arity::required(1), "trim(text: String): String"),
+        Function::new(trim_left, Arity::required(1), "trim_left(text: String): String"),
+        Function::new(trim_right, Arity::required(1), "trim_right(text: String): String"),
+    ]
 }
 
 /// Converts a [`Value::Number`] into a [`Value::String`] containg a single

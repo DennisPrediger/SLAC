@@ -9,28 +9,32 @@ use super::{
     default_number,
     error::{NativeError, NativeResult},
 };
-use crate::{environment::Arity, StaticEnvironment, Value};
 
-/// Extends a [`StaticEnvironment`] with functions to manipulate [`Value::Number`]
-/// variables and various common mathematical constants.
+use crate::{
+    environment::{Arity, Function},
+    Value,
+};
+
+/// Returns all math functions as a fixed size array.
 #[rustfmt::skip]
-pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("abs", abs, Arity::required(1));
-    env.add_function("arc_tan", arc_tan, Arity::required(1));
-    env.add_function("cos", cos, Arity::required(1));
-    env.add_function("exp", exp, Arity::required(1));
-    env.add_function("frac", frac, Arity::required(1));
-    env.add_function("ln", ln, Arity::required(1));
-    env.add_function("round", round, Arity::required(1));
-    env.add_function("sin", sin, Arity::required(1));
-    env.add_function("sqrt", sqrt, Arity::required(1));
-    env.add_function("trunc", trunc, Arity::required(1));
-
-    env.add_function("int_to_hex", int_to_hex, Arity::required(1));
-    env.add_function("even", even, Arity::required(1));
-    env.add_function("odd", odd, Arity::required(1));
-    env.add_function("pow", pow, Arity::optional(1, 1));
-    env.add_function("random", random, Arity::optional(0, 1));
+pub fn functions() -> Vec<Function> {
+    vec![
+        Function::new(abs, Arity::required(1), "abs(value: Number): Number"),
+        Function::new(arc_tan, Arity::required(1), "arc_tan(value: Number): Number"),
+        Function::new(cos, Arity::required(1), "cos(value: Number): Number"),
+        Function::new(exp, Arity::required(1), "exp(value: Number): Number"),
+        Function::new(frac, Arity::required(1), "frac(value: Number): Number"),
+        Function::new(ln, Arity::required(1), "ln(value: Number): Number"),
+        Function::new(round, Arity::required(1), "round(value: Number): Number"),
+        Function::new(sin, Arity::required(1), "sin(value: Number): Number"),
+        Function::new(sqrt, Arity::required(1), "sqrt(value: Number): Number"),
+        Function::new(trunc, Arity::required(1), "trunc(value: Number): Number"),
+        Function::new(int_to_hex, Arity::required(1), "int_to_hex(value: Number): String"),
+        Function::new(even, Arity::required(1), "even(value: Number): Boolean"),
+        Function::new(odd, Arity::required(1), "odd(value: Number): Boolean"),
+        Function::new(pow, Arity::optional(1, 1), "pow(value: Number, exponent: Number = 2): Number"),
+        Function::new(random, Arity::optional(0, 1), "random(range: Number = 1): Number"),
+    ]
 }
 
 macro_rules! generate_std_math_functions {

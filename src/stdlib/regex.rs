@@ -6,17 +6,22 @@
 
 use regex_lite::{Captures, Regex};
 
-use crate::{environment::Arity, StaticEnvironment, Value};
+use crate::{
+    environment::{Arity, Function},
+    Value,
+};
 
 use super::{default_number, default_string, NativeError, NativeResult};
 
-/// Extends a [`StaticEnvironment`] with `regex` functions.
+/// Returns all regex functions as a fixed size array.
 #[rustfmt::skip]
-pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("re_is_match", is_match, Arity::required(2));
-    env.add_function("re_find", find, Arity::required(2));
-    env.add_function("re_capture", capture, Arity::required(2));
-    env.add_function("re_replace", replace, Arity::optional(2, 2));
+pub fn functions() -> Vec<Function> {
+    vec![
+        Function::new(is_match, Arity::required(2), "re_is_match(haystack: String, pattern: String): Boolean"),
+        Function::new(find, Arity::required(2), "re_find(haystack: String, pattern: String): Array<String>"),
+        Function::new(capture, Arity::required(2), "re_capture(haystack: String, pattern: String): Array<String>"),
+        Function::new(replace, Arity::optional(2, 2), "re_replace(haystack: String, pattern: String, replacement: String = '', limit = 0): String"),
+    ]
 }
 
 /// Checks if a regex matches a [`Value::String`].
@@ -106,14 +111,16 @@ pub fn capture(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 /// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn replace(params: &[Value]) -> NativeResult {
-    let rep = default_string(params, 2, "")?;
+    let replacement = default_string(params, 2, "")?;
     let limit = default_number(params, 3, 0.0)? as usize;
 
     match params {
         [Value::String(haystack), Value::String(needle), ..] => {
             let re = Regex::new(needle).map_err(|e| NativeError::from(e.to_string()))?;
 
-            Ok(Value::String(re.replacen(haystack, limit, rep).to_string()))
+            Ok(Value::String(
+                re.replacen(haystack, limit, replacement).to_string(),
+            ))
         }
         [_, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(2)),

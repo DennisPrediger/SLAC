@@ -8,32 +8,38 @@ use super::{
     error::{NativeError, NativeResult},
     get_index, get_string_index, STRING_OFFSET,
 };
-use crate::{environment::Arity, StaticEnvironment, Value};
 
-/// Extends a [`StaticEnvironment`] with `common` functions.
+use crate::{
+    environment::{Arity, Function},
+    Value,
+};
+
+/// Returns all common functions as a fixed size array.
 #[rustfmt::skip]
-pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_function("all", all, Arity::Variadic);
-    env.add_function("any", any, Arity::Variadic);
-    env.add_function("at", at, Arity::required(2));
-    env.add_function("between", between, Arity::required(3));
-    env.add_function("bool", bool, Arity::required(1));
-    env.add_function("contains", contains, Arity::required(2));
-    env.add_function("compare", compare, Arity::required(2));
-    env.add_function("copy", copy, Arity::required(3));
-    env.add_function("empty", empty, Arity::required(1));
-    env.add_function("find", find, Arity::required(2));
-    env.add_function("float", float, Arity::required(1));
-    env.add_function("if_then", if_then, Arity::optional(2, 1));
-    env.add_function("insert", insert, Arity::required(3));
-    env.add_function("int", int, Arity::required(1));
-    env.add_function("length", length, Arity::required(1));
-    env.add_function("max", max, Arity::Variadic);
-    env.add_function("min", min, Arity::Variadic);
-    env.add_function("replace", replace, Arity::optional(2, 1));
-    env.add_function("remove", replace, Arity::required(2)); // replace with only 2 parameters acts as remove
-    env.add_function("reverse", reverse, Arity::required(1));
-    env.add_function("str", str, Arity::required(1));
+pub fn functions() -> Vec<Function> {
+    vec![
+        Function::new(all, Arity::Variadic, "all(...): Boolean"),
+        Function::new(any, Arity::Variadic, "any(...): Boolean"),
+        Function::new(at, Arity::required(2), "at(values: [String|Array], index: Number): Any"),
+        Function::new(between, Arity::required(3), "between(value: Any, lower: Any, upper: Any): Boolean"),
+        Function::new(bool, Arity::required(1), "bool(value: Any): Boolean"),
+        Function::new(contains, Arity::required(2), "contains(haystack: [String|Array], needle: [String|Any]): Boolean"),
+        Function::new(compare, Arity::required(2), "compare(left: Any, right: Any): Number"),
+        Function::new(copy, Arity::required(3), "copy(source: [String|Array], start: Number, count: Number): [String|Array]"),
+        Function::new(empty, Arity::required(1), "empty(value: Any): Boolean"),
+        Function::new(find, Arity::required(2), "find(haystack: [String|Array], needle: [String|Any]): Number"),
+        Function::new(float, Arity::required(1), "float(value: Any): Number"),
+        Function::new(if_then, Arity::optional(2, 1), "if_then(condition: Boolean, first: Any, second: Any): Any"),
+        Function::new(insert, Arity::required(3), "insert(target: [String|Array], source: [String|Any], index: Number): Any"),
+        Function::new(int, Arity::required(1), "int(value: Any): Number"),
+        Function::new(length, Arity::required(1), "length(value: [String|Array]): Number"),
+        Function::new(max, Arity::Variadic, "max(...): Any"),
+        Function::new(min, Arity::Variadic, "min(...): Any"),
+        Function::new(replace, Arity::optional(2, 1), "replace(value: [String|Array], from: [String|Any], to: [String|Any]): [String|Array]"),
+        Function::new(replace, Arity::required(2), "remove(value: [String|Array], from: [String|Any]): [String|Array]"), // replace with only 2 parameters acts as remove
+        Function::new(reverse, Arity::required(1), "reverse(value: [Array|String]): [Array|String]"),
+        Function::new(str, Arity::required(1), "str(value: Any): String"),
+    ]
 }
 
 /// Return the first parameter if it's an [`Value::Array`] or return all
@@ -453,7 +459,6 @@ pub fn str(params: &[Value]) -> NativeResult {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::value::Value;
 
     #[test]
     fn std_all() {

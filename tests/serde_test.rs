@@ -3,7 +3,9 @@ mod test {
 
     use minify::json::minify;
     use slac::{
-        check_variables_and_functions, compile, environment::Arity, stdlib::NativeResult,
+        check_variables_and_functions, compile,
+        environment::{Arity, Function},
+        stdlib::NativeResult,
         Expression, Operator, StaticEnvironment,
     };
 
@@ -28,22 +30,22 @@ mod test {
     fn test_validate(script: &str) {
         let input = compile(script).unwrap();
         let mut env = StaticEnvironment::default();
-        env.add_function(
-            "max",
+        env.add_function(Function::new(
             dummy_func,
             Arity::Polyadic {
                 required: 2,
                 optional: 0,
             },
-        );
-        env.add_function(
-            "some_func",
+            "max(left: Any, right: Any): Any",
+        ));
+        env.add_function(Function::new(
             dummy_func,
             Arity::Polyadic {
                 required: 1,
                 optional: 0,
             },
-        );
+            "some_func(param: Any): Any",
+        ));
         env.add_variable("some_var", slac::Value::Boolean(false));
 
         assert!(check_variables_and_functions(&env, &input).is_ok());
