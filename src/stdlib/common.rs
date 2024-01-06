@@ -14,7 +14,7 @@ use crate::{
     Value,
 };
 
-/// Returns all common functions as a fixed size array.
+/// Returns all common Functions.
 #[rustfmt::skip]
 pub fn functions() -> Vec<Function> {
     vec![
@@ -42,7 +42,7 @@ pub fn functions() -> Vec<Function> {
     ]
 }
 
-/// Return the first parameter if it's an [`Value::Array`] or return all
+/// Returns the first parameter if it's an [`Value::Array`] or return all
 /// parameters as varadic function.
 fn smart_vec(params: &[Value]) -> &[Value] {
     match params {
@@ -53,6 +53,8 @@ fn smart_vec(params: &[Value]) -> &[Value] {
 
 /// Checks if all members of a [`Value::Array`] are [`Value::Boolean(true)`].
 /// Can be called with a single [`Value::Array`] parameter or as varadic function.
+///
+/// * Declaration: `all(...): Boolean`
 #[allow(clippy::missing_errors_doc)]
 pub fn all(params: &[Value]) -> NativeResult {
     let values = smart_vec(params);
@@ -63,6 +65,8 @@ pub fn all(params: &[Value]) -> NativeResult {
 
 /// Checks if any member of a [`Value::Array`] is [`Value::Boolean(true)`].
 /// Can be called with a single [`Value::Array`] parameter or as varadic function.
+///
+/// * Declaration: `any(...): Boolean`
 #[allow(clippy::missing_errors_doc)]
 pub fn any(params: &[Value]) -> NativeResult {
     let values = smart_vec(params);
@@ -71,7 +75,9 @@ pub fn any(params: &[Value]) -> NativeResult {
     Ok(Value::Boolean(result))
 }
 
-/// Returns the item at the specified index.
+/// Returns the value at the specified index of a [`Value::String`] or [`Value::Array`].
+///
+/// * Declaration: `at(values: [String|Array], index: Number): Any`
 ///
 /// # Errors
 ///
@@ -103,6 +109,8 @@ pub fn at(params: &[Value]) -> NativeResult {
 /// Returns a [`Value::Boolean`] indicating if the first parameter falls within
 /// the range of the second and third parameter.
 ///
+/// * Declaration: `between(value: Any, lower: Any, upper: Any): Boolean`
+///
 /// # Remarks
 ///
 /// The range includes the lower and upper bounds.
@@ -118,6 +126,8 @@ pub fn between(params: &[Value]) -> NativeResult {
 }
 
 /// Converts any [`Value`] to a [`Value::Boolean`].
+///
+/// * Declaration: `bool(value: Any): Boolean`
 ///
 /// # Remarks
 ///
@@ -142,10 +152,9 @@ pub fn bool(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Checks if the second parameter (needle) is contained inside the first (haystack).
-/// Can be called with either:
-/// * two [`Value::String`]
-/// * a [`Value::Array`] as haystack and any [`Value`] as needle
+/// Checks if needle is contained inside the first haystack.
+///
+/// * Declaration: `contains(haystack: [String|Array], needle: [String|Any]): Boolean`
 ///
 /// # Errors
 ///
@@ -162,7 +171,9 @@ pub fn contains(params: &[Value]) -> NativeResult {
     Ok(Value::Boolean(found))
 }
 
-/// Compares two [`Value`] and returns the [`Ordering`] as [`Value::Number`].
+/// Compares two [`Value`] parameters and returns the [`Ordering`] as [`Value::Number`].
+///
+/// * Declaration: `compare(left: Any, right: Any): Number`
 ///
 /// # Errors
 ///
@@ -177,8 +188,9 @@ pub fn compare(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Copys a range of a [`Value::String`] or [`Value::Array`].
-/// The first parameter sets the start index, the second the number of characters to copy.
+/// Copies a range from a `source` from a `start` up to a `count`.
+///
+/// * Declaration: `copy(source: [String|Array], start: Number, count: Number): [String|Array]`
 ///
 /// # Errors
 ///
@@ -208,6 +220,16 @@ pub fn copy(params: &[Value]) -> NativeResult {
 
 /// Checks if the supplied [`Value`] is empty.
 ///
+/// * Declaration: `empty(value: Any): Boolean`
+///
+/// # Remarks
+///
+/// Empty values are the following:
+/// * Boolean: `False`
+/// * String: `''`
+/// * Number: `0.0`
+/// * Array: `[]`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
@@ -220,6 +242,8 @@ pub fn empty(params: &[Value]) -> NativeResult {
 
 /// Finds the index of a [`Value`] inside an [`Value::Array`] or the position of a substring inside
 /// a [`Value::String`].
+///
+/// * Declaration: `find(haystack: [String|Array], needle: [String|Any]): Number`
 ///
 /// # Errors
 ///
@@ -241,11 +265,13 @@ pub fn find(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Converts [`Value::Boolean`] or [`Value::String`] to a [`Value::Number`].
-/// A [`Value::Number`] will retain it's value.
+/// Converts a [`Value::Boolean`] or a [`Value::String`] to a [`Value::Number`].
+///
+/// * Declaration: `float(value: Any): Number`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the Value can not be converted to a Number.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn float(params: &[Value]) -> NativeResult {
@@ -261,8 +287,14 @@ pub fn float(params: &[Value]) -> NativeResult {
     }
 }
 
-/// If the first parameter is [`Value::Boolean(true)`] returns the second parameter, otherwise returns the thrid.
-/// If the third parameter is not defined, return an empty [`Value`] of the same type as the second parameter.
+/// If the condition is `True`, returns the first value, otherwise returns the second.
+/// If the second value is not defined, returns an empty [`Value`] of the same type as the first value.
+///
+/// * Declaration: `if_then(condition: Boolean, first: Any, second: Any): Any`
+///
+/// # Remarks
+///
+/// *All parameters are evaluated* prior the the functions execution. There is *no short circuit* evaluation.
 ///
 /// # Errors
 ///
@@ -282,9 +314,9 @@ pub fn if_then(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Inserts a [`Value::String`] into another [`Value::String`] at the specified
-/// character index.
-/// Or Inserts a [`Value`] into a [`Value::Array`] at the specified index.
+/// Inserts a Value on the specified index.
+///
+/// * Declaration: `insert(target: [String|Array], source: [String|Any], index: Number): Any`
 ///
 /// # Errors
 ///
@@ -321,11 +353,13 @@ pub fn insert(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Converts any [`Value`] to a [`Value::Number`] with integer precision.
-/// See [`float`] for conversion information.
+/// Converts a [`Value::Boolean`] or a [`Value::String`] to an integer [`Value::Number`].
+///
+/// * Declaration: `int(value: Any): Number`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the Value can not be converted to a Number.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn int(params: &[Value]) -> NativeResult {
@@ -338,6 +372,8 @@ pub fn int(params: &[Value]) -> NativeResult {
 /// Returns the length of the supplied [`Value::String`] or [`Value::Array`].
 /// For other [`Value`] types return 0.
 ///
+/// * Declaration: `length(value: [String|Array]): Number`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
@@ -348,8 +384,9 @@ pub fn length(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Returns the maximum [`Value`] of a [`Value::Array`].
-/// Can be called with a single [`Value::Array`] parameter or as varadic function.
+/// Returns the maximum [`Value`] of a all supplied parameters.
+///
+/// * Declaration: `max(...): Any`
 ///
 /// # Errors
 ///
@@ -370,8 +407,9 @@ pub fn max(params: &[Value]) -> NativeResult {
         .ok_or(NativeError::WrongParameterCount(1))
 }
 
-/// Returns the minimum [`Value`] of a [`Value::Array`].
-/// Can be called with a single [`Value::Array`] parameter or as varadic function.
+/// Returns the minimum [`Value`] of a all supplied parameters.
+///
+/// * Declaration: `min(...): Any`
 ///
 /// # Errors
 ///
@@ -392,22 +430,10 @@ pub fn min(params: &[Value]) -> NativeResult {
         .ok_or(NativeError::WrongParameterCount(1))
 }
 
-/// Reverses the items of a [`Value::Array`] or the characters of a [`Value::String`].
+/// Replaces all matches of a pattern with another value.
 ///
-/// # Errors
-///
-/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
-/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-pub fn reverse(params: &[Value]) -> NativeResult {
-    match params {
-        [Value::Array(values)] => Ok(Value::Array(values.iter().cloned().rev().collect())),
-        [Value::String(value)] => Ok(Value::String(value.chars().rev().collect())),
-        [_] => Err(NativeError::WrongParameterType),
-        _ => Err(NativeError::WrongParameterCount(1)),
-    }
-}
-
-/// Replaces all matches of a pattern with another string.
+/// * Declaration: `replace(value: [String|Array], from: [String|Any], to: [String|Any]): [String|Array]`
+/// * Declaration: `remove(value: [String|Array], from: [String|Any]): [String|Array]`
 ///
 /// # Remarks
 ///
@@ -444,7 +470,26 @@ pub fn replace(params: &[Value]) -> NativeResult {
     }
 }
 
+/// Reverses the items of a [`Value::Array`] or the characters of a [`Value::String`].
+///
+/// * Declaration: `reverse(value: [Array|String]): [Array|String]`
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+pub fn reverse(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::Array(values)] => Ok(Value::Array(values.iter().cloned().rev().collect())),
+        [Value::String(value)] => Ok(Value::String(value.chars().rev().collect())),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::WrongParameterCount(1)),
+    }
+}
+
 /// Converts any [`Value`] to a [`Value::String`].
+///
+/// * Declaration: `str(value: Any): String`
 ///
 /// # Errors
 ///

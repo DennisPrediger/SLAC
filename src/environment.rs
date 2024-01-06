@@ -36,6 +36,7 @@ pub trait ValidateEnvironment {
     fn function_exists(&self, name: &str, arity: usize) -> FunctionResult;
 }
 
+/// The [Arity](https://en.wikipedia.org/wiki/Arity) of a [`NativeFunction`].
 #[derive(Clone, Copy)]
 pub enum Arity {
     Polyadic { required: usize, optional: usize },
@@ -44,6 +45,8 @@ pub enum Arity {
 }
 
 impl Arity {
+    /// Declares an Arity with some required but no optional parameters.
+    #[must_use]
     pub const fn required(required: usize) -> Self {
         Self::Polyadic {
             required,
@@ -51,6 +54,8 @@ impl Arity {
         }
     }
 
+    /// Declares an Arity with required and optional parameters.
+    #[must_use]
     pub const fn optional(required: usize, optional: usize) -> Self {
         Self::Polyadic { required, optional }
     }
@@ -73,6 +78,7 @@ impl Function {
     ///
     /// If the declaration does not contain an opening brace, the whole string
     /// is used as name and the params are left empty.
+    #[must_use]
     pub fn new(func: NativeFunction, arity: Arity, declaration: &str) -> Self {
         let (name, params) = declaration
             .split_once('(')
@@ -96,45 +102,47 @@ pub struct StaticEnvironment {
     functions: HashMap<String, Rc<Function>>,
 }
 
-/// Handle all variable and function names case-insensitive.
+/// Transforms all variable and function names to lowercase for case-insensitive lookup.
 fn get_env_key(name: &str) -> String {
     name.to_lowercase()
 }
 
 impl StaticEnvironment {
-    /// Add or update a variable.
+    /// Adds or updates a single variable.
     pub fn add_variable(&mut self, name: &str, value: Value) {
         self.variables.insert(get_env_key(name), Rc::new(value));
     }
 
-    /// Remove a variable and return its [`Rc<Value>`] if it existed.
+    /// Removes a variable and return its [`Rc<Value>`] if it existed.
     pub fn remove_variable(&mut self, name: &str) -> Option<Rc<Value>> {
         self.variables.remove(&get_env_key(name))
     }
 
-    /// Clear all variables.
+    /// Clears all variables.
     pub fn clear_variables(&mut self) {
         self.variables.clear();
     }
 
-    /// Add or update a [`NativeFunction`].
+    /// Adds or updates a [`NativeFunction`].
     pub fn add_function(&mut self, func: Function) {
         self.functions
             .insert(get_env_key(&func.name), Rc::new(func));
     }
 
+    /// Calls `add_function` for a `Vec<Function>`.
     pub fn add_functions(&mut self, functions: Vec<Function>) {
         for func in functions {
             self.add_function(func);
         }
     }
 
-    /// Remove a native function and return its [`Function`] if it existed.
+    /// Removes a [`NativeFunction`] and return its [`Function`] if it existed.
     pub fn remove_function(&mut self, name: &str) -> Option<Rc<Function>> {
         self.functions.remove(&get_env_key(name))
     }
 
-    /// Output all currently registered [`Function`] structs.
+    /// Output all currently registered [`Function`] structs as [`Rc`].
+    #[must_use]
     pub fn list_functions(&self) -> Vec<Rc<Function>> {
         self.functions.values().cloned().collect()
     }

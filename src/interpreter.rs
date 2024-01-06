@@ -2,8 +2,13 @@ use crate::{
     ast::Expression, environment::Environment, operator::Operator, value::Value, Error, Result,
 };
 
-/// A tree walking interpreter which given an [`Environment`] and an [`AST`](Expression)
-/// recursivly walks the tree and computes a single [`Value`].
+/// A simple recursive tree walking interpreter.
+/// Given an [`Environment`] and an [`AST`](Expression) recursivly walks the tree
+/// and computes a single output [`Value`].
+///
+/// # Errors
+///
+/// Returns an [`Error`] if the execution fails.
 pub struct TreeWalkingInterpreter<'a> {
     environment: &'a dyn Environment,
 }

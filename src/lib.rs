@@ -116,7 +116,7 @@ pub fn compile(source: &str) -> Result<Expression> {
 /// * Currently uses an `TreeWalkingInterpreter` to evaluate the AST.
 /// * Will [short-circuit](https://en.wikipedia.org/wiki/Short-circuit_evaluation) boolean expression.
 /// * Invalid operations will be evaluated to an [`Error`].
-/// * Comparison of empty Values ([`Value::empty()`]) against [`Error::RuntimeMissingVariable`] is a valid operation
+/// * Comparison of empty Values ([`Value::empty()`]) against [`Error::UndefinedVariable`] is a valid operation
 ///   * e.g: `undefined_var = ''` is valid
 pub fn execute(env: &dyn Environment, ast: &Expression) -> Result<Value> {
     interpreter::TreeWalkingInterpreter::interprete(env, ast)

@@ -24,18 +24,19 @@ pub fn functions() -> Vec<Function> {
     ]
 }
 
-/// Converts a [`Value::Number`] into a [`Value::String`] containg a single
-/// ASCII character.
+/// Converts a [`Value::Number`] into a [`Value::String`] containing a single ASCII character.
+///
+/// * Declaration: `chr(ord: Number): String`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the supplied number is outside of ASCII character range.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the supplied number is outside of ASCII character range.
 pub fn chr(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Number(value)] if (0.0..127.0).contains(value) => Ok(Value::String(
-            char::from_u32(*value as u32).unwrap_or('\0').to_string(),
+        [Value::Number(ordinal)] if (0.0..127.0).contains(ordinal) => Ok(Value::String(
+            char::from_u32(*ordinal as u32).unwrap_or('\0').to_string(),
         )),
         [Value::Number(_)] => Err(NativeError::from("number is out of ASCII range")),
         [_] => Err(NativeError::WrongParameterType),
@@ -43,20 +44,21 @@ pub fn chr(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Converts a single charachter [`Value::String`] into a [`Value::Number`]
-/// containing it's ASCII number value.
+/// Converts a single character [`Value::String`] into a [`Value::Number`] containing it's ordinal value.
+///
+/// * Declaration: `ord(char: String): Number`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the supplied number is outside of ASCII character range.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the supplied number is outside of ASCII character range.
 pub fn ord(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(value)] if value.chars().count() == 1 => {
-            if value.is_ascii() {
+        [Value::String(char)] if char.chars().count() == 1 => {
+            if char.is_ascii() {
                 Ok(Value::Number(f64::from(
-                    value.chars().next().unwrap_or('\0') as u8,
+                    char.chars().next().unwrap_or('\0') as u8,
                 )))
             } else {
                 Err(NativeError::from("character is out of ASCII range"))
@@ -70,13 +72,15 @@ pub fn ord(params: &[Value]) -> NativeResult {
 
 /// Converts a [`Value::String`] to lowercase.
 ///
+/// * Declaration: `lowercase(text: String): String`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn lowercase(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(value)] => Ok(Value::String(value.to_lowercase())),
+        [Value::String(text)] => Ok(Value::String(text.to_lowercase())),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -84,19 +88,27 @@ pub fn lowercase(params: &[Value]) -> NativeResult {
 
 /// Converts a [`Value::String`] to uppercase.
 ///
+/// * Declaration: `uppercase(text: String): String`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn uppercase(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(value)] => Ok(Value::String(value.to_uppercase())),
+        [Value::String(text)] => Ok(Value::String(text.to_uppercase())),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
 
 /// Compares two [`Value::String`] by text content.
+///
+/// * Declaration: `same_text(left: String, right: String): Boolean`
+///
+/// # Remarks
+///
+/// Comparison is made by comparing the lowercase values.
 ///
 /// # Errors
 ///
@@ -112,7 +124,9 @@ pub fn same_text(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Splits a [`Value::String`] into a [`Value::Array`] according to a seperator string.
+/// Splits a [`Value::String`] into a [`Value::Array`] according to a separator.
+///
+/// * Declaration: `split(line: String, separator: String): Array<String>`
 ///
 /// # Errors
 ///
@@ -120,9 +134,9 @@ pub fn same_text(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn split(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(line), Value::String(seperator)] => {
+        [Value::String(line), Value::String(separator)] => {
             let values = line
-                .split(seperator)
+                .split(separator)
                 .map(String::from)
                 .map(Value::String)
                 .collect();
@@ -161,8 +175,9 @@ fn parse_csv(line: &str, separator: char) -> Vec<String> {
     result
 }
 
-/// Splits a csv [`Value::String`] into a [`Value::Array`] according to a seperator
-/// character (Default: ';').
+/// Splits a csv [`Value::String`] into a [`Value::Array`].
+///
+/// * Declaration: `split_csv(line: String, separator: String = ';'): Array<String>`
 ///
 /// # Errors
 ///
@@ -186,13 +201,15 @@ pub fn split_csv(params: &[Value]) -> NativeResult {
 
 /// Trims the whitespace of a [`Value::String`] on both sides.
 ///
+/// * Declaration: `trim(text: String): String`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn trim(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(value)] => Ok(Value::String(value.trim().to_string())),
+        [Value::String(text)] => Ok(Value::String(text.trim().to_string())),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -200,13 +217,15 @@ pub fn trim(params: &[Value]) -> NativeResult {
 
 /// Trims the whitespace of a [`Value::String`] on the left side of the String.
 ///
+/// * Declaration: `trim_left(text: String): String`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn trim_left(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(value)] => Ok(Value::String(value.trim_start().to_string())),
+        [Value::String(text)] => Ok(Value::String(text.trim_start().to_string())),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -214,13 +233,15 @@ pub fn trim_left(params: &[Value]) -> NativeResult {
 
 /// Trims the whitespace of a [`Value::String`] on the right side of the String.
 ///
+/// * Declaration: `trim_right(text: String): String`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn trim_right(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(value)] => Ok(Value::String(value.trim_end().to_string())),
+        [Value::String(text)] => Ok(Value::String(text.trim_end().to_string())),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }

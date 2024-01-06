@@ -6,10 +6,12 @@ use crate::{
     value::Value,
 };
 
-/// Validates [`Variable`](Expression::Variable) and [`Call`](Expression::Call)
-/// [`Expressions`](Expression) by walking the tree.
+/// Validates [`Variable`](Expression::Variable) and [`Call`](Expression::Call) [`Expressions`](Expression)
+/// by walking the AST and returning the first error.
+///
 /// # Errors
-/// Returns an [`Error`] on missing Variables or Functions.
+///
+/// Returns an [`Error`] on missing variables or functions.
 pub fn check_variables_and_functions(
     env: &dyn ValidateEnvironment,
     expression: &Expression,

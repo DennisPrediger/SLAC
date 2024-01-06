@@ -15,7 +15,7 @@ use crate::{
     Value,
 };
 
-/// Returns all math functions as a fixed size array.
+/// Returns all math functions.
 #[rustfmt::skip]
 pub fn functions() -> Vec<Function> {
     vec![
@@ -73,6 +73,8 @@ generate_std_math_functions!(
 
 /// Converts a [`Value::Number`] to an uppercase hex [`Value::String`].
 ///
+/// * Declaration: `int_to_hex(value: Number): String`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
@@ -86,6 +88,8 @@ pub fn int_to_hex(params: &[Value]) -> NativeResult {
 }
 
 /// Checks if a [`Value::Number`] is even and returns a [`Value::Boolean`].
+///
+/// * Declaration: `even(value: Number): Boolean`
 ///
 /// # Errors
 ///
@@ -101,6 +105,8 @@ pub fn even(params: &[Value]) -> NativeResult {
 
 /// Checks if a [`Value::Number`] is odd and returns a [`Value::Boolean`].
 ///
+/// * Declaration: `odd(value: Number): Boolean`
+///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
@@ -113,11 +119,9 @@ pub fn odd(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Raises a [`Value::Number`] to the power in the second [`Value::Number`] parameter.
+/// Raises a [`Value::Number`] to the power of an exponent.
 ///
-/// # Remark
-///
-/// The second parameter is optional and defaults to 2.
+/// * Declaration: `pow(value: Number, exponent: Number = 2): Number`
 ///
 /// # Errors
 ///
@@ -135,6 +139,8 @@ pub fn pow(params: &[Value]) -> NativeResult {
 
 /// Generates a random-ish [`Value::Number`]. Uses [`RandomState`] and is very
 /// much **not** cryptographicly secure
+///
+/// * Declaration: `random(range: Number = 1): Number`
 ///
 /// # Errors
 ///

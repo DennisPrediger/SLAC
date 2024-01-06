@@ -39,8 +39,9 @@ pub enum Precedence {
     Primary,    // Literals
 }
 
-#[rustfmt::skip]
+
 impl From<&Token> for Precedence {
+    #[rustfmt::skip]
     fn from(token: &Token) -> Self {
         match token {
             Token::Minus | Token::Plus => Precedence::Term,
@@ -57,6 +58,7 @@ impl From<&Token> for Precedence {
 }
 
 impl Precedence {
+    /// Returns the next `Precendence` with wrap around to the first.
     pub fn next(self) -> Precedence {
         match self {
             Precedence::None => Precedence::Or,

@@ -17,7 +17,9 @@ pub enum Operator {
 }
 
 /// Convert a [`Token`] into an [`Operator`].
+///
 /// # Errors
+///
 /// Returns [`Error::TokenNotAnOperator`] if an invalid Token is encountered.
 impl TryFrom<&Token> for Operator {
     type Error = Error;

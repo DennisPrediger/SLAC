@@ -24,17 +24,19 @@ pub fn functions() -> Vec<Function> {
     ]
 }
 
-/// Checks if a regex matches a [`Value::String`].
+/// Checks if a regex pattern matches a [`Value::String`].
+///
+/// * Declaration: `re_is_match(haystack: String, pattern: String): Boolean`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn is_match(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(haystack), Value::String(needle)] => {
-            let re = Regex::new(needle).map_err(|e| NativeError::from(e.to_string()))?;
+        [Value::String(haystack), Value::String(pattern)] => {
+            let re = Regex::new(pattern).map_err(|e| NativeError::from(e.to_string()))?;
 
             Ok(Value::Boolean(re.is_match(haystack)))
         }
@@ -43,18 +45,20 @@ pub fn is_match(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Finds non overlapping matches for a given regex inside a [`Value::String`].
-/// Returns a [`Value::Array`] containing all matches.
+/// Finds non overlapping matches for a given regex inside a [`Value::String`] and
+/// returns a [`Value::Array`] containing all matches.
+///
+/// * Declaration: `re_find(haystack: String, pattern: String): Array<String>`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn find(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(haystack), Value::String(re)] => {
-            let re = Regex::new(re).map_err(|e| NativeError::from(e.to_string()))?;
+        [Value::String(haystack), Value::String(pattern)] => {
+            let re = Regex::new(pattern).map_err(|e| NativeError::from(e.to_string()))?;
 
             let groups: Vec<Value> = re
                 .find_iter(haystack)
@@ -78,18 +82,20 @@ fn get_capture_groups(captures: Captures) -> Vec<Value> {
         .collect()
 }
 
-/// Returns the matches of all regex capture groups inside a [`Value::Array`]. The first element is the full match.
-/// Index 1 to N are the capture groups.
+/// Returns the matches of all regex capture groups inside a [`Value::Array`].
+/// The first element is the full match; Index 1 to N are the capture groups.
+///
+/// * Declaration: `re_capture(haystack: String, pattern: String): Array<String>`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn capture(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(haystack), Value::String(re)] => {
-            let re = Regex::new(re).map_err(|e| NativeError::from(e.to_string()))?;
+        [Value::String(haystack), Value::String(pattern)] => {
+            let re = Regex::new(pattern).map_err(|e| NativeError::from(e.to_string()))?;
 
             let groups: Vec<Value> = re.captures(haystack).map_or_else(
                 || vec![Value::String(String::new()); re.captures_len()],
@@ -103,13 +109,15 @@ pub fn capture(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Replaces all regex matches inside a [`Value::String`] with a replacement [`Value::String`].
+/// Replaces all matches of a regex pattern inside a [`Value::String`] with a replacement [`Value::String`].
+///
+/// * Declaration: `re_replace(haystack: String, pattern: String, replacement: String = '', limit = 0): String`
 ///
 /// # Errors
 ///
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-/// Will return [`NativeError::CustomError`] if the regex produces an error.
 pub fn replace(params: &[Value]) -> NativeResult {
     let replacement = default_string(params, 2, "")?;
     let limit = default_number(params, 3, 0.0)? as usize;

@@ -11,7 +11,7 @@ use crate::{
     Operator,
 };
 
-/// Wrapper for the four different possible variable types.
+/// A Wrapper for the four different possible variable types.
 #[derive(Debug, PartialOrd, Clone)]
 pub enum Value {
     Boolean(bool),
@@ -153,8 +153,8 @@ impl Value {
         }
     }
 
-    /// Return the length of the [`Value::String`] or [`Value::Array`],
-    /// otherwise return 0.
+    /// Returns the length of a `String` or `Array` `Value`.
+    /// Other `Boolean` and `Number` return 0.
     pub fn len(&self) -> usize {
         match self {
             Value::String(v) => v.len(),
@@ -164,11 +164,12 @@ impl Value {
     }
 
     /// Checks if the value is equal to the result of [`Value::empty()`].
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self == &Value::empty(self)
     }
 
-    /// Returns an new empty [`Value`] of the same type as the callee.
+    /// Returns an new empty `Value` of the same type as the callee.
     #[must_use]
     pub fn empty(&self) -> Self {
         match self {
