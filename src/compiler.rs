@@ -38,7 +38,11 @@ impl Compiler {
     }
 
     fn expression(&mut self) -> Result<Expression> {
-        self.parse_precedence(Precedence::Or)
+        if self.current < self.tokens.len() {
+            self.parse_precedence(Precedence::Or)
+        } else {
+            Err(Error::Eof)
+        }
     }
 
     fn parse_precedence(&mut self, precedence: Precedence) -> Result<Expression> {
@@ -439,6 +443,20 @@ mod test {
 
         let expected = Error::Eof;
         assert_eq!(ast, Err(expected));
+    }
+
+    #[test]
+    fn err_open_group() {
+        let ast = Compiler::compile_ast(vec![Token::LeftParen]);
+
+        assert_eq!(ast, Err(Error::Eof));
+
+        let ast = Compiler::compile_ast(vec![
+            Token::Identifier(String::from("test")),
+            Token::And,
+            Token::LeftParen,
+        ]);
+        assert_eq!(ast, Err(Error::Eof));
     }
 
     #[test]
