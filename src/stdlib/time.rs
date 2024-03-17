@@ -89,7 +89,8 @@ impl TryFrom<&Value> for NaiveDateTime {
             Value::Number(value) => {
                 let milliseconds = (value * MILLISECONDS_PER_DAY) as i64;
 
-                NaiveDateTime::from_timestamp_millis(milliseconds)
+                DateTime::from_timestamp_millis(milliseconds)
+                    .map(|dt| dt.naive_utc())
                     .ok_or(NativeError::from("datetime out of range"))
             }
             _ => Err(NativeError::WrongParameterType),
@@ -99,7 +100,7 @@ impl TryFrom<&Value> for NaiveDateTime {
 
 impl From<NaiveDateTime> for Value {
     fn from(val: NaiveDateTime) -> Self {
-        let milliseconds = val.timestamp_millis();
+        let milliseconds = val.and_utc().timestamp_millis();
 
         Value::Number(milliseconds as f64 / MILLISECONDS_PER_DAY)
     }
