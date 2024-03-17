@@ -131,23 +131,14 @@ pub fn between(params: &[Value]) -> NativeResult {
 ///
 /// # Remarks
 ///
-/// Conversion depends on the supplied [`Value`] parameter:
-/// * [`Value::Boolean`]: stays the same
-/// * [`Value::Number`]: true = 1.0
-/// * [`Value::String`]: true = "true" (case insensitive)
-/// * [`Value::Array`]: true = `!is_empty()`
+/// Conversion depends on the supplied [`Value`] parameter, see [`Value::as_bool`].
 ///
 /// # Errors
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn bool(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(v)] => Ok(Value::Boolean(v.to_lowercase() == "true")), // "true" => true, other => false
-        [Value::Number(v)] => Ok(Value::Boolean(
-            v.partial_cmp(&1.0).is_some_and(|o| o == Ordering::Equal), // 1 => true, other (incl. NaN) => false
-        )),
-        [Value::Array(v)] => Ok(Value::Boolean(!v.is_empty())), // [] => false, other => true
-        [Value::Boolean(v)] => Ok(Value::Boolean(*v)),          // Boolean => Boolean
+        [value] => Ok(Value::Boolean(value.as_bool())),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
@@ -608,12 +599,12 @@ mod test {
         );
 
         assert_eq!(
-            Value::Boolean(true),
-            bool(&vec![Value::String(String::from("true"))]).unwrap()
+            Value::Boolean(false),
+            bool(&vec![Value::String(String::from(""))]).unwrap()
         );
 
         assert_eq!(
-            Value::Boolean(false),
+            Value::Boolean(true),
             bool(&vec![Value::String(String::from("other"))]).unwrap()
         );
 
@@ -625,6 +616,11 @@ mod test {
         assert_eq!(
             Value::Boolean(false),
             bool(&vec![Value::Array(vec![])]).unwrap()
+        );
+
+        assert_eq!(
+            Value::Boolean(true),
+            bool(&vec![Value::Array(vec![Value::Boolean(true)])]).unwrap()
         );
 
         assert!(bool(&vec![]).is_err());

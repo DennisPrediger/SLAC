@@ -105,19 +105,13 @@ impl<'a> TreeWalkingInterpreter<'a> {
     }
 
     fn boolean(&self, left: Value, right: &Expression, full_evaluate_on: bool) -> Result<Value> {
-        match left {
-            Value::Boolean(left) => {
-                if left == full_evaluate_on {
-                    // if `left` is not the result we need, evaluate `right`
-                    match self.expression(right)? {
-                        Value::Boolean(right) => Ok(Value::Boolean(right)),
-                        _ => Err(Error::InvalidBinaryOperator(Operator::And)),
-                    }
-                } else {
-                    Ok(Value::Boolean(left)) // short circuit
-                }
-            }
-            _ => Err(Error::InvalidBinaryOperator(Operator::And)),
+        let left = left.as_bool();
+
+        if left == full_evaluate_on {
+            let right = self.expression(right)?;
+            Ok(Value::Boolean(right.as_bool()))
+        } else {
+            Ok(Value::Boolean(left)) // short circuit
         }
     }
 

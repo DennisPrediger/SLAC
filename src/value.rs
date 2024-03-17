@@ -47,10 +47,7 @@ impl Not for Value {
     type Output = error::Result<Value>;
 
     fn not(self) -> Self::Output {
-        match self {
-            Value::Boolean(value) => Ok(Value::Boolean(!value)),
-            _ => Err(Error::InvalidUnaryOperator(Operator::Not)),
-        }
+        Ok(Value::Boolean(!self.as_bool()))
     }
 }
 
@@ -154,7 +151,8 @@ impl Value {
     }
 
     /// Returns the length of a `String` or `Array` `Value`.
-    /// Other `Boolean` and `Number` return 0.
+    /// `Boolean` and `Number` have a length of 0.
+    #[must_use]
     pub fn len(&self) -> usize {
         match self {
             Value::String(v) => v.len(),
@@ -170,6 +168,10 @@ impl Value {
     }
 
     /// Returns an new empty `Value` of the same type as the callee.
+    /// * `Value::Boolean` -> `false`
+    /// * `Value::String` -> `''`
+    /// * `Value::Number` -> `0`
+    /// * `Value::Array` -> `[]`
     #[must_use]
     pub fn empty(&self) -> Self {
         match self {
@@ -177,6 +179,17 @@ impl Value {
             Value::String(_) => Value::String(String::new()),
             Value::Number(_) => Value::Number(0.0),
             Value::Array(_) => Value::Array(vec![]),
+        }
+    }
+
+    /// Returns the boolean representation of the `Value`.
+    /// Returns Booleans _as is_. Other `Value` kinds are based on
+    /// if the contained value is not [`Value::is_empty()`].
+    #[must_use]
+    pub fn as_bool(&self) -> bool {
+        match self {
+            Value::Boolean(v) => *v,
+            value => !value.is_empty(),
         }
     }
 }
@@ -350,10 +363,6 @@ mod test {
         assert_eq!(
             Err(Error::InvalidUnaryOperator(Operator::Minus)),
             -Value::String(String::from("a string"))
-        );
-        assert_eq!(
-            Err(Error::InvalidUnaryOperator(Operator::Not)),
-            !Value::String(String::from("a string"))
         );
         assert_eq!(
             Err(Error::InvalidBinaryOperator(Operator::Plus)),

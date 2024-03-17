@@ -96,6 +96,20 @@ fn boolean_or() {
 }
 
 #[test]
+fn boolean_empty() {
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'' or true"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("0 or true"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("[] or true"));
+    assert_eq!(Ok(Value::Boolean(false)), execute_raw("true and ''"));
+    assert_eq!(Ok(Value::Boolean(false)), execute_raw("true and 0"));
+    assert_eq!(Ok(Value::Boolean(false)), execute_raw("true and []"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("true and '1'"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("true and 1"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("true and [1]"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("true and not 0"));
+}
+
+#[test]
 fn boolean_xor() {
     assert_eq!(Value::Boolean(true), execute_test("true xor false"));
     assert_eq!(Value::Boolean(true), execute_test("false xor true"));
