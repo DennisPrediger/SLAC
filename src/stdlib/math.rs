@@ -256,9 +256,9 @@ mod test {
         for _ in 0..1000 {
             assert!(random(&vec![]).unwrap() <= Value::Number(1.0));
             assert!(random(&vec![]).unwrap() > Value::Number(0.0));
-            assert!(random(&vec![Value::Number(10000.0)]) <= Ok(Value::Number(10000.0)));
-            assert!(random(&vec![Value::Number(-100.0)]) >= Ok(Value::Number(-100.0)));
-            assert!(random(&vec![Value::Number(-100.0)]) < Ok(Value::Number(0.0)));
+            assert!(random(&vec![Value::Number(10000.0)]).unwrap() <= Value::Number(10000.0));
+            assert!(random(&vec![Value::Number(-100.0)]).unwrap() >= Value::Number(-100.0));
+            assert!(random(&vec![Value::Number(-100.0)]).unwrap() < Value::Number(0.0));
         }
     }
 }

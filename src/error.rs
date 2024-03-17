@@ -1,7 +1,6 @@
-use std::error;
-use std::fmt;
-use std::fmt::Display;
 use std::result;
+
+use thiserror::Error;
 
 use crate::operator::Operator;
 use crate::stdlib::NativeError;
@@ -9,80 +8,50 @@ use crate::token::Token;
 
 /// The error type for failures while scanning, compiling or validation slac
 /// expressions.
-#[derive(Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq)]
 pub enum Error {
+    #[error("unexpected end of file")]
     Eof,
     // scanner errors
+    #[error("\"{0}\" is not a valid character")]
     InvalidCharacter(char),
+    #[error("\"{0}\" is not a valid number")]
     InvalidNumber(String),
+    #[error("unterminated string literal")]
     UnterminatedStringLiteral,
+    #[error("encountered multiple expressions at Token \"{0:?}\"")]
     // compiler errors
     MultipleExpressions(Token),
+    #[error("\"{0:?}\" is not a valid prefix Token")]
     NoValidPrefixToken(Token),
+    #[error("\"{0:?}\" is not a valid infix Token")]
     NoValidInfixToken(Token),
+    #[error("\"{0:?}\" is not a valid call target")]
     CallNotOnVariable(Token),
+    #[error("previous Token not found")]
     PreviousTokenNotFound,
+    #[error("invalid Token \"{0:?}\"")]
     InvalidToken(Token),
+    #[error("\"{0:?}\" is not a valid Operator")]
     TokenNotAnOperator(Token),
+    #[error("missing variable \"{0}\"")]
     // validation errors
     MissingVariable(String),
+    #[error("missing function \"{0}\"")]
     MissingFunction(String),
+    #[error("expected {1} parameters but got {2} for function \"{0}\"")]
     ParamCountMismatch(String, usize, usize), // name, expected, found
+    #[error("invalid unary operator \"{0:?}\"")]
     InvalidUnaryOperator(Operator),
+    #[error("invalid binary operator \"{0:?}\"")]
     InvalidBinaryOperator(Operator),
+    #[error("top level expression does not return a boolean value")]
     LiteralNotBoolean,
     // runtime errors
+    #[error("undefined variable \"{0}\"")]
     UndefinedVariable(String),
-    NativeFunctionError(NativeError),
-}
-
-impl error::Error for Error {}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::Eof => write!(f, "unexpected end of file"),
-            Error::InvalidCharacter(char) => write!(f, "\"{char}\" is not a valid character"),
-            Error::InvalidNumber(number) => write!(f, "\"{number}\" is not a valid number"),
-            Error::UnterminatedStringLiteral => write!(f, "unterminated string literal"),
-            Error::MultipleExpressions(token) => {
-                write!(f, "encountered multiple expressions at token \"{token:?}\"")
-            }
-            Error::NoValidPrefixToken(token) => {
-                write!(f, "\"{token:?}\" is not a valid prefix token")
-            }
-            Error::NoValidInfixToken(token) => {
-                write!(f, "\"{token:?}\" is not a valid infix token")
-            }
-            Error::CallNotOnVariable(token) => {
-                write!(f, "\"{token:?}\" is not a valid call target")
-            }
-            Error::PreviousTokenNotFound => write!(f, "previous token not found"),
-            Error::InvalidToken(token) => write!(f, "invalid token \"{token:?}\""),
-            Error::TokenNotAnOperator(token) => {
-                write!(f, "\"{token:?}\" is not a valid operator")
-            }
-            Error::MissingVariable(name) => write!(f, "missing variable \"{name}\""),
-            Error::MissingFunction(name) => write!(f, "missing function \"{name}\""),
-            Error::ParamCountMismatch(name, expected, found) => write!(
-                f,
-                "expected {expected} parameters but got {found} for function \"{name}\""
-            ),
-            Error::InvalidUnaryOperator(operator) => {
-                write!(f, "invalid unary operator \"{operator:?}\"")
-            }
-            Error::InvalidBinaryOperator(operator) => {
-                write!(f, "invalid binary operator \"{operator:?}\"")
-            }
-            Error::LiteralNotBoolean => {
-                write!(f, "top level expression does not return a boolean value")
-            }
-            Error::UndefinedVariable(name) => write!(f, "undefined variable \"{name}\""),
-            Error::NativeFunctionError(error) => {
-                write!(f, "native function encountered an error: \"{error}\"")
-            }
-        }
-    }
+    #[error("native function encountered an error: \"{0}\"")]
+    NativeFunctionError(#[from] NativeError),
 }
 
 /// A specialized [`Result`] type for [`Errors`](Error) during the scanning, compiling or

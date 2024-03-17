@@ -1,34 +1,23 @@
-use std::{error, fmt::Display};
+use thiserror::Error;
 
 use crate::Value;
 
 /// Error types created by [`super::NativeFunction`] calls.
 /// `NativeError::CustomError` can be used for general purpose errors.
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Error, Debug, PartialEq)]
 pub enum NativeError {
+    #[error("function \"{0}\" not found")]
     FunctionNotFound(String),
+    #[error("not enough parameters: \"{0}\" expected")]
     WrongParameterCount(usize),
+    #[error("wrong parameter type")]
     WrongParameterType,
+    #[error("index \"{0}\" is out of bounds")]
     IndexOutOfBounds(usize),
+    #[error("index must not be negative")]
     IndexNegative,
+    #[error("{0}")]
     CustomError(String),
-}
-
-impl error::Error for NativeError {}
-
-impl Display for NativeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            NativeError::FunctionNotFound(name) => write!(f, "function \"{name}\" not found"),
-            NativeError::WrongParameterCount(count) => {
-                write!(f, "not enough parameters: \"{count}\" expected")
-            }
-            NativeError::WrongParameterType => write!(f, "wrong parameter type"),
-            NativeError::IndexOutOfBounds(index) => write!(f, "index \"{index}\" is out of bounds"),
-            NativeError::IndexNegative => write!(f, "index must not be negative"),
-            NativeError::CustomError(msg) => write!(f, "{msg}"),
-        }
-    }
 }
 
 impl From<&str> for NativeError {
