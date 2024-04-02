@@ -11,7 +11,7 @@ use crate::value::Value;
     derive(Deserialize, Serialize),
     serde(tag = "type", rename_all = "camelCase")
 )]
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum Expression {
     /// An unary operation on a single `Expression` operand using an [`Operator`]
     Unary {

@@ -2,6 +2,7 @@ use slac::{
     check_variables_and_functions, compile,
     environment::{Arity, Function},
     execute,
+    optimizer::transform_ternary,
     stdlib::{extend_environment, NativeResult},
     Result, StaticEnvironment, Value,
 };
@@ -22,6 +23,7 @@ fn execute_with_stdlib(script: &str) -> Result<Value> {
     let mut env = StaticEnvironment::default();
     extend_environment(&mut env);
     check_variables_and_functions(&env, &ast)?;
+    let ast = transform_ternary(ast);
 
     execute(&env, &ast)
 }
@@ -467,4 +469,13 @@ fn common_remove() {
     assert_execute("remove([1, 2, 3], 2)", "[1, 3]");
     assert_execute("remove('Hello World', 'l')", "'Heo Word'");
     assert_err("remove([1, 2, 3], 1, 2)");
+}
+
+#[test]
+
+fn ternary_if() {
+    assert_execute("if_then(true, 1, 2)", "1");
+    assert_execute("if_then(false, 1, 2)", "2");
+    assert_execute("if_then(true, 1)", "1");
+    assert_execute("if_then(false, 1)", "0");
 }

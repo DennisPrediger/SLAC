@@ -30,6 +30,7 @@ pub mod environment;
 mod error;
 mod interpreter;
 mod operator;
+pub mod optimizer;
 mod scanner;
 pub mod stdlib;
 mod token;
