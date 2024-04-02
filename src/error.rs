@@ -45,6 +45,8 @@ pub enum Error {
     InvalidUnaryOperator(Operator),
     #[error("invalid binary operator \"{0:?}\"")]
     InvalidBinaryOperator(Operator),
+    #[error("invalid ternary operator \"{0:?}\"")]
+    InvalidTernaryOperator(Operator),
     #[error("top level expression does not return a boolean value")]
     LiteralNotBoolean,
     // runtime errors

@@ -30,6 +30,12 @@ impl<'a> TreeWalkingInterpreter<'a> {
                 right,
                 operator,
             } => self.binary(left, right, operator),
+            Expression::Ternary {
+                left,
+                middle,
+                right,
+                operator,
+            } => self.ternary(left, middle, right, operator),
             Expression::Array { expressions } => self.array(expressions),
             Expression::Literal { value } => Ok(value.clone()),
             Expression::Variable { name } => self.variable(name),
@@ -112,6 +118,28 @@ impl<'a> TreeWalkingInterpreter<'a> {
             Ok(Value::Boolean(right.as_bool()))
         } else {
             Ok(Value::Boolean(left)) // short circuit
+        }
+    }
+
+    fn ternary(
+        &self,
+        left: &Expression,
+        middle: &Expression,
+        right: &Expression,
+        operator: &Operator,
+    ) -> Result<Value> {
+        match operator {
+            Operator::TernaryCondition => {
+                let left = self.expression(left)?;
+
+                // short circuit evaluation
+                if left.as_bool() {
+                    self.expression(middle)
+                } else {
+                    self.expression(right)
+                }
+            }
+            _ => Err(Error::InvalidTernaryOperator(*operator)),
         }
     }
 

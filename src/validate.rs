@@ -24,6 +24,14 @@ pub fn check_variables_and_functions(
             operator: _,
         } => check_variables_and_functions(env, left)
             .and_then(|_| check_variables_and_functions(env, right)),
+        Expression::Ternary {
+            left,
+            middle,
+            right,
+            operator: _,
+        } => check_variables_and_functions(env, left)
+            .and_then(|_| check_variables_and_functions(env, middle))
+            .and_then(|_| check_variables_and_functions(env, right)),
         Expression::Array {
             expressions: values,
         } => validate_expr_vec(env, values),
@@ -89,13 +97,28 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
             | Operator::Or => Ok(()),
             _ => Err(Error::InvalidBinaryOperator(*operator)),
         },
+        Expression::Ternary {
+            left,
+            middle,
+            right,
+            operator,
+        } => match operator {
+            Operator::TernaryCondition => {
+                // the `left` argument should be a boolean for the `TernaryCondition` to function
+                // the `middle` and `right` arguments eventually result in the expressions final result
+                check_boolean_result(left)
+                    .and_then(|_| check_boolean_result(middle))
+                    .and_then(|_| check_boolean_result(right))
+            }
+            _ => Err(Error::InvalidTernaryOperator(*operator)),
+        },
         Expression::Array { expressions: _ } => Err(Error::LiteralNotBoolean),
         Expression::Literal { value } => match value {
             Value::Boolean(_) => Ok(()),
             _ => Err(Error::LiteralNotBoolean),
         },
         Expression::Variable { name: _ } | Expression::Call { name: _, params: _ } => {
-            Ok(()) // Type not known
+            Ok(()) // the type is not known
         }
     }
 }

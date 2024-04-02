@@ -14,6 +14,7 @@ pub enum Operator {
     Equal, NotEqual,
     And, Or, Xor, Not, 
     Div, Mod,
+    TernaryCondition,
 }
 
 /// Convert a [`Token`] into an [`Operator`].

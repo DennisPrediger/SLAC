@@ -24,6 +24,12 @@ pub enum Expression {
         right: Box<Expression>,
         operator: Operator,
     },
+    Ternary {
+        left: Box<Expression>,
+        middle: Box<Expression>,
+        right: Box<Expression>,
+        operator: Operator,
+    },
     /// An list of not yet evaluated `Expression` values.
     Array { expressions: Vec<Expression> },
     /// A literal [`Value`].
