@@ -2,7 +2,7 @@ use slac::{
     check_variables_and_functions, compile,
     environment::{Arity, Function},
     execute,
-    optimizer::transform_ternary,
+    optimizer::{fold_constants, transform_ternary},
     stdlib::{extend_environment, NativeResult},
     Result, StaticEnvironment, Value,
 };
@@ -18,40 +18,70 @@ fn execute_test(script: &str) -> Value {
     execute_raw(script).unwrap_or(Value::Boolean(false))
 }
 
-fn execute_with_stdlib(script: &str) -> Result<Value> {
-    let ast = compile(script)?;
+fn execute_with_stdlib(script: &str, optimize: bool) -> Result<Value> {
+    let mut ast = compile(script)?;
     let mut env = StaticEnvironment::default();
     extend_environment(&mut env);
     check_variables_and_functions(&env, &ast)?;
-    let ast = transform_ternary(ast);
+
+    if optimize {
+        ast = transform_ternary(ast);
+        ast = fold_constants(ast)?;
+    }
 
     execute(&env, &ast)
 }
 
 fn assert_execute(left: &str, right: &str) {
-    let left = execute_with_stdlib(left);
-    let right = execute_with_stdlib(right);
+    let left_result = execute_with_stdlib(left, false);
+    let right_result = execute_with_stdlib(right, false);
 
-    assert_eq!(left, right);
+    assert_eq!(left_result, right_result);
+
+    let left_result = execute_with_stdlib(left, true);
+    let right_result = execute_with_stdlib(right, true);
+
+    assert_eq!(left_result, right_result);
 }
 
 fn assert_bool(expected: bool, script: &str) {
-    assert_eq!(Ok(Value::Boolean(expected)), execute_with_stdlib(script));
+    assert_eq!(
+        Ok(Value::Boolean(expected)),
+        execute_with_stdlib(script, false)
+    );
+
+    assert_eq!(
+        Ok(Value::Boolean(expected)),
+        execute_with_stdlib(script, true)
+    );
 }
 
 fn assert_str(expected: &str, script: &str) {
     assert_eq!(
         Ok(Value::String(expected.to_string())),
-        execute_with_stdlib(script)
+        execute_with_stdlib(script, false)
+    );
+
+    assert_eq!(
+        Ok(Value::String(expected.to_string())),
+        execute_with_stdlib(script, true)
     );
 }
 
 fn assert_num(expected: f64, script: &str) {
-    assert_eq!(Ok(Value::Number(expected)), execute_with_stdlib(script));
+    assert_eq!(
+        Ok(Value::Number(expected)),
+        execute_with_stdlib(script, false)
+    );
+
+    assert_eq!(
+        Ok(Value::Number(expected)),
+        execute_with_stdlib(script, true)
+    );
 }
 
 fn assert_err(script: &str) {
-    assert!(execute_with_stdlib(script).is_err());
+    assert!(execute_with_stdlib(script, false).is_err());
 }
 
 #[test]
@@ -472,10 +502,23 @@ fn common_remove() {
 }
 
 #[test]
-
 fn ternary_if() {
     assert_execute("if_then(true, 1, 2)", "1");
     assert_execute("if_then(false, 1, 2)", "2");
     assert_execute("if_then(true, 1)", "1");
     assert_execute("if_then(false, 1)", "0");
+}
+
+#[test]
+fn optimize_fold() {
+    assert_execute("1+1", "2");
+    assert_execute("1+1--2", "4");
+    assert_execute("1+1--------2", "4");
+    assert_execute("1 + 2 > 3 + 4", "false");
+    assert_execute("if_then(1 = 2, 3, 4)", "4");
+    assert_execute("if_then(max(1,3) = 2, 3, 4)", "4");
+    assert_execute(
+        "if_then(1 = 2, if_then(true, 1, 2), if_then(false, 3, 4))",
+        "4",
+    );
 }
