@@ -18,25 +18,26 @@ pub enum Expression {
         right: Box<Expression>,
         operator: Operator,
     },
-    /// An binary operation on two `Expression` operands using an [`Operator`].
+    /// A binary operation on two `Expression` operands using an [`Operator`].
     Binary {
         left: Box<Expression>,
         right: Box<Expression>,
         operator: Operator,
     },
+    /// A ternary operation on three `Expression` operands using an [`Operator`].
     Ternary {
         left: Box<Expression>,
         middle: Box<Expression>,
         right: Box<Expression>,
         operator: Operator,
     },
-    /// An list of not yet evaluated `Expression` values.
+    /// A list of `Expression` values.
     Array { expressions: Vec<Expression> },
     /// A literal [`Value`].
     Literal { value: Value },
     /// A named external variable.
     Variable { name: String },
-    /// A call to an external function with a list of not yet evaluated `Expression` parameters.
+    /// A call to an external function with a list of `Expression` parameters.
     Call {
         name: String,
         params: Vec<Expression>,

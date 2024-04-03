@@ -1,7 +1,17 @@
+//! Transformation routines to optimize an [`Expression`] AST.
+
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{execute, Expression, Operator, Result, StaticEnvironment};
 
+/// Recursivly transforms ternary function calls into [`Expression::Ternary`].
+/// Three parameter [`crate::stdlib::common::if_then`] calls are transformed
+/// into a [`Operator::TernaryCondition`];
+///
+/// # Remarks
+///
+/// While the [`crate::stdlib::common::if_then`] is eagerly evaluated, the
+/// [`Expression::Ternary`] supports short-circuit evaluation in the `TreeWalkingInterpreter`.
 pub fn transform_ternary(expr: Expression) -> Expression {
     match expr {
         Expression::Unary { right, operator } => Expression::Unary {
@@ -57,6 +67,19 @@ pub fn transform_ternary(expr: Expression) -> Expression {
     }
 }
 
+/// Evaluates [`Expression::Unary`] and [`Expression::Binary`] into a single
+/// [`Expression::Literal`] if all arguments are also an [`Expression::Literal`].
+///
+/// Evaluates [`Operator::TernaryCondition`] [`Expression::Ternary`] into either
+/// the second or third argument, if the first argument is a [`Expression::Literal`].
+///
+/// # Remarks
+///
+/// This function is repeatedly applied to the expression until no further folding is possible.
+///
+/// # Errors
+///
+/// Will return [`crate::Error`] if the Evaluation is not possible.
 pub fn fold_constants(mut expression: Expression) -> Result<Expression> {
     fn try_fold(expr: Expression, found_const: &Rc<RefCell<bool>>) -> Result<Expression> {
         match expr {
