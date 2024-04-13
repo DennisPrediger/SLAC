@@ -52,8 +52,8 @@ pub enum Error {
     // runtime errors
     #[error("undefined variable \"{0}\"")]
     UndefinedVariable(String),
-    #[error("native function encountered an error: \"{0}\"")]
-    NativeFunctionError(#[from] NativeError),
+    #[error("native function \"{0}\" encountered an error: \"{1}\"")]
+    NativeFunctionError(String, NativeError),
 }
 
 /// A specialized [`Result`] type for [`Errors`](Error) during the scanning, compiling or

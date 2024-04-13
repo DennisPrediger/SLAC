@@ -166,7 +166,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
         let params = self.get_values(expressions)?;
         self.environment
             .call(name, &params)
-            .map_err(Error::NativeFunctionError)
+            .map_err(|e| Error::NativeFunctionError(name.to_string(), e))
     }
 }
 
