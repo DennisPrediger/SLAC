@@ -23,15 +23,15 @@ pub fn check_variables_and_functions(
             right,
             operator: _,
         } => check_variables_and_functions(env, left)
-            .and_then(|_| check_variables_and_functions(env, right)),
+            .and_then(|()| check_variables_and_functions(env, right)),
         Expression::Ternary {
             left,
             middle,
             right,
             operator: _,
         } => check_variables_and_functions(env, left)
-            .and_then(|_| check_variables_and_functions(env, middle))
-            .and_then(|_| check_variables_and_functions(env, right)),
+            .and_then(|()| check_variables_and_functions(env, middle))
+            .and_then(|()| check_variables_and_functions(env, right)),
         Expression::Array {
             expressions: values,
         } => validate_expr_vec(env, values),
@@ -107,8 +107,8 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
                 // the `left` argument should be a boolean for the `TernaryCondition` to function
                 // the `middle` and `right` arguments eventually result in the expressions final result
                 check_boolean_result(left)
-                    .and_then(|_| check_boolean_result(middle))
-                    .and_then(|_| check_boolean_result(right))
+                    .and_then(|()| check_boolean_result(middle))
+                    .and_then(|()| check_boolean_result(right))
             }
             _ => Err(Error::InvalidTernaryOperator(*operator)),
         },

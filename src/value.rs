@@ -143,6 +143,10 @@ impl Value {
     ///
     /// assert_eq!(Ok(Value::Number(3.0)), a.div_int(b));
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidBinaryOperator`] if any side of the operator is not a Number.
     pub fn div_int(self, rhs: Self) -> error::Result<Self> {
         match (self, rhs) {
             (Value::Number(lhs), Value::Number(rhs)) => Ok(Value::Number((lhs / rhs).trunc())),

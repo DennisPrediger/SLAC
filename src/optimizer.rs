@@ -12,6 +12,7 @@ use crate::{execute, Expression, Operator, Result, StaticEnvironment};
 ///
 /// While the [`crate::stdlib::common::if_then`] is eagerly evaluated, the
 /// [`Expression::Ternary`] supports short-circuit evaluation in the `TreeWalkingInterpreter`.
+#[must_use]
 pub fn transform_ternary(expr: Expression) -> Expression {
     match expr {
         Expression::Unary { right, operator } => Expression::Unary {
@@ -80,6 +81,7 @@ pub fn transform_ternary(expr: Expression) -> Expression {
 /// # Errors
 ///
 /// Will return [`crate::Error`] if the Evaluation is not possible.
+#[must_use]
 pub fn fold_constants(mut expression: Expression) -> Result<Expression> {
     fn try_fold(expr: Expression, found_const: &Rc<RefCell<bool>>) -> Result<Expression> {
         match expr {
@@ -95,7 +97,7 @@ pub fn fold_constants(mut expression: Expression) -> Result<Expression> {
                 }
                 _ => Ok(Expression::Unary {
                     right: Box::new(try_fold(*right.clone(), found_const)?),
-                    operator: operator.clone(),
+                    operator: *operator,
                 }),
             },
             Expression::Binary {
@@ -112,7 +114,7 @@ pub fn fold_constants(mut expression: Expression) -> Result<Expression> {
                 _ => Ok(Expression::Binary {
                     left: Box::new(try_fold(*left.clone(), found_const)?),
                     right: Box::new(try_fold(*right.clone(), found_const)?),
-                    operator: operator.clone(),
+                    operator: *operator,
                 }),
             },
             Expression::Ternary {
@@ -159,7 +161,7 @@ pub fn fold_constants(mut expression: Expression) -> Result<Expression> {
         // repeat until no further folding is possible
         expression = try_fold(expression, &found_const)?;
 
-        if found_const.replace(false) == false {
+        if !found_const.replace(false) {
             return Ok(expression);
         }
     }

@@ -24,6 +24,10 @@ pub trait Environment {
     fn variable(&self, name: &str) -> Option<Rc<Value>>;
 
     /// Call a [`Function`] and may return a [`Value`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`NativeError`] when encountering an error inside a [`NativeFunction`].
     fn call(&self, name: &str, params: &[Value]) -> NativeResult;
 }
 

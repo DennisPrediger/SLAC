@@ -119,6 +119,10 @@ pub fn compile(source: &str) -> Result<Expression> {
 /// * Invalid operations will be evaluated to an [`Error`].
 /// * Comparison of empty Values ([`Value::empty()`]) against [`Error::UndefinedVariable`] is a valid operation
 ///   * e.g: `undefined_var = ''` is valid
+///
+/// # Errors
+///
+/// Returns [`Error`] when encountering a RuntimeError
 pub fn execute(env: &dyn Environment, ast: &Expression) -> Result<Value> {
     interpreter::TreeWalkingInterpreter::interprete(env, ast)
 }
