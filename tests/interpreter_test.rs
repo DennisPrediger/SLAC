@@ -311,10 +311,10 @@ fn operators_full() {
         "(true and not false) and
                  (false or true) and
                  (true xor false) and
-                 (10 + 20 - 30 < 50 * 5 / 25) and
-                 (10 mod 3 <= 10 div 3) and
-                 (round(2.5) > 2) and
-                 (7 >= 8 or 9 <> 10) and
+                 (10 + 20 - 30 < 50 * 5 / 25) and // 0 < 10
+                 (10 mod 3 <= 10 div 3) and       // 1 <= 3
+                 (round(2.5) > 2) and             // 3 > 2
+                 (7 >= 8 or 9 <> 10) and          // false or true
                  ('Apple' + 'Pen' = 'ApplePen')",
     )
 }
@@ -521,4 +521,55 @@ fn optimize_fold() {
         "if_then(1 = 2, if_then(true, 1, 2), if_then(false, 3, 4))",
         "4",
     );
+}
+
+#[test]
+fn has_comments() {
+    assert_execute("3.14", "3 + .14 // eh, close enough");
+    assert_execute("3", "3{ + .14}");
+    assert_execute("3", "3{ + .14} // todo for later");
+    assert_execute("8", "3{ {-} + .14} + 5");
+    assert_execute("3", "3{ ");
+    assert_execute(
+        "8",
+        "
+    4
+    // chosen by fair dice roll
+    + 4
+    ",
+    );
+    assert_execute(
+        "8",
+        "
+    4
+    {
+    + 5
+    }
+    + 4
+    ",
+    );
+
+    assert_execute(
+        "13",
+        "
+    4
+    //{
+    + 5
+    //}
+    + 4
+    ",
+    );
+
+    assert_err(
+        "
+    4
+    //{
+    + 5
+    } // closed brace
+    + 4
+    ",
+    );
+
+    assert_err("// todo add expression");
+    assert_err("{todo add expression}");
 }

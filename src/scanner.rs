@@ -52,7 +52,7 @@ impl<'a> Scanner<'a> {
 
     fn next_token(&mut self) -> Result<Token> {
         self.start = self.current;
-        let next = self.next_char().unwrap();
+        let next = self.next_char().ok_or(Error::Eof)?;
 
         if Scanner::is_identifier_start(next) {
             return Ok(self.identifier());
@@ -82,7 +82,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current == self.end
+        self.current >= self.end
     }
 
     fn advance(&mut self) {
@@ -113,8 +113,41 @@ impl<'a> Scanner<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        while let Some(' ' | '\r' | '\t' | '\n') = self.peek() {
-            self.advance();
+        loop {
+            while let Some(' ' | '\r' | '\t' | '\n') = self.peek() {
+                self.advance();
+            }
+
+            if !self.skip_comments() {
+                // repeat check for whitespace if comments where found
+                break;
+            };
+        }
+    }
+
+    fn skip_comments(&mut self) -> bool {
+        match (self.peek_ahead(0), self.peek_ahead(1)) {
+            (Some('/'), Some('/')) => {
+                while self.next_char().is_some_and(|c| c != '\n') {
+                    // skip via next_char() until eof or linebreak
+                }
+                true // found line comment
+            }
+            (Some('{'), _) => {
+                self.advance(); // skip the '{'
+
+                let mut comment_depth: i32 = 1;
+                while comment_depth > 0 {
+                    match self.next_char() {
+                        Some('{') => comment_depth += 1,
+                        Some('}') => comment_depth -= 1,
+                        None => break, // Eof
+                        _ => (),
+                    }
+                }
+                true // found block comment
+            }
+            _ => false, // no comment
         }
     }
 
@@ -347,5 +380,54 @@ mod tests {
         let expected = Err(Error::UnterminatedStringLiteral);
 
         assert_eq!(expected, tokens);
+    }
+
+    #[test]
+    fn has_slash_comment() {
+        let tokens = Scanner::tokenize("true // some comment");
+        let expected = Ok(vec![Token::Literal(Value::Boolean(true))]);
+
+        assert_eq!(expected, tokens);
+
+        let tokens = Scanner::tokenize("true //");
+        let expected = Ok(vec![Token::Literal(Value::Boolean(true))]);
+
+        assert_eq!(expected, tokens);
+    }
+
+    #[test]
+    fn has_slash_comment_multiline() {
+        let tokens = Scanner::tokenize("true // some comment \n and false");
+        let expected = Ok(vec![
+            Token::Literal(Value::Boolean(true)),
+            Token::And,
+            Token::Literal(Value::Boolean(false)),
+        ]);
+
+        assert_eq!(expected, tokens);
+
+        let tokens = Scanner::tokenize("true //\n//\n and false");
+        let expected = Ok(vec![
+            Token::Literal(Value::Boolean(true)),
+            Token::And,
+            Token::Literal(Value::Boolean(false)),
+        ]);
+
+        assert_eq!(expected, tokens);
+    }
+
+    #[test]
+    fn has_brace_comment() {
+        let expected = Ok(vec![
+            Token::Literal(Value::Number(1.0)),
+            Token::Plus,
+            Token::Literal(Value::Number(3.0)),
+        ]);
+
+        assert_eq!(expected, Scanner::tokenize("1 + {2} 3"));
+        assert_eq!(expected, Scanner::tokenize("1 + 3 {123}"));
+        assert_eq!(expected, Scanner::tokenize("1 + {123 {+4}} 3"));
+        assert_eq!(expected, Scanner::tokenize("1 + 3 {  "));
+        assert_eq!(expected, Scanner::tokenize("{Test}1+3"));
     }
 }
