@@ -1,8 +1,8 @@
 //! Transformation routines to optimize an [`Expression`] AST.
 
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{execute, Expression, Operator, Result, StaticEnvironment};
+
+use crate::stdlib::common::TERNARY_IF_THEN;
 
 /// Recursivly transforms ternary function calls into [`Expression::Ternary`].
 /// Three parameter [`crate::stdlib::common::if_then`] calls are transformed
@@ -12,59 +12,55 @@ use crate::{execute, Expression, Operator, Result, StaticEnvironment};
 ///
 /// While the [`crate::stdlib::common::if_then`] is eagerly evaluated, the
 /// [`Expression::Ternary`] supports short-circuit evaluation in the `TreeWalkingInterpreter`.
-#[must_use]
-pub fn transform_ternary(expr: Expression) -> Expression {
-    match expr {
-        Expression::Unary { right, operator } => Expression::Unary {
-            right: Box::new(transform_ternary(*right)),
-            operator,
-        },
+pub fn transform_ternary(expression: &mut Expression, found_const: &mut bool) {
+    match expression {
+        Expression::Unary { right, operator: _ } => {
+            transform_ternary(right, found_const);
+        }
         Expression::Binary {
             left,
             right,
-            operator,
-        } => Expression::Binary {
-            left: Box::new(transform_ternary(*left)),
-            right: Box::new(transform_ternary(*right)),
-            operator,
-        },
+            operator: _,
+        } => {
+            transform_ternary(left, found_const);
+            transform_ternary(right, found_const);
+        }
         Expression::Ternary {
             left,
             middle,
             right,
-            operator,
-        } => Expression::Ternary {
-            left: Box::new(transform_ternary(*left)),
-            middle: Box::new(transform_ternary(*middle)),
-            right: Box::new(transform_ternary(*right)),
-            operator,
-        },
-        Expression::Array { expressions } => Expression::Array {
-            expressions: expressions
-                .iter()
-                .map(|e| transform_ternary(e.clone()))
-                .collect(),
-        },
-        Expression::Call {
-            ref name,
-            ref params,
-        } if name == "if_then" => match params.as_slice() {
-            // only match on three parameter "if_then"
-            [left, middle, right] => Expression::Ternary {
-                left: Box::new(transform_ternary(left.clone())),
-                middle: Box::new(transform_ternary(middle.clone())),
-                right: Box::new(transform_ternary(right.clone())),
-                operator: Operator::TernaryCondition,
-            },
-            _ => Expression::Call {
-                name: name.clone(),
-                params: params
-                    .iter()
-                    .map(|e| transform_ternary(e.clone()))
-                    .collect(),
-            },
-        },
-        _ => expr,
+            operator: _,
+        } => {
+            transform_ternary(left, found_const);
+            transform_ternary(middle, found_const);
+            transform_ternary(right, found_const);
+        }
+        Expression::Array { expressions } => {
+            for expr in expressions {
+                transform_ternary(expr, found_const);
+            }
+        }
+        Expression::Call { name, params } if (name == TERNARY_IF_THEN) => {
+            if let [left, middle, right] = params.as_slice() {
+                *found_const = true;
+                *expression = Expression::Ternary {
+                    left: Box::new(left.clone()),
+                    middle: Box::new(middle.clone()),
+                    right: Box::new(right.clone()),
+                    operator: Operator::TernaryCondition,
+                }
+            } else {
+                for expr in params {
+                    transform_ternary(expr, found_const);
+                }
+            }
+        }
+        Expression::Call { name: _, params } => {
+            for expr in params {
+                transform_ternary(expr, found_const);
+            }
+        }
+        _ => (),
     }
 }
 
@@ -74,108 +70,106 @@ pub fn transform_ternary(expr: Expression) -> Expression {
 /// Evaluates [`Operator::TernaryCondition`] [`Expression::Ternary`] into either
 /// the second or third argument, if the first argument is a [`Expression::Literal`].
 ///
-/// # Remarks
+/// # Errors
 ///
-/// This function is repeatedly applied to the expression until no further folding is possible.
+/// Will return [`crate::Error`] if constant evaluation is not possible.
+pub fn fold_constants(expression: &mut Expression, found_const: &mut bool) -> Result<()> {
+    match expression {
+        Expression::Unary { right, operator: _ } => match right.as_ref() {
+            Expression::Literal { value: _ } => {
+                *found_const = true;
+                *expression = Expression::Literal {
+                    value: execute(&StaticEnvironment::default(), expression)?,
+                }
+            }
+            _ => fold_constants(right, found_const)?,
+        },
+        Expression::Binary {
+            left,
+            right,
+            operator: _,
+        } => {
+            if let (Expression::Literal { value: _ }, Expression::Literal { value: _ }) =
+                (left.as_ref(), right.as_ref())
+            {
+                *found_const = true;
+                *expression = Expression::Literal {
+                    value: execute(&StaticEnvironment::default(), expression)?,
+                };
+            } else {
+                fold_constants(left, found_const)?;
+                fold_constants(right, found_const)?;
+            }
+        }
+        Expression::Ternary {
+            left,
+            middle,
+            right,
+            operator,
+        } => {
+            if let (Expression::Literal { value: left }, Operator::TernaryCondition) =
+                (left.as_ref(), operator)
+            {
+                *found_const = true;
+                if left.as_bool() {
+                    *expression = *middle.clone();
+                } else {
+                    *expression = *right.clone();
+                }
+            } else {
+                fold_constants(left, found_const)?;
+                fold_constants(middle, found_const)?;
+                fold_constants(right, found_const)?;
+            }
+        }
+        Expression::Array { expressions } => {
+            for expr in expressions {
+                fold_constants(expr, found_const)?;
+            }
+        }
+        Expression::Call { name: _, params } => {
+            for expr in params {
+                fold_constants(expr, found_const)?;
+            }
+        }
+        _ => (),
+    };
+
+    Ok(())
+}
+
+/// Transforms an [`Expression`] tree by applying [`transform_ternary`] and
+/// [`fold_constants`] in a loop until no further optimization is possible.
 ///
 /// # Errors
 ///
-/// Will return [`crate::Error`] if the Evaluation is not possible.
-#[must_use]
-pub fn fold_constants(mut expression: Expression) -> Result<Expression> {
-    fn try_fold(expr: Expression, found_const: &Rc<RefCell<bool>>) -> Result<Expression> {
-        match expr {
-            Expression::Unary {
-                ref right,
-                ref operator,
-            } => match right.as_ref() {
-                Expression::Literal { value: _ } => {
-                    found_const.replace(true);
-                    Ok(Expression::Literal {
-                        value: execute(&StaticEnvironment::default(), &expr)?,
-                    })
-                }
-                _ => Ok(Expression::Unary {
-                    right: Box::new(try_fold(*right.clone(), found_const)?),
-                    operator: *operator,
-                }),
-            },
-            Expression::Binary {
-                ref left,
-                ref right,
-                ref operator,
-            } => match (left.as_ref(), right.as_ref()) {
-                (Expression::Literal { value: _ }, Expression::Literal { value: _ }) => {
-                    found_const.replace(true);
-                    Ok(Expression::Literal {
-                        value: execute(&StaticEnvironment::default(), &expr)?,
-                    })
-                }
-                _ => Ok(Expression::Binary {
-                    left: Box::new(try_fold(*left.clone(), found_const)?),
-                    right: Box::new(try_fold(*right.clone(), found_const)?),
-                    operator: *operator,
-                }),
-            },
-            Expression::Ternary {
-                left,
-                middle,
-                right,
-                operator,
-            } => match (left.as_ref(), operator) {
-                (Expression::Literal { value }, Operator::TernaryCondition) => {
-                    found_const.replace(true);
-                    if value.as_bool() {
-                        Ok(*middle.clone())
-                    } else {
-                        Ok(*right.clone())
-                    }
-                }
-                _ => Ok(Expression::Ternary {
-                    left: Box::new(try_fold(*left, found_const)?),
-                    middle: Box::new(try_fold(*middle, found_const)?),
-                    right: Box::new(try_fold(*right, found_const)?),
-                    operator,
-                }),
-            },
-            Expression::Array { expressions } => Ok(Expression::Array {
-                expressions: expressions
-                    .iter()
-                    .map(|e| try_fold(e.clone(), found_const))
-                    .collect::<Result<Vec<_>>>()?,
-            }),
-            Expression::Call { name, params } => Ok(Expression::Call {
-                name,
-                params: params
-                    .iter()
-                    .map(|e| try_fold(e.clone(), found_const))
-                    .collect::<Result<Vec<_>>>()?,
-            }),
-            _ => Ok(expr),
-        }
-    }
-
-    let found_const = Rc::new(RefCell::new(false));
+/// Will return [`crate::Error`] if constant evaluation is not possible.
+pub fn optimize(expression: &mut Expression) -> Result<()> {
+    let mut found_const = false;
 
     loop {
-        // repeat until no further folding is possible
-        expression = try_fold(expression, &found_const)?;
+        transform_ternary(expression, &mut found_const);
+        fold_constants(expression, &mut found_const)?;
 
-        if !found_const.replace(false) {
-            return Ok(expression);
+        if found_const {
+            found_const = false; // repeat until no further folding is possible
+        } else {
+            return Ok(());
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{fold_constants, transform_ternary};
+
+    use super::{optimize, transform_ternary};
+    use crate::stdlib::common::TERNARY_IF_THEN;
     use crate::{Expression, Operator, Value};
 
     #[test]
     fn ternary_flat() {
-        let expr = Expression::Call {
-            name: String::from("if_then"),
+        let mut expr = Expression::Call {
+            name: String::from(TERNARY_IF_THEN),
             params: vec![
                 Expression::Literal {
                     value: Value::Boolean(true),
@@ -202,14 +196,16 @@ mod test {
             operator: Operator::TernaryCondition,
         };
 
-        assert_eq!(ternary, transform_ternary(expr));
+        transform_ternary(&mut expr, &mut false);
+
+        assert_eq!(ternary, expr);
     }
 
     #[test]
     fn ternary_nested() {
-        let expr = Expression::Unary {
+        let mut expr = Expression::Unary {
             right: Box::new(Expression::Call {
-                name: String::from("if_then"),
+                name: String::from(TERNARY_IF_THEN),
                 params: vec![
                     Expression::Literal {
                         value: Value::Boolean(true),
@@ -241,12 +237,14 @@ mod test {
             operator: Operator::Minus,
         };
 
-        assert_eq!(ternary, transform_ternary(expr));
+        transform_ternary(&mut expr, &mut false);
+
+        assert_eq!(ternary, expr);
     }
 
     #[test]
     fn fold_const_flat_binary() {
-        let expr = Expression::Binary {
+        let mut expr = Expression::Binary {
             left: Box::new(Expression::Literal {
                 value: Value::Number(10.0),
             }),
@@ -260,12 +258,13 @@ mod test {
             value: Value::Number(15.0),
         };
 
-        assert_eq!(Ok(value), fold_constants(expr));
+        optimize(&mut expr).unwrap();
+        assert_eq!(value, expr);
     }
 
     #[test]
     fn fold_const_flat_unary() {
-        let expr = Expression::Unary {
+        let mut expr = Expression::Unary {
             right: Box::new(Expression::Literal {
                 value: Value::Number(5.0),
             }),
@@ -275,10 +274,10 @@ mod test {
         let value = Expression::Literal {
             value: Value::Number(-5.0),
         };
+        optimize(&mut expr).unwrap();
+        assert_eq!(value, expr);
 
-        assert_eq!(Ok(value), fold_constants(expr));
-
-        let expr = Expression::Unary {
+        let mut expr = Expression::Unary {
             right: Box::new(Expression::Unary {
                 right: Box::new(Expression::Literal {
                     value: Value::Number(5.0),
@@ -292,12 +291,13 @@ mod test {
             value: Value::Number(5.0),
         };
 
-        assert_eq!(Ok(value), fold_constants(expr));
+        optimize(&mut expr).unwrap();
+        assert_eq!(value, expr);
     }
 
     #[test]
     fn fold_const_ternary() {
-        let expr = Expression::Ternary {
+        let mut expr = Expression::Ternary {
             left: Box::new(Expression::Literal {
                 value: Value::Boolean(true),
             }),
@@ -314,6 +314,58 @@ mod test {
             value: Value::Number(1.0),
         };
 
-        assert_eq!(Ok(value), fold_constants(expr));
+        optimize(&mut expr).unwrap();
+        assert_eq!(value, expr);
+    }
+
+    #[test]
+    fn fold_vectors() {
+        let mut expr = Expression::Array {
+            expressions: vec![Expression::Unary {
+                right: Box::new(Expression::Call {
+                    name: String::from(TERNARY_IF_THEN),
+                    params: vec![
+                        Expression::Literal {
+                            value: Value::Boolean(true),
+                        },
+                        Expression::Call {
+                            name: String::from(TERNARY_IF_THEN),
+                            params: vec![
+                                Expression::Literal {
+                                    value: Value::Boolean(true),
+                                },
+                                Expression::Literal {
+                                    value: Value::Number(3.0),
+                                },
+                            ],
+                        },
+                        Expression::Literal {
+                            value: Value::Number(2.0),
+                        },
+                    ],
+                }),
+                operator: Operator::Minus,
+            }],
+        };
+
+        let value = Expression::Array {
+            expressions: vec![Expression::Unary {
+                right: Box::new(Expression::Call {
+                    name: String::from(TERNARY_IF_THEN),
+                    params: vec![
+                        Expression::Literal {
+                            value: Value::Boolean(true),
+                        },
+                        Expression::Literal {
+                            value: Value::Number(3.0),
+                        },
+                    ],
+                }),
+                operator: Operator::Minus,
+            }],
+        };
+        optimize(&mut expr).unwrap();
+
+        assert_eq!(value, expr);
     }
 }

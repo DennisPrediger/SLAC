@@ -14,6 +14,8 @@ use crate::{
     Value,
 };
 
+pub(crate) const TERNARY_IF_THEN: &str = "if_then";
+
 /// Returns all common Functions.
 #[rustfmt::skip]
 pub fn functions() -> Vec<Function> {
@@ -29,7 +31,7 @@ pub fn functions() -> Vec<Function> {
         Function::new(empty, Arity::required(1), "empty(value: Any): Boolean"),
         Function::new(find, Arity::required(2), "find(haystack: [String|Array], needle: [String|Any]): Number"),
         Function::new(float, Arity::required(1), "float(value: Any): Number"),
-        Function::new(if_then, Arity::optional(2, 1), "if_then(condition: Boolean, first: Any, second: Any): Any"),
+        Function::new(if_then, Arity::optional(2, 1), &format!("{TERNARY_IF_THEN}(condition: Boolean, first: Any, second: Any): Any")),
         Function::new(insert, Arity::required(3), "insert(target: [String|Array], source: [String|Any], index: Number): Any"),
         Function::new(int, Arity::required(1), "int(value: Any): Number"),
         Function::new(length, Arity::required(1), "length(value: [String|Array]): Number"),

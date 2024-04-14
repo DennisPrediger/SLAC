@@ -56,6 +56,6 @@ pub enum Error {
     NativeFunctionError(String, NativeError),
 }
 
-/// A specialized [`Result`] type for [`Errors`](Error) during the scanning, compiling or
+/// A specialized [`Result`] type for [`Errors`](enum@Error) during the scanning, compiling or
 /// validation phase.
 pub type Result<T> = result::Result<T, Error>;

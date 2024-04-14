@@ -50,6 +50,8 @@ pub use crate::error::{Error, Result};
 #[doc(inline)]
 pub use crate::operator::Operator;
 #[doc(inline)]
+pub use crate::optimizer::optimize;
+#[doc(inline)]
 pub use crate::scanner::Scanner;
 #[doc(inline)]
 pub use crate::token::Token;

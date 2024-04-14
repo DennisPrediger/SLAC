@@ -1,12 +1,14 @@
 use std::{env, process::ExitCode};
 
-use slac::{Result, Value};
+use slac::{optimize, Result, Value};
 
 fn execute(source: &str) -> Result<Value> {
-    let ast = slac::compile(&source)?;
+    let mut ast = slac::compile(&source)?;
     let mut env = slac::StaticEnvironment::default();
     slac::stdlib::extend_environment(&mut env);
     slac::check_variables_and_functions(&env, &ast)?;
+
+    optimize(&mut ast)?;
 
     let result = slac::execute(&env, &ast)?;
     Ok(result)

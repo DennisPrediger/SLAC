@@ -2,7 +2,7 @@ use slac::{
     check_variables_and_functions, compile,
     environment::{Arity, Function},
     execute,
-    optimizer::{fold_constants, transform_ternary},
+    optimizer::optimize,
     stdlib::{extend_environment, NativeResult},
     Result, StaticEnvironment, Value,
 };
@@ -18,15 +18,15 @@ fn execute_test(script: &str) -> Value {
     execute_raw(script).unwrap_or(Value::Boolean(false))
 }
 
-fn execute_with_stdlib(script: &str, optimize: bool) -> Result<Value> {
+fn execute_with_stdlib(script: &str, do_optimize: bool) -> Result<Value> {
     let mut ast = compile(script)?;
     let mut env = StaticEnvironment::default();
+
     extend_environment(&mut env);
     check_variables_and_functions(&env, &ast)?;
 
-    if optimize {
-        ast = transform_ternary(ast);
-        ast = fold_constants(ast)?;
+    if do_optimize {
+        optimize(&mut ast)?;
     }
 
     execute(&env, &ast)
@@ -38,10 +38,22 @@ fn assert_execute(left: &str, right: &str) {
 
     assert_eq!(left_result, right_result);
 
-    let left_result = execute_with_stdlib(left, true);
-    let right_result = execute_with_stdlib(right, true);
+    let left_result_opt = execute_with_stdlib(left, true);
+    let right_result_opt = execute_with_stdlib(right, true);
 
-    assert_eq!(left_result, right_result);
+    assert_eq!(left_result_opt, right_result_opt);
+
+    assert_eq!(left_result, left_result_opt);
+    assert_eq!(right_result, right_result_opt);
+}
+
+fn assert_expr(expected: &str, script: &str) {
+    let ast_expected = compile(expected).unwrap();
+    let mut ast = compile(script).unwrap();
+
+    optimize(&mut ast).unwrap();
+
+    assert_eq!(ast_expected, ast);
 }
 
 fn assert_bool(expected: bool, script: &str) {
@@ -521,6 +533,11 @@ fn optimize_fold() {
         "if_then(1 = 2, if_then(true, 1, 2), if_then(false, 3, 4))",
         "4",
     );
+    assert_execute("if_then(if_then(true, true, false), 1, 2)", "1");
+
+    assert_expr("2", "1+1");
+    assert_expr("2", "if_then(1 > 2, 1, 2)");
+    assert_expr("1", "if_then(if_then(true, true, false), 1, 2)");
 }
 
 #[test]
