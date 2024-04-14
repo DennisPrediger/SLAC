@@ -57,8 +57,8 @@ impl<'a> TreeWalkingInterpreter<'a> {
         let left = self.expression(left);
 
         match (operator, left) {
-            (Operator::And, Ok(left)) => self.boolean(left, right, true),
-            (Operator::Or, Ok(left)) => self.boolean(left, right, false),
+            (Operator::And, Ok(left)) => self.boolean::<true>(left, right),
+            (Operator::Or, Ok(left)) => self.boolean::<false>(left, right),
             (_, Ok(left)) => {
                 let right = self.expression(right);
 
@@ -110,10 +110,10 @@ impl<'a> TreeWalkingInterpreter<'a> {
         }
     }
 
-    fn boolean(&self, left: Value, right: &Expression, full_evaluate_on: bool) -> Result<Value> {
+    fn boolean<const FULL_EVAL: bool>(&self, left: Value, right: &Expression) -> Result<Value> {
         let left = left.as_bool();
 
-        if left == full_evaluate_on {
+        if left == FULL_EVAL {
             let right = self.expression(right)?;
             Ok(Value::Boolean(right.as_bool()))
         } else {
