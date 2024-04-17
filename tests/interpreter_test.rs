@@ -219,6 +219,16 @@ fn std_lib_contains() {
     assert_bool(true, "contains([1,2,3], 1)");
     assert_bool(true, "contains('something', 'thing')");
     assert_bool(false, "contains('something', 'other')");
+    assert_bool(false, "contains([], 1)");
+}
+
+#[test]
+fn std_lib_count() {
+    assert_execute("count('Donaudampfschifffahrtsgesellschaft', 'fff')", "1");
+    assert_execute("count('', 'Hello')", "0");
+    assert_execute("count([True, False, True, False], True)", "2");
+    assert_execute("count([True, False, True, False], 123)", "0");
+    assert_execute("count([], 123)", "0");
 }
 
 #[test]
@@ -229,7 +239,9 @@ fn std_lib_lowercase_uppercase() {
 
 #[test]
 fn std_str() {
+    assert_str("0", "str(0)");
     assert_str("99", "str(99)");
+    assert_str("-1", "str(-1)");
     assert_bool(true, "str(true) = 'true'");
 }
 
@@ -242,6 +254,7 @@ fn std_lib_full() {
             all([true, true]) and 
             any([true, false]) and
             bool(1) and
+            not bool(0) and
             contains('something', 'ome') and
             empty([]) and
             (float('3.14') = 3.14) and
@@ -254,7 +267,8 @@ fn std_lib_full() {
             (pow(10, 2) = 100) and
             (round(3.4) = round(2.5)) and
             (str(-10) = '-10') and
-            (trim('  space   ') = 'space')
+            (trim('  space   ') = 'space') and
+            (count([1,2,3,4,3,2,1], 2) = 2)
              ",
     );
 }

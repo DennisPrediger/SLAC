@@ -108,9 +108,9 @@ mod test {
 
     #[test]
     fn full_syntax() {
-        let script = r#"true and not false and
+        let script = r#"true and not false and // this comment should not appear in the ast
                               10 + 20 - 30 < 50 * 5 / 25 and
-                              10 div 3 <= 10 mod 3 or 
+                              10 div 3 <= 10 mod 3 { neither should this comment { or this} } or 
                               some_func(['hello', 1, true]) > some_var or 
                               7 >= 8 or  9 <> 10 and
                               'Apple' + 'Pen' = 'ApplePen'

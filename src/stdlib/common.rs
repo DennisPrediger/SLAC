@@ -28,6 +28,7 @@ pub fn functions() -> Vec<Function> {
         Function::new(contains, Arity::required(2), "contains(haystack: [String|Array], needle: [String|Any]): Boolean"),
         Function::new(compare, Arity::required(2), "compare(left: Any, right: Any): Number"),
         Function::new(copy, Arity::required(3), "copy(source: [String|Array], start: Number, count: Number): [String|Array]"),
+        Function::new(count, Arity::required(2), "count(haystack: [String|Array], needle: Any"),
         Function::new(empty, Arity::required(1), "empty(value: Any): Boolean"),
         Function::new(find, Arity::required(2), "find(haystack: [String|Array], needle: [String|Any]): Number"),
         Function::new(float, Arity::required(1), "float(value: Any): Number"),
@@ -208,6 +209,25 @@ pub fn copy(params: &[Value]) -> NativeResult {
         )),
         [_, _, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(3)),
+    }
+}
+
+/// Counts occurrences of member or substring inside an [`Value::Array`] or a [`Value::String`].
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+fn count(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::Array(haystack), needle] => Ok(Value::Number(
+            haystack.iter().filter(|v| *v == needle).count() as f64,
+        )),
+        [Value::String(haystack), Value::String(needle)] => {
+            Ok(Value::Number(haystack.match_indices(needle).count() as f64))
+        }
+        [_, _] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
 
@@ -977,6 +997,40 @@ mod test {
                 ]),
                 Value::Number(1.0),
                 Value::Number(2.0)
+            ])
+        );
+    }
+
+    #[test]
+    fn std_count() {
+        assert_eq!(
+            Ok(Value::Number(3.0)),
+            count(&vec![
+                Value::String(String::from("Hello World")),
+                Value::String(String::from("l"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(4.0)),
+            count(&vec![
+                Value::String(String::from(
+                    "How much wood would a woodchuck 
+                     chuck if a woodchuck could chuck wood?"
+                )),
+                Value::String(String::from("wood"))
+            ])
+        );
+
+        assert_eq!(
+            Ok(Value::Number(1.0)),
+            count(&vec![
+                Value::Array(vec![
+                    Value::Boolean(true),
+                    Value::Boolean(false),
+                    Value::Boolean(true)
+                ]),
+                Value::Boolean(false)
             ])
         );
     }
