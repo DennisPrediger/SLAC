@@ -1,6 +1,7 @@
-![Crates.io Version](https://img.shields.io/crates/v/slac)
-![docs.rs](https://img.shields.io/docsrs/slac)
-![GitHub License](https://img.shields.io/github/license/dennisprediger/slac)
+[![Crates.io Version](https://img.shields.io/crates/v/slac)](https://crates.io/crates/slac)
+[![docs.rs](https://img.shields.io/docsrs/slac)](https://docs.rs/slac/latest/slac)
+[![GitHub License](https://img.shields.io/github/license/dennisprediger/slac)](https://github.com/DennisPrediger/SLAC/blob/main/LICENSE)
+
 
 # SLAC: The Simple Logic & Arithmetic Compiler
 
