@@ -1,3 +1,7 @@
+![Crates.io Version](https://img.shields.io/crates/v/slac)
+![docs.rs](https://img.shields.io/docsrs/slac)
+![GitHub License](https://img.shields.io/github/license/dennisprediger/slac)
+
 # SLAC: The Simple Logic & Arithmetic Compiler
 
 SLAC is a small and simple compiler which converts a single expression statement into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree). You can use SLAC to implement a [business rules engine](https://en.wikipedia.org/wiki/Business_rules_engine) isolated from you application code at runtime.
