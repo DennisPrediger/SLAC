@@ -60,58 +60,51 @@ The script syntax itself is similar to Delphi Pascal code.
 
 ```pascal
 // arithmetic operators
-40 + 1 * 2
-// > 42
+40 + 1 * 2 // = 42
 
 // Integer Division and Modulo
-50 div 20 mod 2
-// > 2
+50 div 20 mod 2 // = 2
 
 // comparisons
-50 + 50 = 100
-// > True
+50 + 50 = 100 // = True
 
 // logical operators
-True and not False
-// > True
+True and not False // = True
 
 // grouping
-(40 + 1) * 2
-// > 82
+(40 + 1) * 2 // = 82
 
 // arrays
-[1, 2, 3] + ['Four']
-// > [1, 2, 3, 'Four']
+[1, 2, 3] + ['Four'] // = [1, 2, 3, 'Four']
 
 // application defined external functions
-max(10, 20)
-// > 20
+max(10, 20) // = 20
 
 // application defined variables
-pi * -10
-// > -31,4
+pi * -10 // = -31,4
 ```
 
 # Serialization
 
-By using the `serde` **feature flag**, the `Expression` can be (de)serialized to various formats, most notably JSON. This can be useful to separate the compilation and validation in the backend from the execution in the frontend.
+By using the `serde` **feature flag**, the `Expression` can be (de)serialized to various formats, most notably JSON. This can be useful to separate the compilation, validation and optimization in the backend from the execution in the frontend.
 
 ```rust
-use slac::{compile, execute, Expression, StaticEnvironment, Value};
+use slac::{compile, execute, Expression, optimize, StaticEnvironment, Value};
 
 fn main() {
-    let input = compile("50 * 3 > 149").unwrap();
+    let mut input = compile("50 * 3 > 149").unwrap();
+    optimize(&mut input).unwrap();
     let json = serde_json::to_value(&input).unwrap();
 
-    // > Store the JSON in a database and load it on the client
+    // = Store the JSON in a database and load it on the client
 
     let output = serde_json::from_value::<Expression>(json).unwrap();
     let env = StaticEnvironment::default();
 
-    let result = execute(&env, &output);
+    let result = execute(&env, &output).unwrap();
 
     assert_eq!(input, output);
-    assert_eq!(result, Some(Value::Boolean(true)));
+    assert_eq!(result, Value::Boolean(true));
 }
 ```
 
