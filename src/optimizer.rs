@@ -1,6 +1,6 @@
 //! Transformation routines to optimize an [`Expression`] AST.
 
-use crate::{execute, Expression, Operator, Result, StaticEnvironment};
+use crate::{execute, Expression, Operator, Result, StaticEnvironment, Value};
 
 use crate::stdlib::common::TERNARY_IF_THEN;
 
@@ -64,6 +64,12 @@ pub fn transform_ternary(expression: &mut Expression, found_const: &mut bool) {
     }
 }
 
+fn expressions_are_const(expressions: &Vec<Expression>) -> bool {
+    expressions
+        .iter()
+        .all(|e| matches!(e, Expression::Literal { value: _ }))
+}
+
 /// Evaluates [`Expression::Unary`] and [`Expression::Binary`] into a single
 /// [`Expression::Literal`] if all arguments are also an [`Expression::Literal`].
 ///
@@ -120,6 +126,17 @@ pub fn fold_constants(expression: &mut Expression, found_const: &mut bool) -> Re
                 fold_constants(left, found_const)?;
                 fold_constants(middle, found_const)?;
                 fold_constants(right, found_const)?;
+            }
+        }
+        Expression::Array { expressions } if expressions_are_const(&expressions) => {
+            *found_const = true;
+            *expression = Expression::Literal {
+                value: Value::Array(
+                    expressions
+                        .iter()
+                        .map(|e| execute(&StaticEnvironment::default(), e))
+                        .collect::<Result<_>>()?,
+                ),
             }
         }
         Expression::Array { expressions } => {
@@ -364,6 +381,28 @@ mod test {
                 operator: Operator::Minus,
             }],
         };
+        optimize(&mut expr).unwrap();
+
+        assert_eq!(value, expr);
+    }
+
+    #[test]
+    fn fold_array() {
+        let mut expr = Expression::Array {
+            expressions: vec![
+                Expression::Literal {
+                    value: Value::Boolean(true),
+                },
+                Expression::Literal {
+                    value: Value::Boolean(false),
+                },
+            ],
+        };
+
+        let value = Expression::Literal {
+            value: Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
+        };
+
         optimize(&mut expr).unwrap();
 
         assert_eq!(value, expr);
