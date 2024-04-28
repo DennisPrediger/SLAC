@@ -1,5 +1,6 @@
 //! The SLAC standard library features various functions which can be included into a [`StaticEnvironment`].
 
+use crate::environment::Function;
 use crate::{StaticEnvironment, Value};
 
 #[doc(inline)]
@@ -26,15 +27,23 @@ pub const STRING_OFFSET: f64 = 1.0;
 /// All parameters to the function are inside a single Vec<[`Value`]>.
 pub type NativeFunction = fn(&[Value]) -> NativeResult;
 
+#[must_use]
+pub fn builtins() -> Vec<Function> {
+    [
+        common::functions(),
+        math::functions(),
+        string::functions(),
+        #[cfg(feature = "chrono")]
+        time::functions(),
+        #[cfg(feature = "regex")]
+        regex::functions(),
+    ]
+    .concat()
+}
+
 /// Extends a [`StaticEnvironment`] with all standard library functions.
 pub fn extend_environment(env: &mut StaticEnvironment) {
-    env.add_functions(common::functions());
-    env.add_functions(math::functions());
-    env.add_functions(string::functions());
-    #[cfg(feature = "chrono")]
-    env.add_functions(time::functions());
-    #[cfg(feature = "regex")]
-    env.add_functions(regex::functions());
+    env.add_functions(builtins());
 }
 
 pub(crate) fn default_string<'a>(

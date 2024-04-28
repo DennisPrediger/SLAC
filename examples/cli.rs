@@ -8,7 +8,7 @@ fn execute(source: &str) -> Result<Value> {
     slac::stdlib::extend_environment(&mut env);
     slac::check_variables_and_functions(&env, &ast)?;
 
-    optimize(&mut ast)?;
+    optimize(&env, &mut ast)?;
 
     let result = slac::execute(&env, &ast)?;
     Ok(result)

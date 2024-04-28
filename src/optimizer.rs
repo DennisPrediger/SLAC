@@ -1,5 +1,6 @@
 //! Transformation routines to optimize an [`Expression`] AST.
 
+use crate::environment::{FunctionResult, ValidateEnvironment};
 use crate::{execute, Expression, Operator, Result, StaticEnvironment, Value};
 
 use crate::stdlib::common::TERNARY_IF_THEN;
@@ -70,25 +71,32 @@ fn expressions_are_const(expressions: &Vec<Expression>) -> bool {
         .all(|e| matches!(e, Expression::Literal { value: _ }))
 }
 
-/// Evaluates [`Expression::Unary`] and [`Expression::Binary`] into a single
+/// Evaluates [`Expression::Unary`], [`Expression::Binary`] [`Expression::Array`] into a single
 /// [`Expression::Literal`] if all arguments are also an [`Expression::Literal`].
 ///
 /// Evaluates [`Operator::TernaryCondition`] [`Expression::Ternary`] into either
 /// the second or third argument, if the first argument is a [`Expression::Literal`].
 ///
+/// Evaluates [`Expression::Call`] into a single [`Expression::Literal`] if all parameters
+/// are [`Expression::Literal`] and the function is a pure function.
+///
 /// # Errors
 ///
 /// Will return [`crate::Error`] if constant evaluation is not possible.
-pub fn fold_constants(expression: &mut Expression, found_const: &mut bool) -> Result<()> {
+pub fn fold_constants(
+    env: &StaticEnvironment,
+    expression: &mut Expression,
+    found_const: &mut bool,
+) -> Result<()> {
     match expression {
         Expression::Unary { right, operator: _ } => match right.as_ref() {
             Expression::Literal { value: _ } => {
                 *found_const = true;
                 *expression = Expression::Literal {
-                    value: execute(&StaticEnvironment::default(), expression)?,
+                    value: execute(env, expression)?,
                 }
             }
-            _ => fold_constants(right, found_const)?,
+            _ => fold_constants(env, right, found_const)?,
         },
         Expression::Binary {
             left,
@@ -100,11 +108,11 @@ pub fn fold_constants(expression: &mut Expression, found_const: &mut bool) -> Re
             {
                 *found_const = true;
                 *expression = Expression::Literal {
-                    value: execute(&StaticEnvironment::default(), expression)?,
+                    value: execute(env, expression)?,
                 };
             } else {
-                fold_constants(left, found_const)?;
-                fold_constants(right, found_const)?;
+                fold_constants(env, left, found_const)?;
+                fold_constants(env, right, found_const)?;
             }
         }
         Expression::Ternary {
@@ -123,9 +131,9 @@ pub fn fold_constants(expression: &mut Expression, found_const: &mut bool) -> Re
                     *expression = *right.clone();
                 }
             } else {
-                fold_constants(left, found_const)?;
-                fold_constants(middle, found_const)?;
-                fold_constants(right, found_const)?;
+                fold_constants(env, left, found_const)?;
+                fold_constants(env, middle, found_const)?;
+                fold_constants(env, right, found_const)?;
             }
         }
         Expression::Array { expressions } if expressions_are_const(&expressions) => {
@@ -134,19 +142,32 @@ pub fn fold_constants(expression: &mut Expression, found_const: &mut bool) -> Re
                 value: Value::Array(
                     expressions
                         .iter()
-                        .map(|e| execute(&StaticEnvironment::default(), e))
+                        .map(|e| execute(env, e))
                         .collect::<Result<_>>()?,
                 ),
             }
         }
         Expression::Array { expressions } => {
             for expr in expressions {
-                fold_constants(expr, found_const)?;
+                fold_constants(env, expr, found_const)?;
+            }
+        }
+
+        Expression::Call { name, params } if expressions_are_const(params) => {
+            match env.function_exists(name, params.len()) {
+                // only inline pure functions
+                FunctionResult::Exists(func) if func.pure => {
+                    *found_const = true;
+                    *expression = Expression::Literal {
+                        value: execute(env, expression)?,
+                    };
+                }
+                _ => (),
             }
         }
         Expression::Call { name: _, params } => {
             for expr in params {
-                fold_constants(expr, found_const)?;
+                fold_constants(env, expr, found_const)?;
             }
         }
         _ => (),
@@ -161,12 +182,12 @@ pub fn fold_constants(expression: &mut Expression, found_const: &mut bool) -> Re
 /// # Errors
 ///
 /// Will return [`crate::Error`] if constant evaluation is not possible.
-pub fn optimize(expression: &mut Expression) -> Result<()> {
+pub fn optimize(env: &StaticEnvironment, expression: &mut Expression) -> Result<()> {
     let mut found_const = false;
 
     loop {
         transform_ternary(expression, &mut found_const);
-        fold_constants(expression, &mut found_const)?;
+        fold_constants(env, expression, &mut found_const)?;
 
         if found_const {
             found_const = false; // repeat until no further folding is possible
@@ -181,7 +202,8 @@ mod test {
 
     use super::{optimize, transform_ternary};
     use crate::stdlib::common::TERNARY_IF_THEN;
-    use crate::{Expression, Operator, Value};
+    use crate::stdlib::extend_environment;
+    use crate::{Expression, Operator, StaticEnvironment, Value};
 
     #[test]
     fn ternary_flat() {
@@ -275,7 +297,7 @@ mod test {
             value: Value::Number(15.0),
         };
 
-        optimize(&mut expr).unwrap();
+        optimize(&StaticEnvironment::default(), &mut expr).unwrap();
         assert_eq!(value, expr);
     }
 
@@ -291,7 +313,7 @@ mod test {
         let value = Expression::Literal {
             value: Value::Number(-5.0),
         };
-        optimize(&mut expr).unwrap();
+        optimize(&StaticEnvironment::default(), &mut expr).unwrap();
         assert_eq!(value, expr);
 
         let mut expr = Expression::Unary {
@@ -308,7 +330,7 @@ mod test {
             value: Value::Number(5.0),
         };
 
-        optimize(&mut expr).unwrap();
+        optimize(&StaticEnvironment::default(), &mut expr).unwrap();
         assert_eq!(value, expr);
     }
 
@@ -331,7 +353,7 @@ mod test {
             value: Value::Number(1.0),
         };
 
-        optimize(&mut expr).unwrap();
+        optimize(&StaticEnvironment::default(), &mut expr).unwrap();
         assert_eq!(value, expr);
     }
 
@@ -381,7 +403,7 @@ mod test {
                 operator: Operator::Minus,
             }],
         };
-        optimize(&mut expr).unwrap();
+        optimize(&StaticEnvironment::default(), &mut expr).unwrap();
 
         assert_eq!(value, expr);
     }
@@ -403,7 +425,33 @@ mod test {
             value: Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
         };
 
-        optimize(&mut expr).unwrap();
+        optimize(&StaticEnvironment::default(), &mut expr).unwrap();
+
+        assert_eq!(value, expr);
+    }
+
+    #[test]
+    fn fold_pure_function() {
+        let mut expr = Expression::Call {
+            name: String::from("max"),
+            params: vec![
+                Expression::Literal {
+                    value: Value::Number(10.0),
+                },
+                Expression::Literal {
+                    value: Value::Number(20.0),
+                },
+            ],
+        };
+
+        let value = Expression::Literal {
+            value: Value::Number(20.0),
+        };
+
+        let mut env = StaticEnvironment::default();
+        extend_environment(&mut env);
+
+        optimize(&env, &mut expr).unwrap();
 
         assert_eq!(value, expr);
     }

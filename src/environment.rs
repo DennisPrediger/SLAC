@@ -8,9 +8,9 @@ use crate::{
 };
 
 /// An enum signaling if a matching function is provided by a [`ValidateEnvironment`].
-pub enum FunctionResult {
+pub enum FunctionResult<'a> {
     /// A matching function was found.
-    Exists,
+    Exists(&'a Function),
     /// No function with was found matching the supplied name.
     NotFound,
     /// A function with a matching name, but an incompatible arity was found.
@@ -36,7 +36,7 @@ pub trait ValidateEnvironment {
     /// Checks if a variable with a matching name exists.
     fn variable_exists(&self, name: &str) -> bool;
 
-    /// Checks if a function with a matchinbg name and compatible arity exists.
+    /// Checks if a function with a matching name and compatible arity exists.
     fn function_exists(&self, name: &str, arity: usize) -> FunctionResult;
 }
 
@@ -72,10 +72,11 @@ pub struct Function {
     pub func: NativeFunction,
     pub arity: Arity,
     pub params: String,
+    pub pure: bool,
 }
 
 impl Function {
-    /// Creates a new `Function` from  a declaration.
+    /// Creates a new pure `Function` from  a declaration.
     /// Example: "max(left: Number, right: Number): Number")
     ///
     /// # Remarks
@@ -84,18 +85,33 @@ impl Function {
     /// is used as name and the params are left empty.
     #[must_use]
     pub fn new(func: NativeFunction, arity: Arity, declaration: &str) -> Self {
-        let (name, params) = declaration
-            .split_once('(')
-            .map(|(name, param)| (name, format!("({param}")))
-            .unwrap_or((declaration, String::new()));
+        let (name, params) = parse_declaration(declaration);
 
         Self {
-            name: name.trim().to_string(),
+            name,
             func,
             arity,
             params,
+            pure: true,
         }
     }
+
+    /// Creates an impure `Function`.
+    ///
+    /// See also: [`Function::new`]
+    pub fn impure(func: NativeFunction, arity: Arity, declaration: &str) -> Self {
+        Self {
+            pure: false,
+            ..Self::new(func, arity, declaration)
+        }
+    }
+}
+
+fn parse_declaration(declaration: &str) -> (String, String) {
+    declaration
+        .split_once('(')
+        .map(|(name, param)| (name.trim().to_string(), format!("({param}")))
+        .unwrap_or((declaration.to_string(), String::new()))
 }
 
 /// An [`Environment`] implementation in which all variables and functions are
@@ -185,10 +201,10 @@ impl ValidateEnvironment for StaticEnvironment {
                     } else if param_count > upper {
                         FunctionResult::WrongArity(param_count, upper)
                     } else {
-                        FunctionResult::Exists
+                        FunctionResult::Exists(function)
                     }
                 }
-                Arity::Variadic => FunctionResult::Exists,
+                Arity::Variadic => FunctionResult::Exists(function),
                 Arity::None => FunctionResult::WrongArity(param_count, 0),
             }
         } else {

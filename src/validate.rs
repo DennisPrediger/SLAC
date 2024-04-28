@@ -43,7 +43,7 @@ pub fn check_variables_and_functions(
             }
         }
         Expression::Call { name, params } => match env.function_exists(name, params.len()) {
-            FunctionResult::Exists => validate_expr_vec(env, params),
+            FunctionResult::Exists(_) => validate_expr_vec(env, params),
             FunctionResult::NotFound => Err(Error::MissingFunction(name.clone())),
             FunctionResult::WrongArity(found, expected) => {
                 Err(Error::ParamCountMismatch(name.clone(), found, expected))

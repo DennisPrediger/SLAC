@@ -33,7 +33,7 @@ pub fn functions() -> Vec<Function> {
         Function::new(even, Arity::required(1), "even(value: Number): Boolean"),
         Function::new(odd, Arity::required(1), "odd(value: Number): Boolean"),
         Function::new(pow, Arity::optional(1, 1), "pow(value: Number, exponent: Number = 2): Number"),
-        Function::new(random, Arity::optional(0, 1), "random(range: Number = 1): Number"),
+        Function::impure(random, Arity::optional(0, 1), "random(range: Number = 1): Number"),
     ]
 }
 

@@ -4,7 +4,7 @@ use slac::{
     execute,
     optimizer::optimize,
     stdlib::{extend_environment, NativeResult},
-    Result, StaticEnvironment, Value,
+    Expression, Result, StaticEnvironment, Value,
 };
 
 fn execute_raw(script: &str) -> Result<Value> {
@@ -26,7 +26,7 @@ fn execute_with_stdlib(script: &str, do_optimize: bool) -> Result<Value> {
     check_variables_and_functions(&env, &ast)?;
 
     if do_optimize {
-        optimize(&mut ast)?;
+        optimize(&env, &mut ast)?;
     }
 
     execute(&env, &ast)
@@ -50,8 +50,11 @@ fn assert_execute(left: &str, right: &str) {
 fn assert_expr(expected: &str, script: &str) {
     let ast_expected = compile(expected).unwrap();
     let mut ast = compile(script).unwrap();
+    let mut env = StaticEnvironment::default();
 
-    optimize(&mut ast).unwrap();
+    extend_environment(&mut env);
+
+    optimize(&env, &mut ast).unwrap();
 
     assert_eq!(ast_expected, ast);
 }
@@ -90,6 +93,19 @@ fn assert_num(expected: f64, script: &str) {
         Ok(Value::Number(expected)),
         execute_with_stdlib(script, true)
     );
+}
+
+fn assert_value(value: Value, script: &str) {
+    let ast_expected = Expression::Literal { value };
+
+    let mut ast = compile(script).unwrap();
+    let mut env = StaticEnvironment::default();
+
+    extend_environment(&mut env);
+
+    optimize(&env, &mut ast).unwrap();
+
+    assert_eq!(ast_expected, ast);
 }
 
 fn assert_err(script: &str) {
@@ -549,9 +565,31 @@ fn optimize_fold() {
     );
     assert_execute("if_then(if_then(true, true, false), 1, 2)", "1");
 
-    assert_expr("2", "1+1");
+    assert_expr("1", "1+1 + -1");
     assert_expr("2", "if_then(1 > 2, 1, 2)");
     assert_expr("1", "if_then(if_then(true, true, false), 1, 2)");
+    assert_expr("10", "max(min(30, 10), 5)");
+    assert_expr("true", "all([true, true])");
+    assert_expr("max(some_var, 5)", "max(some_var, min(10, 5))");
+    assert_expr("random()", "random()");
+    assert_expr("true", "is_leap_year(string_to_date('2024-01-01'))");
+
+    assert_value(Value::Array(vec![Value::Boolean(true)]), "[true]");
+    assert_value(
+        Value::Number(10.0),
+        "Min(20, if_then(all([true or false, true]) and true, 10, 30))",
+    );
+
+    assert_value(
+        Value::String("john.smith@example.com".to_string()),
+        "at(re_capture('john.smith@example.com', '(.*)@.*\\.*'), 0)",
+    );
+
+    assert_value(Value::Boolean(true), "even(10 + 30 * 3)");
+    assert_value(
+        Value::String(String::from("DEADBEEF")),
+        "int_to_hex(abs(-3735928559))",
+    );
 }
 
 #[test]
