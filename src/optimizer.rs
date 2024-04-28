@@ -1,7 +1,7 @@
 //! Transformation routines to optimize an [`Expression`] AST.
 
 use crate::environment::{FunctionResult, ValidateEnvironment};
-use crate::{execute, Expression, Operator, Result, StaticEnvironment, Value};
+use crate::{execute, Expression, Operator, Result, StaticEnvironment};
 
 use crate::stdlib::common::TERNARY_IF_THEN;
 
@@ -65,7 +65,7 @@ pub fn transform_ternary(expression: &mut Expression, found_const: &mut bool) {
     }
 }
 
-fn expressions_are_const(expressions: &Vec<Expression>) -> bool {
+fn expressions_are_const(expressions: &[Expression]) -> bool {
     expressions
         .iter()
         .all(|e| matches!(e, Expression::Literal { value: _ }))
@@ -136,16 +136,11 @@ pub fn fold_constants(
                 fold_constants(env, right, found_const)?;
             }
         }
-        Expression::Array { expressions } if expressions_are_const(&expressions) => {
+        Expression::Array { expressions } if expressions_are_const(expressions) => {
             *found_const = true;
             *expression = Expression::Literal {
-                value: Value::Array(
-                    expressions
-                        .iter()
-                        .map(|e| execute(env, e))
-                        .collect::<Result<_>>()?,
-                ),
-            }
+                value: execute(env, expression)?,
+            };
         }
         Expression::Array { expressions } => {
             for expr in expressions {

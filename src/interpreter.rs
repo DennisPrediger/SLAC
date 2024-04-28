@@ -151,8 +151,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
     }
 
     fn array(&self, expressions: &[Expression]) -> Result<Value> {
-        let values = self.get_values(expressions)?;
-        Ok(Value::Array(values))
+        Ok(Value::Array(self.get_values(expressions)?))
     }
 
     fn variable(&self, name: &str) -> Result<Value> {
@@ -163,9 +162,8 @@ impl<'a> TreeWalkingInterpreter<'a> {
     }
 
     fn call(&self, name: &str, expressions: &[Expression]) -> Result<Value> {
-        let params = self.get_values(expressions)?;
         self.environment
-            .call(name, &params)
+            .call(name, &self.get_values(expressions)?)
             .map_err(|e| Error::NativeFunctionError(name.to_string(), e))
     }
 }
