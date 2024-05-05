@@ -204,7 +204,8 @@ impl ValidateEnvironment for StaticEnvironment {
                         FunctionResult::Exists(function)
                     }
                 }
-                Arity::Variadic => FunctionResult::Exists(function),
+                Arity::Variadic if param_count > 0 => FunctionResult::Exists(function),
+                Arity::Variadic => FunctionResult::WrongArity(param_count, 1), // variadic without parameters
                 Arity::None => FunctionResult::WrongArity(param_count, 0),
             }
         } else {
