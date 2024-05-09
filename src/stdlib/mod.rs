@@ -81,3 +81,12 @@ pub(crate) fn get_index(index: &f64) -> Result<usize, NativeError> {
 pub(crate) fn get_string_index(index: &f64) -> Result<usize, NativeError> {
     get_index(index).map(|index| index - STRING_OFFSET as usize)
 }
+
+/// Returns the first parameter if it's an [`Value::Array`] or return all
+/// parameters as varadic function.
+pub(crate) fn smart_vec(params: &[Value]) -> &[Value] {
+    match params {
+        [Value::Array(v)] if (params.len() == 1) => v, // only one Array parameter
+        _ => params,                                   // all varadic params
+    }
+}

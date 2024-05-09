@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 use super::{
     default_string,
     error::{NativeError, NativeResult},
-    get_index, get_string_index, STRING_OFFSET,
+    get_index, get_string_index, smart_vec, STRING_OFFSET,
 };
 
 use crate::{
@@ -43,15 +43,6 @@ pub fn functions() -> Vec<Function> {
         Function::new(reverse, Arity::required(1), "reverse(value: [Array|String]): [Array|String]"),
         Function::new(str, Arity::required(1), "str(value: Any): String"),
     ]
-}
-
-/// Returns the first parameter if it's an [`Value::Array`] or return all
-/// parameters as varadic function.
-fn smart_vec(params: &[Value]) -> &[Value] {
-    match params {
-        [Value::Array(v)] if (params.len() == 1) => v, // only one Array parameter
-        _ => params,                                   // all varadic params
-    }
 }
 
 /// Checks if all members of a [`Value::Array`] are [`Value::Boolean(true)`].

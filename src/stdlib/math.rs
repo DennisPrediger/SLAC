@@ -5,6 +5,7 @@ use getrandom::{getrandom, Error};
 use super::{
     default_number,
     error::{NativeError, NativeResult},
+    smart_vec,
 };
 
 use crate::{
@@ -31,6 +32,7 @@ pub fn functions() -> Vec<Function> {
         Function::new(odd, Arity::required(1), "odd(value: Number): Boolean"),
         Function::new(pow, Arity::optional(1, 1), "pow(value: Number, exponent: Number = 2): Number"),
         Function::impure(random, Arity::optional(0, 1), "random(range: Number = 1): Number"),
+        Function::impure(choice, Arity::Variadic, "choice(...): Any"),
     ]
 }
 
@@ -148,6 +150,20 @@ fn get_random_float(max: f64) -> Result<f64, Error> {
     Ok((random * max) / u64::MAX as f64)
 }
 
+fn get_random_int(max: usize) -> Result<usize, Error> {
+    if max == 0 {
+        return Ok(0); // shortcut for empty range
+    }
+
+    // get random bytes from the OS
+    let mut buffer = [0u8; 8];
+    getrandom(&mut buffer)?;
+
+    // constrain the values to an integer range via modulo
+    let random = usize::from_le_bytes(buffer);
+    Ok(random % max)
+}
+
 /// Generates a random [`Value::Number`] provided by the os system source via [`rand::rngs::OsRng`].
 ///
 /// * Declaration: `random(range: Number = 1): Number`
@@ -160,6 +176,29 @@ pub fn random(params: &[Value]) -> NativeResult {
     let result = get_random_float(range).map_err(|e| NativeError::CustomError(e.to_string()))?;
 
     Ok(Value::Number(result))
+}
+
+/// Returns a random choice of one of the provided parameters.
+/// If a [`Value::Array`] is provided as sole parameter, returns one random [`Value`]
+///
+/// * Declaration: `choice(...): Any`
+///
+/// # Remarks
+///
+/// Uses [`rand::rngs::OsRng`] as RNG source.
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterType`] no parameters are provided.
+pub fn choice(params: &[Value]) -> NativeResult {
+    let choices = smart_vec(params);
+    let index: usize =
+        get_random_int(choices.len()).map_err(|e| NativeError::CustomError(e.to_string()))?;
+
+    choices
+        .get(index)
+        .cloned()
+        .ok_or(NativeError::WrongParameterType)
 }
 
 #[cfg(test)]
@@ -275,5 +314,24 @@ mod test {
             assert!(random(&vec![Value::Number(-1.0)]).unwrap() <= Value::Number(0.0));
             assert!(random(&vec![Value::Number(100.0)]).unwrap() >= Value::Number(0.0));
         }
+    }
+
+    #[test]
+    fn math_choice() {
+        let input = &vec![
+            Value::Boolean(true),
+            Value::Boolean(false),
+            Value::Number(123.00),
+            Value::String("Hello".to_string()),
+            Value::String("World".to_string()),
+        ];
+
+        for _ in 0..1000 {
+            let res = choice(&input).unwrap();
+
+            assert!(input.contains(&res));
+        }
+
+        assert_eq!(choice(&vec![]), Err(NativeError::WrongParameterType));
     }
 }

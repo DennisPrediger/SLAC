@@ -572,6 +572,8 @@ fn optimize_fold() {
     assert_expr("true", "all([true, true])");
     assert_expr("max(some_var, 5)", "max(some_var, min(10, 5))");
     assert_expr("random()", "random()");
+    assert_expr("choice(1,2,3)", "choice(1,2,3)");
+    assert_expr("choice(1,2,3)", "choice(1,1+1,3)");
     assert_expr("true", "is_leap_year(string_to_date('2024-01-01'))");
 
     assert_value(Value::Array(vec![Value::Boolean(true)]), "[true]");
@@ -597,6 +599,8 @@ fn random() {
     for _ in 0..100 {
         assert_bool(true, "random() <= 1");
         assert_bool(true, "random(10) <= 10");
+        assert_bool(true, "choice([1,2,3]) <= 10");
+        assert_execute("true", "choice([true])");
     }
 }
 
