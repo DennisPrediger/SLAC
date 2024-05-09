@@ -670,3 +670,11 @@ fn sort_array() {
 
     assert_execute("[false, true, 0, 1, 2]", "sort([2, true, 1, false, 0])");
 }
+
+#[test]
+fn unique_array() {
+    assert_execute("[1,2,3]", "unique([1,1,2,3,3,2,1])");
+    assert_execute("[1,'2',3]", "unique([1,1,'2',3,3,'2',1])");
+    assert_execute("[[],[1]]", "unique([[],[1],[],[1]])");
+    assert_execute("[]", "unique([])");
+}

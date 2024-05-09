@@ -1,6 +1,8 @@
 //! Common functions and constants for converting variables into different
 //! [`Value`] types or check, extract and extend [`Value::Array`] variables.
 
+use std::collections::HashSet;
+
 use super::{
     default_string,
     error::{NativeError, NativeResult},
@@ -41,6 +43,7 @@ pub fn functions() -> Vec<Function> {
         Function::new(reverse, Arity::required(1), "reverse(value: [Array|String]): [Array|String]"),
         Function::new(sort, Arity::required(1), "sort(values: Array): Array"),
         Function::new(str, Arity::required(1), "str(value: Any): String"),
+        Function::new(unique, Arity::required(1), "unique(values: Array): Array"),
     ]
 }
 
@@ -500,6 +503,33 @@ pub fn sort(params: &[Value]) -> NativeResult {
 pub fn str(params: &[Value]) -> NativeResult {
     match params {
         [value] => Ok(Value::String(value.to_string())),
+        _ => Err(NativeError::WrongParameterCount(1)),
+    }
+}
+
+/// Returns all unique members of a [`Value::Array`] in order.
+///
+/// * Declaration: `unique(values: Array): Array`
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+pub fn unique(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::Array(values)] => {
+            let mut unique: HashSet<&Value> = HashSet::with_capacity(values.len());
+            let mut result: Vec<Value> = vec![];
+
+            for value in values {
+                if unique.insert(value) {
+                    result.push(value.clone());
+                }
+            }
+
+            Ok(Value::Array(result))
+        }
+        [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
 }

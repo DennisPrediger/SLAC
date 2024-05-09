@@ -4,6 +4,7 @@ use serde::{de::Visitor, ser::SerializeSeq, Deserialize, Serialize};
 use std::{
     cmp::Ordering,
     fmt::Display,
+    hash::{Hash, Hasher},
     ops::{Add, BitXor, Div, Mul, Neg, Not, Rem, Sub},
 };
 
@@ -20,7 +21,6 @@ pub enum Value {
     Number(f64),
     Array(Vec<Value>),
 }
-
 impl Eq for Value {}
 
 impl PartialOrd for Value {
@@ -53,6 +53,12 @@ impl PartialEq for Value {
             (Self::Array(l0), Self::Array(r0)) => l0 == r0,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
+    }
+}
+
+impl Hash for Value {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
     }
 }
 
