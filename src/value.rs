@@ -2,6 +2,7 @@
 use serde::{de::Visitor, ser::SerializeSeq, Deserialize, Serialize};
 
 use std::{
+    cmp::Ordering,
     fmt::Display,
     ops::{Add, BitXor, Div, Mul, Neg, Not, Rem, Sub},
 };
@@ -12,12 +13,35 @@ use crate::{
 };
 
 /// A Wrapper for the four different possible variable types.
-#[derive(Debug, PartialOrd, Clone)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Boolean(bool),
     String(String),
     Number(f64),
     Array(Vec<Value>),
+}
+
+impl Eq for Value {}
+
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Value {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            // direct comparision of contained types
+            (Value::Boolean(l0), Value::Boolean(r0)) => l0.cmp(r0),
+            (Value::String(l0), Value::String(r0)) => l0.cmp(r0),
+            (Value::Number(l0), Value::Number(r0)) => l0.total_cmp(r0), // total_cmp for f64
+            (Value::Array(l0), Value::Array(r0)) => l0.cmp(r0),
+
+            // comparison by ordinal value
+            (left, right) => left.ordinal().cmp(&right.ordinal()),
+        }
+    }
 }
 
 impl PartialEq for Value {
@@ -194,6 +218,17 @@ impl Value {
         match self {
             Value::Boolean(v) => *v,
             value => !value.is_empty(),
+        }
+    }
+
+    /// Returns an ordinal value for each [`Value`] kind.
+    #[must_use]
+    fn ordinal(&self) -> u8 {
+        match self {
+            Value::Boolean(_) => 0,
+            Value::String(_) => 1,
+            Value::Number(_) => 2,
+            Value::Array(_) => 3,
         }
     }
 }

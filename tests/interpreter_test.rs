@@ -654,3 +654,19 @@ fn has_comments() {
     assert_err("// todo add expression");
     assert_err("{todo add expression}");
 }
+
+#[test]
+fn sort_array() {
+    assert_execute("[1,2,3,4,5]", "sort([5,4,3,2,1])");
+    assert_execute("[false, false, true]", "sort([false, true, false])");
+    assert_execute(
+        "[true, 'something', 42, [123]]",
+        "sort([[123], 42, 'something',  true])",
+    );
+    assert_execute(
+        "[[123], 42, 'something',  true]",
+        "reverse(sort([[123], 42, 'something',  true]))",
+    );
+
+    assert_execute("[false, true, 0, 1, 2]", "sort([2, true, 1, false, 0])");
+}

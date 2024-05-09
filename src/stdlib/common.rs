@@ -1,8 +1,6 @@
 //! Common functions and constants for converting variables into different
 //! [`Value`] types or check, extract and extend [`Value::Array`] variables.
 
-use std::cmp::Ordering;
-
 use super::{
     default_string,
     error::{NativeError, NativeResult},
@@ -41,6 +39,7 @@ pub fn functions() -> Vec<Function> {
         Function::new(replace, Arity::optional(2, 1), "replace(value: [String|Array], from: [String|Any], to: [String|Any]): [String|Array]"),
         Function::new(replace, Arity::required(2), "remove(value: [String|Array], from: [String|Any]): [String|Array]"), // replace with only 2 parameters acts as remove
         Function::new(reverse, Arity::required(1), "reverse(value: [Array|String]): [Array|String]"),
+        Function::new(sort, Arity::required(1), "sort(values: Array): Array"),
         Function::new(str, Arity::required(1), "str(value: Any): String"),
     ]
 }
@@ -165,10 +164,7 @@ pub fn contains(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn compare(params: &[Value]) -> NativeResult {
     match params {
-        [left, right] => Ok(Value::Number(f64::from(
-            left.partial_cmp(right)
-                .ok_or(NativeError::from("values not comparable"))? as i8,
-        ))),
+        [left, right] => Ok(Value::Number(f64::from(left.cmp(right) as i8))),
         _ => Err(NativeError::WrongParameterCount(2)),
     }
 }
@@ -398,15 +394,7 @@ pub fn length(params: &[Value]) -> NativeResult {
 pub fn max(params: &[Value]) -> NativeResult {
     smart_vec(params)
         .iter()
-        .max_by(|a, b| {
-            if a < b {
-                Ordering::Less
-            } else if a > b {
-                Ordering::Greater
-            } else {
-                Ordering::Equal
-            }
-        })
+        .max()
         .cloned()
         .ok_or(NativeError::WrongParameterCount(1))
 }
@@ -421,15 +409,7 @@ pub fn max(params: &[Value]) -> NativeResult {
 pub fn min(params: &[Value]) -> NativeResult {
     smart_vec(params)
         .iter()
-        .min_by(|a, b| {
-            if a < b {
-                Ordering::Less
-            } else if a > b {
-                Ordering::Greater
-            } else {
-                Ordering::Equal
-            }
-        })
+        .min()
         .cloned()
         .ok_or(NativeError::WrongParameterCount(1))
 }
@@ -486,6 +466,25 @@ pub fn reverse(params: &[Value]) -> NativeResult {
     match params {
         [Value::Array(values)] => Ok(Value::Array(values.iter().cloned().rev().collect())),
         [Value::String(value)] => Ok(Value::String(value.chars().rev().collect())),
+        [_] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::WrongParameterCount(1)),
+    }
+}
+
+/// Returns a sorted copy of the provided [`Value::Array`].
+///
+/// # Errors
+///
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+pub fn sort(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::Array(values)] => {
+            let mut sorted = values.clone();
+            sorted.sort();
+
+            Ok(Value::Array(sorted))
+        }
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
