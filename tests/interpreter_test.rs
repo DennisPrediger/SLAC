@@ -593,6 +593,14 @@ fn optimize_fold() {
 }
 
 #[test]
+fn random() {
+    for _ in 0..100 {
+        assert_bool(true, "random() <= 1");
+        assert_bool(true, "random(10) <= 10");
+    }
+}
+
+#[test]
 fn has_comments() {
     assert_execute("3.14", "3 + .14 // eh, close enough");
     assert_execute("3", "3{ + .14}");

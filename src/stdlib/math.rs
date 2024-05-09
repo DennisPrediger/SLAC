@@ -1,9 +1,6 @@
 //! Functions to perform calculations with [`Value::Number`] variables.
 
-use std::{
-    collections::hash_map::RandomState,
-    hash::{BuildHasher, Hasher},
-};
+use getrandom::{getrandom, Error};
 
 use super::{
     default_number,
@@ -137,20 +134,32 @@ pub fn pow(params: &[Value]) -> NativeResult {
     }
 }
 
-/// Generates a random-ish [`Value::Number`]. Uses [`RandomState`] and is very
-/// much **not** cryptographicly secure
+fn get_random_float(max: f64) -> Result<f64, Error> {
+    if max == 0.0 {
+        return Ok(0.0); // shortcut for empty range
+    }
+
+    // get random bytes from the OS
+    let mut buffer = [0u8; 8];
+    getrandom(&mut buffer)?;
+
+    // constrain the values to a float range
+    let random = u64::from_le_bytes(buffer) as f64;
+    Ok((random * max) / u64::MAX as f64)
+}
+
+/// Generates a random [`Value::Number`] provided by the os system source via [`rand::rngs::OsRng`].
 ///
 /// * Declaration: `random(range: Number = 1): Number`
 ///
 /// # Errors
 ///
-/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn random(params: &[Value]) -> NativeResult {
     let range = default_number(params, 0, 1.0)?;
+    let result = get_random_float(range).map_err(|e| NativeError::CustomError(e.to_string()))?;
 
-    let random = RandomState::new().build_hasher().finish();
-    Ok(Value::Number((random as f64 / u64::MAX as f64) * range))
+    Ok(Value::Number(result))
 }
 
 #[cfg(test)]
@@ -259,6 +268,12 @@ mod test {
             assert!(random(&vec![Value::Number(10000.0)]).unwrap() <= Value::Number(10000.0));
             assert!(random(&vec![Value::Number(-100.0)]).unwrap() >= Value::Number(-100.0));
             assert!(random(&vec![Value::Number(-100.0)]).unwrap() < Value::Number(0.0));
+            assert_eq!(random(&vec![Value::Number(0.0)]), Ok(Value::Number(0.0)));
+        }
+
+        for _ in 0..1000 {
+            assert!(random(&vec![Value::Number(-1.0)]).unwrap() <= Value::Number(0.0));
+            assert!(random(&vec![Value::Number(100.0)]).unwrap() >= Value::Number(0.0));
         }
     }
 }
