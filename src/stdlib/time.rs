@@ -84,6 +84,7 @@ const MILLISECONDS_PER_DAY: f64 = 24. * 60. * 60. * 1000.;
 impl TryFrom<&Value> for NaiveDateTime {
     type Error = NativeError;
 
+    #[allow(clippy::cast_possible_truncation)]
     fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
             Value::Number(value) => {
@@ -99,6 +100,7 @@ impl TryFrom<&Value> for NaiveDateTime {
 }
 
 impl From<NaiveDateTime> for Value {
+    #[allow(clippy::cast_precision_loss)]
     fn from(val: NaiveDateTime) -> Self {
         let milliseconds = val.and_utc().timestamp_millis();
 
@@ -163,7 +165,7 @@ pub fn string_to_date(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::CustomError`] if the String can not be parsed.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-#[allow(clippy::module_name_repetitions)]
+#[allow(clippy::module_name_repetitions, clippy::cast_possible_truncation)]
 pub fn string_to_time(params: &[Value]) -> NativeResult {
     let fmt = default_string(params, 1, "%H:%M:%S")?;
 
@@ -330,6 +332,7 @@ pub fn day_of_week(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::CustomError`] if an under/overflow occures.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn encode_date(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(year), Value::Number(month), Value::Number(day)] => {
@@ -352,7 +355,11 @@ pub fn encode_date(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::CustomError`] if an under/overflow occures.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
-#[allow(clippy::module_name_repetitions)]
+#[allow(
+    clippy::module_name_repetitions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub fn encode_time(params: &[Value]) -> NativeResult {
     let milli = default_number(params, 3, 0.0)?;
 
@@ -379,6 +386,7 @@ pub fn encode_time(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::CustomError`] if an under/overflow occures.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+#[allow(clippy::cast_possible_truncation)]
 pub fn inc_month(params: &[Value]) -> NativeResult {
     let increment = default_number(params, 1, 1.0)?;
 

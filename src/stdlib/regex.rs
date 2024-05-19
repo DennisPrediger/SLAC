@@ -11,7 +11,7 @@ use crate::{
     Value,
 };
 
-use super::{default_number, default_string, NativeError, NativeResult};
+use super::{default_number, default_string, usize_from_f64, NativeError, NativeResult};
 
 /// Returns all regex functions as a fixed size array.
 #[rustfmt::skip]
@@ -120,7 +120,7 @@ pub fn capture(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn replace(params: &[Value]) -> NativeResult {
     let replacement = default_string(params, 2, "")?;
-    let limit = default_number(params, 3, 0.0)? as usize;
+    let limit = usize_from_f64(default_number(params, 3, 0.0)?);
 
     match params {
         [Value::String(haystack), Value::String(needle), ..] => {

@@ -70,16 +70,28 @@ pub(crate) fn default_number(
     }
 }
 
-pub(crate) fn get_index(index: &f64) -> Result<usize, NativeError> {
-    if index >= &0.0 {
-        Ok(*index as usize)
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+pub(crate) fn get_index(index: f64) -> Result<usize, NativeError> {
+    if index >= 0.0 {
+        Ok(index as usize)
     } else {
         Err(NativeError::IndexNegative)
     }
 }
 
-pub(crate) fn get_string_index(index: &f64) -> Result<usize, NativeError> {
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+pub(crate) fn get_string_index(index: f64) -> Result<usize, NativeError> {
     get_index(index).map(|index| index - STRING_OFFSET as usize)
+}
+
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+pub(crate) fn usize_from_f64(value: f64) -> usize {
+    value.floor() as usize
+}
+
+#[allow(clippy::cast_precision_loss)]
+pub(crate) fn f64_from_usize(value: usize) -> f64 {
+    value as f64
 }
 
 /// Returns the first parameter if it's an [`Value::Array`] or return all

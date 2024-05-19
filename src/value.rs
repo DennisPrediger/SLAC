@@ -302,6 +302,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
         Ok(Value::String(v))
     }
 
+    #[allow(clippy::cast_precision_loss)]
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
@@ -309,6 +310,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
         self.visit_f64(v as f64)
     }
 
+    #[allow(clippy::cast_precision_loss)]
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
     where
         E: serde::de::Error,

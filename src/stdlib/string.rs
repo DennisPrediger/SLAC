@@ -33,6 +33,7 @@ pub fn functions() -> Vec<Function> {
 /// Will return [`NativeError::CustomError`] if the supplied number is outside of ASCII character range.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn chr(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(ordinal)] if (0.0..127.0).contains(ordinal) => Ok(Value::String(

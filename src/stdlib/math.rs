@@ -5,7 +5,7 @@ use getrandom::{getrandom, Error};
 use super::{
     default_number,
     error::{NativeError, NativeResult},
-    smart_vec,
+    smart_vec, usize_from_f64,
 };
 
 use crate::{
@@ -78,6 +78,7 @@ generate_std_math_functions!(
 ///
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+#[allow(clippy::cast_possible_truncation)]
 pub fn int_to_hex(params: &[Value]) -> NativeResult {
     match params {
         [Value::Number(value)] => Ok(Value::String(format!("{:X}", value.trunc() as i64))),
@@ -96,7 +97,7 @@ pub fn int_to_hex(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn even(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 == 0)),
+        [Value::Number(value)] => Ok(Value::Boolean(usize_from_f64(*value) % 2 == 0)),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -112,7 +113,7 @@ pub fn even(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn odd(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Number(value)] => Ok(Value::Boolean((*value as usize) % 2 != 0)),
+        [Value::Number(value)] => Ok(Value::Boolean(usize_from_f64(*value) % 2 != 0)),
         [_] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
@@ -136,6 +137,7 @@ pub fn pow(params: &[Value]) -> NativeResult {
     }
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn get_random_float(max: f64) -> Result<f64, Error> {
     if max == 0.0 {
         return Ok(0.0); // shortcut for empty range

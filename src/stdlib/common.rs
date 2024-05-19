@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use super::{
     default_string,
     error::{NativeError, NativeResult},
-    get_index, get_string_index, smart_vec, STRING_OFFSET,
+    f64_from_usize, get_index, get_string_index, smart_vec, usize_from_f64, STRING_OFFSET,
 };
 
 use crate::{
@@ -82,7 +82,7 @@ pub fn any(params: &[Value]) -> NativeResult {
 pub fn at(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(values), Value::Number(index)] => {
-            let index = get_string_index(index)?;
+            let index = get_string_index(*index)?;
 
             match values.chars().nth(index) {
                 Some(char) => Ok(Value::String(char.to_string())),
@@ -90,7 +90,7 @@ pub fn at(params: &[Value]) -> NativeResult {
             }
         }
         [Value::Array(values), Value::Number(index)] => {
-            let index = get_index(index)?;
+            let index = get_index(*index)?;
 
             match values.get(index) {
                 Some(value) => Ok(value.clone()),
@@ -185,15 +185,15 @@ pub fn copy(params: &[Value]) -> NativeResult {
         [Value::String(source), Value::Number(start), Value::Number(count)] => Ok(Value::String(
             source
                 .chars()
-                .skip(get_string_index(start)?)
-                .take(count.trunc() as usize)
+                .skip(get_string_index(*start)?)
+                .take(usize_from_f64(*count))
                 .collect(),
         )),
         [Value::Array(source), Value::Number(start), Value::Number(count)] => Ok(Value::Array(
             source
                 .iter()
-                .skip(get_index(start)?)
-                .take(count.trunc() as usize)
+                .skip(get_index(*start)?)
+                .take(usize_from_f64(*count))
                 .cloned()
                 .collect(),
         )),
@@ -210,11 +210,13 @@ pub fn copy(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 fn count(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Array(haystack), needle] => Ok(Value::Number(
-            haystack.iter().filter(|v| *v == needle).count() as f64,
-        )),
+        [Value::Array(haystack), needle] => {
+            let count = haystack.iter().filter(|v| *v == needle).count();
+            Ok(Value::Number(f64_from_usize(count)))
+        }
         [Value::String(haystack), Value::String(needle)] => {
-            Ok(Value::Number(haystack.match_indices(needle).count() as f64))
+            let count = haystack.match_indices(needle).count();
+            Ok(Value::Number(f64_from_usize(count)))
         }
         [_, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(2)),
@@ -257,12 +259,14 @@ pub fn find(params: &[Value]) -> NativeResult {
         [Value::String(haystack), Value::String(needle)] => Ok(haystack
             .find(needle)
             .map_or(Value::Number(-1.0 + STRING_OFFSET), |index| {
-                Value::Number((index as f64) + STRING_OFFSET)
+                Value::Number(f64_from_usize(index) + STRING_OFFSET)
             })),
         [Value::Array(haystack), needle] => Ok(haystack
             .iter()
             .position(|v| v == needle)
-            .map_or(Value::Number(-1.0), |index| Value::Number(index as f64))),
+            .map_or(Value::Number(-1.0), |index| {
+                Value::Number(f64_from_usize(index))
+            })),
         [_, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(2)),
     }
@@ -329,7 +333,7 @@ pub fn if_then(params: &[Value]) -> NativeResult {
 pub fn insert(params: &[Value]) -> NativeResult {
     match params {
         [Value::String(target), Value::String(source), Value::Number(index)] => {
-            let index = get_string_index(index)?;
+            let index = get_string_index(*index)?;
 
             if index > target.chars().count() {
                 return Err(NativeError::IndexOutOfBounds(index));
@@ -341,7 +345,7 @@ pub fn insert(params: &[Value]) -> NativeResult {
             Ok(Value::String(before + source + &after))
         }
         [Value::Array(values), element, Value::Number(index)] => {
-            let index = get_index(index)?;
+            let index = get_index(*index)?;
             if index > values.len() {
                 return Err(NativeError::IndexOutOfBounds(index));
             }
@@ -382,7 +386,7 @@ pub fn int(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 pub fn length(params: &[Value]) -> NativeResult {
     match params {
-        [value] => Ok(Value::Number(value.len() as f64)),
+        [value] => Ok(Value::Number(f64_from_usize(value.len()))),
         _ => Err(NativeError::WrongParameterCount(1)),
     }
 }
