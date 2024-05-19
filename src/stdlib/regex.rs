@@ -74,6 +74,7 @@ pub fn find(params: &[Value]) -> NativeResult {
 
 /// Extract a [`Value::Array`] from a [`Captures`] struct while preserving empty captures
 /// as empty strings.
+#[allow(clippy::needless_pass_by_value)]
 fn get_capture_groups(captures: Captures) -> Vec<Value> {
     captures
         .iter()
