@@ -9,6 +9,7 @@ use crate::{
 /// # Errors
 ///
 /// Returns an [`Error`] if the execution fails.
+#[allow(clippy::module_name_repetitions)]
 pub struct TreeWalkingInterpreter<'a> {
     environment: &'a dyn Environment,
 }

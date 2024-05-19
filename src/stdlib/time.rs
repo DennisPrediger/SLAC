@@ -163,6 +163,7 @@ pub fn string_to_date(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::CustomError`] if the String can not be parsed.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+#[allow(clippy::module_name_repetitions)]
 pub fn string_to_time(params: &[Value]) -> NativeResult {
     let fmt = default_string(params, 1, "%H:%M:%S")?;
 
@@ -351,6 +352,7 @@ pub fn encode_date(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::CustomError`] if an under/overflow occures.
 /// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+#[allow(clippy::module_name_repetitions)]
 pub fn encode_time(params: &[Value]) -> NativeResult {
     let milli = default_number(params, 3, 0.0)?;
 

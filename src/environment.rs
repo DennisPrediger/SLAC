@@ -32,6 +32,7 @@ pub trait Environment {
 }
 
 /// An environment used during **validation** of the [`Expression`](crate::Expression).
+#[allow(clippy::module_name_repetitions)]
 pub trait ValidateEnvironment {
     /// Checks if a variable with a matching name exists.
     fn variable_exists(&self, name: &str) -> bool;
@@ -116,6 +117,7 @@ fn parse_declaration(declaration: &str) -> (String, String) {
 
 /// An [`Environment`] implementation in which all variables and functions are
 /// known ahead of execution. All variable and function names treated as *case-insensitive*.
+#[allow(clippy::module_name_repetitions)]
 #[derive(Default)]
 pub struct StaticEnvironment {
     variables: HashMap<String, Rc<Value>>,

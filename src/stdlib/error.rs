@@ -4,6 +4,7 @@ use crate::Value;
 
 /// Error types created by [`super::NativeFunction`] calls.
 /// `NativeError::CustomError` can be used for general purpose errors.
+#[allow(clippy::module_name_repetitions)]
 #[derive(Error, Debug, PartialEq)]
 pub enum NativeError {
     #[error("function \"{0}\" not found")]
