@@ -24,18 +24,18 @@ impl<'a> TreeWalkingInterpreter<'a> {
 
     fn expression(&self, expression: &Expression) -> Result<Value> {
         match expression {
-            Expression::Unary { right, operator } => self.unary(right, operator),
+            Expression::Unary { right, operator } => self.unary(right, *operator),
             Expression::Binary {
                 left,
                 right,
                 operator,
-            } => self.binary(left, right, operator),
+            } => self.binary(left, right, *operator),
             Expression::Ternary {
                 left,
                 middle,
                 right,
                 operator,
-            } => self.ternary(left, middle, right, operator),
+            } => self.ternary(left, middle, right, *operator),
             Expression::Array { expressions } => self.array(expressions),
             Expression::Literal { value } => Ok(value.clone()),
             Expression::Variable { name } => self.variable(name),
@@ -43,22 +43,22 @@ impl<'a> TreeWalkingInterpreter<'a> {
         }
     }
 
-    fn unary(&self, right: &Expression, operator: &Operator) -> Result<Value> {
+    fn unary(&self, right: &Expression, operator: Operator) -> Result<Value> {
         let right = self.expression(right);
 
         match (operator, right) {
             (Operator::Minus, Ok(rhs)) => -rhs,
             (Operator::Not, Ok(rhs)) => !rhs,
-            _ => Err(Error::InvalidUnaryOperator(*operator)),
+            _ => Err(Error::InvalidUnaryOperator(operator)),
         }
     }
 
-    fn binary(&self, left: &Expression, right: &Expression, operator: &Operator) -> Result<Value> {
+    fn binary(&self, left: &Expression, right: &Expression, operator: Operator) -> Result<Value> {
         let left = self.expression(left);
 
         match (operator, left) {
-            (Operator::And, Ok(left)) => self.boolean::<true>(left, right),
-            (Operator::Or, Ok(left)) => self.boolean::<false>(left, right),
+            (Operator::And, Ok(left)) => self.boolean::<true>(&left, right),
+            (Operator::Or, Ok(left)) => self.boolean::<false>(&left, right),
             (_, Ok(left)) => {
                 let right = self.expression(right);
 
@@ -85,7 +85,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
                         Ok(Value::Boolean(!left.is_empty()))
                     }
                     (_, Err(right)) => Err(right),
-                    (operator, _) => Err(Error::InvalidBinaryOperator(*operator)),
+                    (operator, _) => Err(Error::InvalidBinaryOperator(operator)),
                 }
             }
             (Operator::Equal, Err(Error::UndefinedVariable(_))) => {
@@ -110,7 +110,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
         }
     }
 
-    fn boolean<const FULL_EVAL: bool>(&self, left: Value, right: &Expression) -> Result<Value> {
+    fn boolean<const FULL_EVAL: bool>(&self, left: &Value, right: &Expression) -> Result<Value> {
         let left = left.as_bool();
 
         if left == FULL_EVAL {
@@ -126,7 +126,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
         left: &Expression,
         middle: &Expression,
         right: &Expression,
-        operator: &Operator,
+        operator: Operator,
     ) -> Result<Value> {
         match operator {
             Operator::TernaryCondition => {
@@ -139,7 +139,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
                     self.expression(right)
                 }
             }
-            _ => Err(Error::InvalidTernaryOperator(*operator)),
+            _ => Err(Error::InvalidTernaryOperator(operator)),
         }
     }
 
