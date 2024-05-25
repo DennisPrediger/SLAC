@@ -1,7 +1,7 @@
 //! Transformation routines to optimize an [`Expression`] AST.
 
-use crate::environment::{FunctionResult, ValidateEnvironment};
-use crate::{execute, Expression, Operator, Result, StaticEnvironment};
+use crate::environment::{Environment, FunctionResult};
+use crate::{execute, Expression, Operator, Result};
 
 use crate::stdlib::common::TERNARY_IF_THEN;
 
@@ -84,7 +84,7 @@ fn expressions_are_const(expressions: &[Expression]) -> bool {
 ///
 /// Will return [`crate::Error`] if constant evaluation is not possible.
 pub fn fold_constants(
-    env: &StaticEnvironment,
+    env: &dyn Environment,
     expression: &mut Expression,
     found_const: &mut bool,
 ) -> Result<()> {
@@ -177,7 +177,7 @@ pub fn fold_constants(
 /// # Errors
 ///
 /// Will return [`crate::Error`] if constant evaluation is not possible.
-pub fn optimize(env: &StaticEnvironment, expression: &mut Expression) -> Result<()> {
+pub fn optimize(env: &dyn Environment, expression: &mut Expression) -> Result<()> {
     let mut found_const = false;
 
     loop {

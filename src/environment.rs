@@ -7,7 +7,7 @@ use crate::{
     value::Value,
 };
 
-/// An enum signaling if a matching function is provided by a [`ValidateEnvironment`].
+/// An enum signaling if a matching function is provided by a [`Environment`].
 pub enum FunctionResult {
     /// A matching function was found.
     Exists { pure: bool },
@@ -29,11 +29,7 @@ pub trait Environment {
     ///
     /// Returns [`NativeError`] when encountering an error inside a [`NativeFunction`].
     fn call(&self, name: &str, params: &[Value]) -> NativeResult;
-}
 
-/// An environment used during **validation** of the [`Expression`](crate::Expression).
-#[allow(clippy::module_name_repetitions)]
-pub trait ValidateEnvironment {
     /// Checks if a variable with a matching name exists.
     fn variable_exists(&self, name: &str) -> bool;
 
@@ -184,9 +180,7 @@ impl Environment for StaticEnvironment {
         let call = function.func;
         call(params)
     }
-}
 
-impl ValidateEnvironment for StaticEnvironment {
     fn variable_exists(&self, name: &str) -> bool {
         self.variables.contains_key(&get_env_key(name))
     }

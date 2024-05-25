@@ -1,6 +1,6 @@
 use crate::{
     ast::Expression,
-    environment::{FunctionResult, ValidateEnvironment},
+    environment::{Environment, FunctionResult},
     error::{Error, Result},
     operator::Operator,
     value::Value,
@@ -12,10 +12,7 @@ use crate::{
 /// # Errors
 ///
 /// Returns an [`Error`] on missing variables or functions.
-pub fn check_variables_and_functions(
-    env: &dyn ValidateEnvironment,
-    expression: &Expression,
-) -> Result<()> {
+pub fn check_variables_and_functions(env: &dyn Environment, expression: &Expression) -> Result<()> {
     match expression {
         Expression::Unary { right, operator: _ } => check_variables_and_functions(env, right),
         Expression::Binary {
@@ -60,7 +57,7 @@ pub fn check_variables_and_functions(
     }
 }
 
-fn validate_expr_vec(env: &dyn ValidateEnvironment, expressions: &[Expression]) -> Result<()> {
+fn validate_expr_vec(env: &dyn Environment, expressions: &[Expression]) -> Result<()> {
     expressions
         .iter()
         .try_for_each(|expression| check_variables_and_functions(env, expression))
