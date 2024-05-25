@@ -158,7 +158,7 @@ pub fn contains(params: &[Value]) -> NativeResult {
     Ok(Value::Boolean(found))
 }
 
-/// Compares two [`Value`] parameters and returns the [`Ordering`] as [`Value::Number`].
+/// Compares two [`Value`] parameters and returns the [`std::cmp::Ordering`] as [`Value::Number`].
 ///
 /// * Declaration: `compare(left: Any, right: Any): Number`
 ///

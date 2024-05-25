@@ -1,4 +1,4 @@
-//! Wrapper structs for native [`Function`]` definitions.
+//! Wrapper structs for native [`Function`] definitions.
 
 use crate::stdlib::NativeFunction;
 

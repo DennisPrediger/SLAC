@@ -28,7 +28,7 @@ pub trait Environment {
     ///
     /// # Errors
     ///
-    /// Returns [`NativeError`] when encountering an error inside a [`NativeFunction`].
+    /// Returns [`NativeError`] when encountering an error inside a [`NativeFunction`](crate::stdlib::NativeFunction)
     fn call(&self, name: &str, params: &[Value]) -> NativeResult;
 
     /// Checks if a variable with a matching name exists.
@@ -68,7 +68,7 @@ impl StaticEnvironment {
         self.variables.clear();
     }
 
-    /// Adds or updates a [`NativeFunction`].
+    /// Adds or updates a [`NativeFunction`](crate::stdlib::NativeFunction).
     pub fn add_function(&mut self, func: Function) {
         self.functions
             .insert(get_env_key(&func.name), Rc::new(func));
@@ -81,7 +81,8 @@ impl StaticEnvironment {
         }
     }
 
-    /// Removes a [`NativeFunction`] and return its [`Function`] if it existed.
+    /// Removes a [`NativeFunction`](crate::stdlib::NativeFunction) and return
+    /// its [`Function`] if it existed.
     pub fn remove_function(&mut self, name: &str) -> Option<Rc<Function>> {
         self.functions.remove(&get_env_key(name))
     }

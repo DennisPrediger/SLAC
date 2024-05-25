@@ -166,7 +166,7 @@ fn get_random_int(max: usize) -> Result<usize, Error> {
     Ok(random % max)
 }
 
-/// Generates a random [`Value::Number`] provided by the os system source via [`rand::rngs::OsRng`].
+/// Generates a random [`Value::Number`] provided by the os system source via [`mod@getrandom`].
 ///
 /// * Declaration: `random(range: Number = 1): Number`
 ///
@@ -187,7 +187,7 @@ pub fn random(params: &[Value]) -> NativeResult {
 ///
 /// # Remarks
 ///
-/// Uses [`rand::rngs::OsRng`] as RNG source.
+/// Uses [`mod@getrandom`] as RNG source.
 ///
 /// # Errors
 ///

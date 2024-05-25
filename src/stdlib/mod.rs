@@ -27,6 +27,7 @@ pub const STRING_OFFSET: f64 = 1.0;
 /// All parameters to the function are inside a single Vec<[`Value`]>.
 pub type NativeFunction = fn(&[Value]) -> NativeResult;
 
+/// A vector of all builtin [`Functions`](Function) for use with [`extend_environment`].
 #[must_use]
 pub fn builtins() -> Vec<Function> {
     [
