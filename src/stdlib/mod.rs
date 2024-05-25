@@ -1,6 +1,6 @@
 //! The SLAC standard library features various functions which can be included into a [`StaticEnvironment`].
 
-use crate::environment::Function;
+use crate::function::Function;
 use crate::{StaticEnvironment, Value};
 
 #[doc(inline)]

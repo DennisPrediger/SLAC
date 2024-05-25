@@ -28,6 +28,7 @@ mod ast;
 mod compiler;
 pub mod environment;
 mod error;
+pub mod function;
 mod interpreter;
 mod operator;
 pub mod optimizer;

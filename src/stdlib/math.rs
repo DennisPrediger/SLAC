@@ -9,7 +9,7 @@ use super::{
 };
 
 use crate::{
-    environment::{Arity, Function},
+    function::{Arity, Function},
     Value,
 };
 

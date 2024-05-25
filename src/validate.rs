@@ -131,7 +131,8 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
 mod test {
     use crate::{
         ast::Expression,
-        environment::{Arity, Function, StaticEnvironment},
+        environment::StaticEnvironment,
+        function::{Arity, Function},
         operator::Operator,
         stdlib::NativeResult,
         validate::Error,

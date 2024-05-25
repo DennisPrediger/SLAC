@@ -1,7 +1,6 @@
 use slac::{
-    check_variables_and_functions, compile,
-    environment::{Arity, Function},
-    execute,
+    check_variables_and_functions, compile, execute,
+    function::{Arity, Function},
     optimizer::optimize,
     stdlib::{extend_environment, NativeResult},
     Expression, Result, StaticEnvironment, Value,

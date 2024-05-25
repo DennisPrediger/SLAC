@@ -40,7 +40,7 @@ use chrono::{
 };
 
 use crate::{
-    environment::{Arity, Function},
+    function::{Arity, Function},
     Value,
 };
 

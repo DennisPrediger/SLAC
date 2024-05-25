@@ -7,7 +7,7 @@
 use regex_lite::{Captures, Regex};
 
 use crate::{
-    environment::{Arity, Function},
+    function::{Arity, Function},
     Value,
 };
 

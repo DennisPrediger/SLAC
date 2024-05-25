@@ -4,7 +4,7 @@ mod test {
     use minify::json::minify;
     use slac::{
         check_variables_and_functions, compile,
-        environment::{Arity, Function},
+        function::{Arity, Function},
         stdlib::NativeResult,
         Expression, Operator, StaticEnvironment,
     };

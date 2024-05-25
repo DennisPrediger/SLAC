@@ -1,7 +1,7 @@
 //! Functions to manipulate [`Value::String`] variables.
 
 use crate::{
-    environment::{Arity, Function},
+    function::{Arity, Function},
     Value,
 };
 

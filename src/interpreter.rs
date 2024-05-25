@@ -173,7 +173,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
 mod test {
     use crate::{
         ast::Expression,
-        environment::{Arity, Function},
+        function::{Arity, Function},
         interpreter::TreeWalkingInterpreter,
         operator::Operator,
         stdlib::common::max,
