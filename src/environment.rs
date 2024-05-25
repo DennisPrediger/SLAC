@@ -8,13 +8,13 @@ use crate::{
 };
 
 /// An enum signaling if a matching function is provided by a [`ValidateEnvironment`].
-pub enum FunctionResult<'a> {
+pub enum FunctionResult {
     /// A matching function was found.
-    Exists(&'a Function),
+    Exists { pure: bool },
     /// No function with was found matching the supplied name.
     NotFound,
     /// A function with a matching name, but an incompatible arity was found.
-    WrongArity(usize, usize),
+    WrongArity { min: usize, max: usize },
 }
 
 /// An environment used by the interpreter when executing an [`Expression`](crate::Expression).
@@ -195,20 +195,22 @@ impl ValidateEnvironment for StaticEnvironment {
         if let Some(function) = self.functions.get(&get_env_key(name)) {
             match function.arity {
                 Arity::Polyadic { required, optional } => {
-                    let lower = required;
-                    let upper = required + optional;
+                    let min = required;
+                    let max = required + optional;
 
-                    if param_count < lower {
-                        FunctionResult::WrongArity(param_count, lower)
-                    } else if param_count > upper {
-                        FunctionResult::WrongArity(param_count, upper)
+                    if param_count < min || param_count > max {
+                        FunctionResult::WrongArity { min, max }
                     } else {
-                        FunctionResult::Exists(function)
+                        FunctionResult::Exists {
+                            pure: function.pure,
+                        }
                     }
                 }
-                Arity::Variadic if param_count > 0 => FunctionResult::Exists(function),
-                Arity::Variadic => FunctionResult::WrongArity(param_count, 1), // variadic without parameters
-                Arity::None => FunctionResult::WrongArity(param_count, 0),
+                Arity::Variadic if param_count > 0 => FunctionResult::Exists {
+                    pure: function.pure,
+                },
+                Arity::Variadic => FunctionResult::WrongArity { min: 1, max: 99 }, // variadic without parameters
+                Arity::None => FunctionResult::WrongArity { min: 0, max: 0 },
             }
         } else {
             FunctionResult::NotFound

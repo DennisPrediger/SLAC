@@ -42,13 +42,20 @@ pub fn check_variables_and_functions(
                 Err(Error::MissingVariable(name.clone()))
             }
         }
-        Expression::Call { name, params } => match env.function_exists(name, params.len()) {
-            FunctionResult::Exists(_) => validate_expr_vec(env, params),
-            FunctionResult::NotFound => Err(Error::MissingFunction(name.clone())),
-            FunctionResult::WrongArity(found, expected) => {
-                Err(Error::ParamCountMismatch(name.clone(), found, expected))
+        Expression::Call { name, params } => {
+            let param_count = params.len();
+
+            match env.function_exists(name, param_count) {
+                FunctionResult::Exists { pure: _ } => validate_expr_vec(env, params),
+                FunctionResult::NotFound => Err(Error::MissingFunction(name.clone())),
+                FunctionResult::WrongArity { min, max } => Err(Error::ParamCountMismatch(
+                    name.clone(),
+                    param_count,
+                    min,
+                    max,
+                )),
             }
-        },
+        }
         Expression::Literal { value: _ } => Ok(()),
     }
 }
@@ -241,7 +248,7 @@ mod test {
         let result = check_variables_and_functions(&env, &ast);
 
         assert_eq!(
-            Err(Error::ParamCountMismatch(String::from("max"), 0, 2)),
+            Err(Error::ParamCountMismatch(String::from("max"), 0, 2, 2)),
             result
         );
     }

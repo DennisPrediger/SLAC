@@ -39,8 +39,8 @@ pub enum Error {
     MissingVariable(String),
     #[error("missing function \"{0}\"")]
     MissingFunction(String),
-    #[error("expected {1} parameters but got {2} for function \"{0}\"")]
-    ParamCountMismatch(String, usize, usize), // name, expected, found
+    #[error("expected {1} to {2} parameters but got {3} for function \"{0}\"")]
+    ParamCountMismatch(String, usize, usize, usize), // name, expected, found
     #[error("invalid unary operator \"{0:?}\"")]
     InvalidUnaryOperator(Operator),
     #[error("invalid binary operator \"{0:?}\"")]

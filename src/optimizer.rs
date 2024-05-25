@@ -151,7 +151,7 @@ pub fn fold_constants(
         Expression::Call { name, params } if expressions_are_const(params) => {
             match env.function_exists(name, params.len()) {
                 // only inline pure functions
-                FunctionResult::Exists(func) if func.pure => {
+                FunctionResult::Exists { pure } if pure => {
                     *found_const = true;
                     *expression = Expression::Literal {
                         value: execute(env, expression)?,
