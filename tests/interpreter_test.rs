@@ -135,6 +135,13 @@ fn add_unicode_string() {
 }
 
 #[test]
+fn escape_string_quotes() {
+    let expected = Value::String(String::from("It's Working"));
+
+    assert_eq!(expected, execute_test("'It''s Working'"));
+}
+
+#[test]
 fn boolean_and() {
     assert_eq!(Value::Boolean(false), execute_test("true and false"));
     assert_eq!(Value::Boolean(true), execute_test("true and true"));

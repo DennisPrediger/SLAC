@@ -212,16 +212,32 @@ impl<'a> Scanner<'a> {
     }
 
     fn string(&mut self) -> Result<Token> {
-        while self.peek().is_some_and(|c| c != '\'') {
-            self.advance();
+        let mut contains_single_quote = false;
+
+        loop {
+            while self.peek().is_some_and(|c| c != '\'') {
+                self.advance(); // advance to the last single quote or the end
+            }
+
+            if self.is_at_end() {
+                return Err(Error::UnterminatedStringLiteral);
+            };
+
+            self.advance(); // consume closing single quote
+
+            if self.peek() == Some('\'') {
+                contains_single_quote = true; // character after the last single quote is also a single quote
+                self.advance();
+            } else {
+                break; // end of string
+            }
         }
 
-        if self.is_at_end() {
-            return Err(Error::UnterminatedStringLiteral);
-        };
+        let mut content = self.get_content(1);
 
-        self.advance();
-        let content = self.get_content(1);
+        if contains_single_quote {
+            content = content.replace("''", "'"); // replace all double quotes with single quotes
+        }
 
         Ok(Token::Literal(Value::String(content)))
     }
@@ -429,5 +445,30 @@ mod tests {
         assert_eq!(expected, Scanner::tokenize("1 + {123 {+4}} 3"));
         assert_eq!(expected, Scanner::tokenize("1 + 3 {  "));
         assert_eq!(expected, Scanner::tokenize("{Test}1+3"));
+    }
+
+    #[test]
+    fn quote_char_in_string() {
+        let expected = Ok(vec![Token::Literal(Value::String(String::from(
+            "It's Working!",
+        )))]);
+        assert_eq!(expected, Scanner::tokenize("'It''s Working!'"));
+
+        let expected = Ok(vec![Token::Literal(Value::String(String::from("'")))]);
+        assert_eq!(expected, Scanner::tokenize("''''"));
+
+        let expected = Err(Error::UnterminatedStringLiteral);
+        assert_eq!(expected, Scanner::tokenize("'''"));
+
+        let expected = Ok(vec![
+            Token::Literal(Value::String(String::from(""))),
+            Token::Literal(Value::String(String::from(""))),
+        ]);
+        assert_eq!(expected, Scanner::tokenize("'' ''"));
+
+        let expected = Ok(vec![Token::Literal(Value::String(String::from(
+            "He's She's It's",
+        )))]);
+        assert_eq!(expected, Scanner::tokenize("'He''s She''s It''s'"));
     }
 }
