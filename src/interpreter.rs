@@ -19,7 +19,7 @@ impl<'a> TreeWalkingInterpreter<'a> {
         Self { environment }
     }
 
-    pub fn interprete(env: &dyn Environment, expression: &Expression) -> Result<Value> {
+    pub fn interprete(env: &impl Environment, expression: &Expression) -> Result<Value> {
         TreeWalkingInterpreter::new(env).expression(expression)
     }
 

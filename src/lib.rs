@@ -126,6 +126,6 @@ pub fn compile(source: &str) -> Result<Expression> {
 /// # Errors
 ///
 /// Returns [`Error`] when encountering an error at runtime.
-pub fn execute(env: &dyn Environment, ast: &Expression) -> Result<Value> {
+pub fn execute(env: &impl Environment, ast: &Expression) -> Result<Value> {
     interpreter::TreeWalkingInterpreter::interprete(env, ast)
 }

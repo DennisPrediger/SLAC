@@ -12,7 +12,10 @@ use crate::{
 /// # Errors
 ///
 /// Returns an [`Error`] on missing variables or functions.
-pub fn check_variables_and_functions(env: &dyn Environment, expression: &Expression) -> Result<()> {
+pub fn check_variables_and_functions(
+    env: &impl Environment,
+    expression: &Expression,
+) -> Result<()> {
     match expression {
         Expression::Unary { right, operator: _ } => check_variables_and_functions(env, right),
         Expression::Binary {
@@ -31,7 +34,7 @@ pub fn check_variables_and_functions(env: &dyn Environment, expression: &Express
             .and_then(|()| check_variables_and_functions(env, right)),
         Expression::Array {
             expressions: values,
-        } => validate_expr_vec(env, values),
+        } => check_expressions(env, values),
         Expression::Variable { name } => {
             if env.variable_exists(name) {
                 Ok(())
@@ -43,7 +46,7 @@ pub fn check_variables_and_functions(env: &dyn Environment, expression: &Express
             let param_count = params.len();
 
             match env.function_exists(name, param_count) {
-                FunctionResult::Exists { pure: _ } => validate_expr_vec(env, params),
+                FunctionResult::Exists { pure: _ } => check_expressions(env, params),
                 FunctionResult::NotFound => Err(Error::MissingFunction(name.clone())),
                 FunctionResult::WrongArity { min, max } => Err(Error::ParamCountMismatch(
                     name.clone(),
@@ -57,7 +60,7 @@ pub fn check_variables_and_functions(env: &dyn Environment, expression: &Express
     }
 }
 
-fn validate_expr_vec(env: &dyn Environment, expressions: &[Expression]) -> Result<()> {
+fn check_expressions(env: &impl Environment, expressions: &[Expression]) -> Result<()> {
     expressions
         .iter()
         .try_for_each(|expression| check_variables_and_functions(env, expression))
