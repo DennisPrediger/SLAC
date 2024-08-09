@@ -137,6 +137,9 @@ pub fn pow(params: &[Value]) -> NativeResult {
     }
 }
 
+const USIZE_BYTE_SIZE: usize = (usize::BITS / 8) as usize;
+const U64_BYTE_SIZE: usize = (u64::BITS / 8) as usize;
+
 #[allow(clippy::cast_precision_loss)]
 fn get_random_float(max: f64) -> Result<f64, Error> {
     if max == 0.0 {
@@ -144,7 +147,7 @@ fn get_random_float(max: f64) -> Result<f64, Error> {
     }
 
     // get random bytes from the OS
-    let mut buffer = [0u8; 8];
+    let mut buffer = [0u8; U64_BYTE_SIZE];
     getrandom(&mut buffer)?;
 
     // constrain the values to a float range
@@ -158,7 +161,7 @@ fn get_random_int(max: usize) -> Result<usize, Error> {
     }
 
     // get random bytes from the OS
-    let mut buffer = [0u8; 8];
+    let mut buffer = [0u8; USIZE_BYTE_SIZE];
     getrandom(&mut buffer)?;
 
     // constrain the values to an integer range via modulo
