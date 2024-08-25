@@ -86,7 +86,8 @@ pub fn check_boolean_result(ast: &Expression) -> Result<()> {
             | Operator::Equal
             | Operator::NotEqual
             | Operator::And
-            | Operator::Or => Ok(()),
+            | Operator::Or
+            | Operator::Xor => Ok(()),
             _ => Err(Error::InvalidBinaryOperator(*operator)),
         },
         Expression::Array { expressions: _ } => Err(Error::LiteralNotBoolean),
