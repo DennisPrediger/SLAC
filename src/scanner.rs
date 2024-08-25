@@ -163,7 +163,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn is_identifier(character: char) -> bool {
-        character.is_alphanumeric() || character == '_' || character == '-'
+        character.is_alphanumeric() || character == '_'
     }
 
     fn identifier(&mut self) -> Token {
@@ -330,7 +330,9 @@ mod tests {
             Token::LeftParen,
             Token::Identifier(String::from("_SOME_VAR1")),
             Token::Star,
-            Token::Identifier(String::from("ANOTHER-ONE")),
+            Token::Identifier(String::from("ANOTHER")),
+            Token::Minus,
+            Token::Identifier(String::from("ONE")),
             Token::RightParen,
         ];
 
