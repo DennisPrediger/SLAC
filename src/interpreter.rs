@@ -59,7 +59,9 @@ impl<'a> TreeWalkingInterpreter<'a> {
 
         match (operator, left) {
             (Operator::And, Ok(left)) => self.boolean::<true>(&left, right),
+            (Operator::And, Err(Error::UndefinedVariable(_))) => Ok(Value::Boolean(false)), // short circuit to false
             (Operator::Or, Ok(left)) => self.boolean::<false>(&left, right),
+            (Operator::Or, Err(Error::UndefinedVariable(_))) => self.expression(right), // evaluate right side
             (_, Ok(left)) => {
                 let right = self.expression(right);
 
@@ -241,6 +243,68 @@ mod test {
         let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
 
         assert_eq!(Value::Boolean(false), value);
+    }
+
+    #[test]
+    fn null_and_bool() {
+        let ast = Expression::Binary {
+            left: Box::from(Expression::Variable {
+                name: String::from("some_var"),
+            }),
+            right: Box::from(Expression::Literal {
+                value: Value::Boolean(false),
+            }),
+            operator: Operator::And,
+        };
+        let env = StaticEnvironment::default();
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
+
+        assert_eq!(Value::Boolean(false), value);
+
+        let ast = Expression::Binary {
+            left: Box::from(Expression::Variable {
+                name: String::from("some_var"),
+            }),
+            right: Box::from(Expression::Literal {
+                value: Value::Boolean(true),
+            }),
+            operator: Operator::And,
+        };
+        let env = StaticEnvironment::default();
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
+
+        assert_eq!(Value::Boolean(false), value);
+    }
+
+    #[test]
+    fn null_or_bool() {
+        let ast = Expression::Binary {
+            left: Box::from(Expression::Variable {
+                name: String::from("some_var"),
+            }),
+            right: Box::from(Expression::Literal {
+                value: Value::Boolean(false),
+            }),
+            operator: Operator::Or,
+        };
+        let env = StaticEnvironment::default();
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
+
+        assert_eq!(Value::Boolean(false), value);
+
+        let ast = Expression::Binary {
+            left: Box::from(Expression::Variable {
+                name: String::from("some_var"),
+            }),
+            right: Box::from(Expression::Literal {
+                value: Value::Boolean(true),
+            }),
+            operator: Operator::Or,
+        };
+        let env = StaticEnvironment::default();
+        let value = TreeWalkingInterpreter::interprete(&env, &ast).unwrap();
+
+        assert_eq!(Value::Boolean(true), value);
     }
 
     #[test]

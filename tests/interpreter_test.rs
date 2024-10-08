@@ -684,3 +684,29 @@ fn unique_array() {
     assert_execute("[[],[1]]", "unique([[],[1],[],[1]])");
     assert_execute("[]", "unique([])");
 }
+
+#[test]
+fn null_and_bool() {
+    let env = StaticEnvironment::default();
+
+    let ast = compile("some_var and true").unwrap();
+    let result = execute(&env, &ast);
+    assert_eq!(Ok(Value::Boolean(false)), result);
+
+    let ast = compile("some_var and false").unwrap();
+    let result = execute(&env, &ast);
+    assert_eq!(Ok(Value::Boolean(false)), result);
+}
+
+#[test]
+fn null_or_bool() {
+    let env = StaticEnvironment::default();
+
+    let ast = compile("some_var or true").unwrap();
+    let result: std::result::Result<Value, slac::Error> = execute(&env, &ast);
+    assert_eq!(Ok(Value::Boolean(true)), result);
+
+    let ast = compile("some_var or false").unwrap();
+    let result = execute(&env, &ast);
+    assert_eq!(Ok(Value::Boolean(false)), result);
+}
