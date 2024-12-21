@@ -395,6 +395,17 @@ fn empty_var_comparison() {
 }
 
 #[test]
+fn compare_mixed_string_number() {
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("1 = '1'"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'3' > 1"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'3.14' > 1"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'3.14' < 4"));
+
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'a' < 4"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'a' <> 4"));
+}
+
+#[test]
 fn optional_params() {
     assert_bool(true, "replace('Hello', 'o', 'p') = 'Hellp'");
     assert_bool(true, "replace('Hello', 'o') = 'Hell'");
@@ -666,8 +677,8 @@ fn sort_array() {
     assert_execute("[1,2,3,4,5]", "sort([5,4,3,2,1])");
     assert_execute("[false, false, true]", "sort([false, true, false])");
     assert_execute(
-        "[true, 'something', 42, [123]]",
-        "sort([[123], 42, 'something',  true])",
+        "[false, true, 'aa', 'something', 42, 43, [123]]",
+        "sort([[123], 43, 42, 'something', 'aa', true, false])",
     );
     assert_execute(
         "[[123], 42, 'something',  true]",

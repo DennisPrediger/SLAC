@@ -31,16 +31,26 @@ impl PartialOrd for Value {
 
 impl Ord for Value {
     fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            // direct comparision of contained types
-            (Value::Boolean(l0), Value::Boolean(r0)) => l0.cmp(r0),
-            (Value::String(l0), Value::String(r0)) => l0.cmp(r0),
-            (Value::Number(l0), Value::Number(r0)) => l0.total_cmp(r0), // total_cmp for f64
-            (Value::Array(l0), Value::Array(r0)) => l0.cmp(r0),
+        let partial_ord = match (self, other) {
+            (Value::Boolean(left), Value::Boolean(right)) => left.partial_cmp(right),
+            (Value::String(left), Value::String(right)) => left.partial_cmp(right),
+            (Value::Number(left), Value::Number(right)) => left.partial_cmp(right),
+            (Value::Array(left), Value::Array(right)) => left.partial_cmp(right),
 
-            // comparison by ordinal value
-            (left, right) => left.ordinal().cmp(&right.ordinal()),
-        }
+            // allow comparison of strings and numbers if the string parses to a number
+            (Value::String(left), Value::Number(right)) => left
+                .parse::<f64>()
+                .ok()
+                .and_then(|left_num| left_num.partial_cmp(right)),
+            (Value::Number(left), Value::String(right)) => right
+                .parse::<f64>()
+                .ok()
+                .and_then(|right_num| left.partial_cmp(&right_num)),
+
+            _ => None,
+        };
+
+        partial_ord.unwrap_or_else(|| self.ordinal().cmp(&other.ordinal()))
     }
 }
 
@@ -51,7 +61,8 @@ impl PartialEq for Value {
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Array(l0), Self::Array(r0)) => l0 == r0,
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+
+            _ => self.cmp(other) == Ordering::Equal,
         }
     }
 }
@@ -439,6 +450,25 @@ mod test {
             Err(Error::InvalidBinaryOperator(Operator::Xor)),
             Value::Number(10.0) ^ Value::Boolean(false)
         );
+    }
+
+    #[test]
+    fn test_cmp_string_number() {
+        assert!(Value::Number(5.0) > Value::String(String::from("1")));
+        assert!(Value::Number(5.0) < Value::String(String::from("6")));
+        assert!(Value::Number(5.0) == Value::String(String::from("5")));
+        assert!(Value::Number(5.0) >= Value::String(String::from("5")));
+        assert!(Value::Number(5.0) >= Value::String(String::from("4")));
+        assert!(Value::Number(5.0) <= Value::String(String::from("5")));
+        assert!(Value::Number(5.0) <= Value::String(String::from("6")));
+
+        assert!(Value::String(String::from("1")) < Value::Number(5.0));
+        assert!(Value::String(String::from("6")) > Value::Number(5.0));
+        assert!(Value::String(String::from("5")) == Value::Number(5.0));
+        assert!(Value::String(String::from("5")) <= Value::Number(5.0));
+        assert!(Value::String(String::from("4")) <= Value::Number(5.0));
+        assert!(Value::String(String::from("5")) >= Value::Number(5.0));
+        assert!(Value::String(String::from("6")) >= Value::Number(5.0));
     }
 }
 
