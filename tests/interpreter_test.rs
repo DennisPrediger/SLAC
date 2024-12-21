@@ -406,6 +406,18 @@ fn compare_mixed_string_number() {
 }
 
 #[test]
+fn compare_mixed_boolean_number() {
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("true = 1"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("false = 0"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("true <> 0"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("false <> 1"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("1 = true"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("0 = false"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("1 <> false"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("0 <> true"));
+}
+
+#[test]
 fn optional_params() {
     assert_bool(true, "replace('Hello', 'o', 'p') = 'Hellp'");
     assert_bool(true, "replace('Hello', 'o') = 'Hell'");

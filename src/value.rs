@@ -62,6 +62,10 @@ impl PartialEq for Value {
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Array(l0), Self::Array(r0)) => l0 == r0,
 
+            // allow equality of boolean and numbers by converting the boolean to 0 or 1
+            (Value::Boolean(left), Value::Number(right)) => f64::from(*left) == *right,
+            (Value::Number(left), Value::Boolean(right)) => *left == f64::from(*right),
+
             _ => self.cmp(other) == Ordering::Equal,
         }
     }
@@ -469,6 +473,16 @@ mod test {
         assert!(Value::String(String::from("4")) <= Value::Number(5.0));
         assert!(Value::String(String::from("5")) >= Value::Number(5.0));
         assert!(Value::String(String::from("6")) >= Value::Number(5.0));
+    }
+
+    #[test]
+    fn test_eq_boolean_number() {
+        assert!(Value::Boolean(true) == Value::Number(1.0));
+        assert!(Value::Boolean(false) == Value::Number(0.0));
+        assert!(Value::Boolean(true) != Value::Number(0.0));
+        assert!(Value::Boolean(false) != Value::Number(1.0));
+        assert!(Value::Boolean(true) != Value::Number(2.0));
+        assert!(Value::Boolean(false) != Value::Number(2.0));
     }
 }
 
