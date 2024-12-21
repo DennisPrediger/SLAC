@@ -2,6 +2,7 @@
 use serde::{de::Visitor, ser::SerializeSeq, Deserialize, Serialize};
 
 use std::{
+    cmp::Ordering,
     fmt::Display,
     ops::{Add, BitXor, Div, Mul, Neg, Not, Rem, Sub},
 };
@@ -12,12 +13,44 @@ use crate::{
 };
 
 /// A Wrapper for the four different possible variable types.
-#[derive(Debug, PartialOrd, Clone)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Boolean(bool),
     String(String),
     Number(f64),
     Array(Vec<Value>),
+}
+impl Eq for Value {}
+
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Value {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let partial_ord = match (self, other) {
+            (Value::Boolean(left), Value::Boolean(right)) => left.partial_cmp(right),
+            (Value::String(left), Value::String(right)) => left.partial_cmp(right),
+            (Value::Number(left), Value::Number(right)) => left.partial_cmp(right),
+            (Value::Array(left), Value::Array(right)) => left.partial_cmp(right),
+
+            // allow comparison of strings and numbers if the string parses to a number
+            (Value::String(left), Value::Number(right)) => left
+                .parse::<f64>()
+                .ok()
+                .and_then(|left_num| left_num.partial_cmp(right)),
+            (Value::Number(left), Value::String(right)) => right
+                .parse::<f64>()
+                .ok()
+                .and_then(|right_num| left.partial_cmp(&right_num)),
+
+            _ => None,
+        };
+
+        partial_ord.unwrap_or_else(|| self.ordinal().cmp(&other.ordinal()))
+    }
 }
 
 impl PartialEq for Value {
@@ -27,7 +60,7 @@ impl PartialEq for Value {
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Array(l0), Self::Array(r0)) => l0 == r0,
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+            _ => self.cmp(other) == Ordering::Equal,
         }
     }
 }
@@ -190,6 +223,17 @@ impl Value {
         match self {
             Value::Boolean(v) => *v,
             value => !value.is_empty(),
+        }
+    }
+
+    /// Returns an ordinal value for each [`Value`] kind.
+    #[must_use]
+    fn ordinal(&self) -> u8 {
+        match self {
+            Value::Boolean(_) => 0,
+            Value::String(_) => 1,
+            Value::Number(_) => 2,
+            Value::Array(_) => 3,
         }
     }
 }

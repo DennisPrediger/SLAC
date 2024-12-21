@@ -315,6 +315,17 @@ fn empty_var_comparison() {
 }
 
 #[test]
+fn compare_mixed_string_number() {
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("1 = '1'"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'3' > 1"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'3.14' > 1"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'3.14' < 4"));
+
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'a' < 4"));
+    assert_eq!(Ok(Value::Boolean(true)), execute_raw("'a' <> 4"));
+}
+
+#[test]
 fn optional_params() {
     assert_bool(true, "replace('Hello', 'o', 'p') = 'Hellp'");
     assert_bool(true, "replace('Hello', 'o') = 'Hell'");
