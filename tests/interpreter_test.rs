@@ -484,6 +484,19 @@ fn regex_replace() {
 }
 
 #[test]
+#[cfg(feature = "regex")]
+fn regex_split() {
+    assert_execute(
+        r"re_split('john.smith@example.com', '\.+')",
+        r"['john', 'smith@example', 'com']",
+    );
+
+    assert_execute(r"re_split(',a,b,c,', ',')", r"['','a','b','c','']");
+    assert_execute(r"re_split('a1,b2;c3', '[,\s;]+')", r"['a1', 'b2', 'c3']");
+    assert_execute(r"re_split('  a  b  ', '\s+')", r"['', 'a', 'b', '']");
+}
+
+#[test]
 fn array_at() {
     assert_execute(r"at([1, 'Test', true], 0)", r"1");
     assert_execute(r"at([1, 'Test', true], 1)", r"'Test'");

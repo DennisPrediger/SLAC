@@ -21,6 +21,7 @@ pub fn functions() -> Vec<Function> {
         Function::new(find, Arity::required(2), "re_find(haystack: String, pattern: String): Array<String>"),
         Function::new(capture, Arity::required(2), "re_capture(haystack: String, pattern: String): Array<String>"),
         Function::new(replace, Arity::optional(2, 2), "re_replace(haystack: String, pattern: String, replacement: String = '', limit = 0): String"),
+        Function::new(split, Arity::required(2), "re_split(haystack: String, pattern: String): Array<String>"),
     ]
 }
 
@@ -136,6 +137,32 @@ pub fn replace(params: &[Value]) -> NativeResult {
     }
 }
 
+/// Split a [`Value::String`] on a pattern returning an [`Value::Array`] of Substrings
+///
+/// * Declaration: `re_split(haystack: String, pattern: String): Array<String>`
+///
+/// # Errors
+///
+/// Will return [`NativeError::CustomError`] if the regex produces an error.
+/// Will return [`NativeError::WrongParameterCount`] if there is a mismatch in the supplied parameters.
+/// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
+pub fn split(params: &[Value]) -> NativeResult {
+    match params {
+        [Value::String(haystack), Value::String(pattern)] => {
+            let re = Regex::new(pattern).map_err(|e| NativeError::from(e.to_string()))?;
+
+            let groups: Vec<Value> = re
+                .split(haystack)
+                .map(|m| Value::String(m.to_string()))
+                .collect();
+
+            Ok(Value::Array(groups))
+        }
+        [_, _] => Err(NativeError::WrongParameterType),
+        _ => Err(NativeError::WrongParameterCount(2)),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::vec;
@@ -221,6 +248,21 @@ mod test {
                 Value::String(String::from(r"\b\d{2}\b")),
                 Value::String(String::from("9999")),
                 Value::Number(1.0)
+            ])
+        );
+    }
+
+    #[test]
+    fn re_split() {
+        assert_eq!(
+            Ok(Value::Array(vec![
+                Value::String(String::from("aaa")),
+                Value::String(String::from("bbb")),
+                Value::String(String::from("ccc"))
+            ])),
+            split(&vec![
+                Value::String(String::from("aaa123bbb456ccc")),
+                Value::String(String::from(r"\d+"))
             ])
         );
     }
