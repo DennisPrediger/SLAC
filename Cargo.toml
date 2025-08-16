@@ -1,6 +1,6 @@
 [package]
 name = "slac"
-version = "0.15.0"
+version = "1.0.0"
 authors = ["Dennis Prediger <dennis.prediger@gmail.com>"]
 edition = "2024"
 rust-version = "1.85.0"
