@@ -4,14 +4,14 @@
 use std::collections::HashSet;
 
 use super::{
-    default_string,
+    STRING_OFFSET, default_string,
     error::{NativeError, NativeResult},
-    f64_from_usize, get_index, get_string_index, smart_vec, usize_from_f64, STRING_OFFSET,
+    f64_from_usize, get_index, get_string_index, smart_vec, usize_from_f64,
 };
 
 use crate::{
-    function::{Arity, Function},
     Value,
+    function::{Arity, Function},
 };
 
 pub(crate) const TERNARY_IF_THEN: &str = "if_then";
@@ -182,14 +182,22 @@ pub fn compare(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::WrongParameterType`] if the the supplied parameters have the wrong type.
 pub fn copy(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(source), Value::Number(start), Value::Number(count)] => Ok(Value::String(
+        [
+            Value::String(source),
+            Value::Number(start),
+            Value::Number(count),
+        ] => Ok(Value::String(
             source
                 .chars()
                 .skip(get_string_index(*start)?)
                 .take(usize_from_f64(*count))
                 .collect(),
         )),
-        [Value::Array(source), Value::Number(start), Value::Number(count)] => Ok(Value::Array(
+        [
+            Value::Array(source),
+            Value::Number(start),
+            Value::Number(count),
+        ] => Ok(Value::Array(
             source
                 .iter()
                 .skip(get_index(*start)?)
@@ -332,7 +340,11 @@ pub fn if_then(params: &[Value]) -> NativeResult {
 /// Will return [`NativeError::IndexOutOfBounds`] if the index parameter does not fit inside the supplied value length.
 pub fn insert(params: &[Value]) -> NativeResult {
     match params {
-        [Value::String(target), Value::String(source), Value::Number(index)] => {
+        [
+            Value::String(target),
+            Value::String(source),
+            Value::Number(index),
+        ] => {
             let index = get_string_index(*index)?;
 
             if index > target.chars().count() {

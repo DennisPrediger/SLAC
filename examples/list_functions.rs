@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 
-use slac::stdlib::extend_environment;
 use slac::StaticEnvironment;
+use slac::stdlib::extend_environment;
 
 fn main() -> ExitCode {
     let mut env = StaticEnvironment::default();

@@ -3,10 +3,9 @@ mod test {
 
     use minify::json::minify;
     use slac::{
-        check_variables_and_functions, compile,
+        Expression, Operator, StaticEnvironment, check_variables_and_functions, compile,
         function::{Arity, Function},
         stdlib::NativeResult,
-        Expression, Operator, StaticEnvironment,
     };
 
     fn test_serialize(script: &str, expected: &str) {

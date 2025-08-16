@@ -40,8 +40,8 @@ use chrono::{
 };
 
 use crate::{
-    function::{Arity, Function},
     Value,
+    function::{Arity, Function},
 };
 
 use super::{
@@ -335,12 +335,14 @@ pub fn day_of_week(params: &[Value]) -> NativeResult {
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn encode_date(params: &[Value]) -> NativeResult {
     match params {
-        [Value::Number(year), Value::Number(month), Value::Number(day)] => {
-            NaiveDate::from_ymd_opt(*year as i32, *month as u32, *day as u32)
-                .map(|date| date.and_time(NaiveTime::default()))
-                .map(Value::from)
-                .ok_or(NativeError::from("invalid date parameters"))
-        }
+        [
+            Value::Number(year),
+            Value::Number(month),
+            Value::Number(day),
+        ] => NaiveDate::from_ymd_opt(*year as i32, *month as u32, *day as u32)
+            .map(|date| date.and_time(NaiveTime::default()))
+            .map(Value::from)
+            .ok_or(NativeError::from("invalid date parameters")),
         [_, _, _] => Err(NativeError::WrongParameterType),
         _ => Err(NativeError::WrongParameterCount(3)),
     }
@@ -364,7 +366,12 @@ pub fn encode_time(params: &[Value]) -> NativeResult {
     let milli = default_number(params, 3, 0.0)?;
 
     match params {
-        [Value::Number(hour), Value::Number(min), Value::Number(sec), ..] => NaiveDate::default()
+        [
+            Value::Number(hour),
+            Value::Number(min),
+            Value::Number(sec),
+            ..,
+        ] => NaiveDate::default()
             .and_hms_milli_opt(*hour as u32, *min as u32, *sec as u32, milli as u32)
             .map(Value::from)
             .ok_or(NativeError::from("invalid time parameters")),

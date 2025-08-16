@@ -7,11 +7,11 @@
 use regex_lite::{Captures, Regex};
 
 use crate::{
-    function::{Arity, Function},
     Value,
+    function::{Arity, Function},
 };
 
-use super::{default_number, default_string, usize_from_f64, NativeError, NativeResult};
+use super::{NativeError, NativeResult, default_number, default_string, usize_from_f64};
 
 /// Returns all regex functions as a fixed size array.
 #[rustfmt::skip]

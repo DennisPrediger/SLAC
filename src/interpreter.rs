@@ -1,5 +1,5 @@
 use crate::{
-    ast::Expression, environment::Environment, operator::Operator, value::Value, Error, Result,
+    Error, Result, ast::Expression, environment::Environment, operator::Operator, value::Value,
 };
 
 /// A simple recursive tree walking interpreter.
@@ -174,13 +174,13 @@ impl<'a> TreeWalkingInterpreter<'a> {
 #[cfg(test)]
 mod test {
     use crate::{
+        StaticEnvironment,
         ast::Expression,
         function::{Arity, Function},
         interpreter::TreeWalkingInterpreter,
         operator::Operator,
         stdlib::common::max,
         value::Value,
-        StaticEnvironment,
     };
 
     #[test]

@@ -1,8 +1,8 @@
 //! Functions to manipulate [`Value::String`] variables.
 
 use crate::{
-    function::{Arity, Function},
     Value,
+    function::{Arity, Function},
 };
 
 use super::error::{NativeError, NativeResult};

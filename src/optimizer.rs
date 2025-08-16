@@ -1,7 +1,7 @@
 //! Transformation routines to optimize an [`Expression`] AST.
 
 use crate::environment::{Environment, FunctionResult};
-use crate::{execute, Expression, Operator, Result};
+use crate::{Expression, Operator, Result, execute};
 
 use crate::stdlib::common::TERNARY_IF_THEN;
 

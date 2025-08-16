@@ -1,5 +1,5 @@
 #[cfg(feature = "serde")]
-use serde::{de::Visitor, ser::SerializeSeq, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::Visitor, ser::SerializeSeq};
 
 use std::{
     cmp::Ordering,
@@ -9,8 +9,8 @@ use std::{
 };
 
 use crate::{
-    error::{self, Error},
     Operator,
+    error::{self, Error},
 };
 
 /// A Wrapper for the four different possible variable types.

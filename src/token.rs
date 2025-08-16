@@ -39,7 +39,6 @@ pub enum Precedence {
     Primary,    // Literals
 }
 
-
 impl From<&Token> for Precedence {
     #[rustfmt::skip]
     fn from(token: &Token) -> Self {
@@ -50,7 +49,7 @@ impl From<&Token> for Precedence {
             Token::Greater | Token::GreaterEqual | Token::Less | Token::LessEqual => Precedence::Comparison,
             Token::And => Precedence::And,
             Token::Or => Precedence::Or,
-            Token::Xor => Precedence::Xor, 
+            Token::Xor => Precedence::Xor,
             Token::LeftParen => Precedence::Call,
             _ => Precedence::None,
         }

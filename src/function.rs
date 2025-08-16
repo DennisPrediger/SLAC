@@ -79,9 +79,9 @@ fn parse_declaration(declaration: &str) -> (String, String) {
 #[cfg(test)]
 mod test {
     use crate::{
+        Value,
         function::{Arity, Function},
         stdlib::NativeResult,
-        Value,
     };
 
     #[test]

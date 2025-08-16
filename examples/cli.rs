@@ -1,6 +1,6 @@
 use std::{env, process::ExitCode};
 
-use slac::{optimize, Result, Value};
+use slac::{Result, Value, optimize};
 
 fn execute(source: &str) -> Result<Value> {
     let mut ast = slac::compile(&source)?;

@@ -1,6 +1,6 @@
 //! Functions to perform calculations with [`Value::Number`] variables.
 
-use getrandom::{getrandom, Error};
+use getrandom::{Error, getrandom};
 
 use super::{
     default_number,
@@ -9,8 +9,8 @@ use super::{
 };
 
 use crate::{
-    function::{Arity, Function},
     Value,
+    function::{Arity, Function},
 };
 
 /// Returns all math functions.

@@ -1,9 +1,8 @@
 use slac::{
-    check_variables_and_functions, compile, execute,
+    Expression, Result, StaticEnvironment, Value, check_variables_and_functions, compile, execute,
     function::{Arity, Function},
     optimizer::optimize,
-    stdlib::{extend_environment, NativeResult},
-    Expression, Result, StaticEnvironment, Value,
+    stdlib::{NativeResult, extend_environment},
 };
 
 fn execute_raw(script: &str) -> Result<Value> {
