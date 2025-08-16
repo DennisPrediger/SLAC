@@ -115,7 +115,7 @@ fn main() {
 
 # Installation
 
-The minimum required Rust toolchain version is **1.70.0**. 
+The minimum required Rust toolchain version is **1.85.0**. 
 
 Use `cargo add slac` to install the library from [crates.io](https://crates.io/crates/slac) as a dependency in your application.
 

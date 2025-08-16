@@ -2,8 +2,8 @@
 name = "slac"
 version = "0.15.0"
 authors = ["Dennis Prediger <dennis.prediger@gmail.com>"]
-edition = "2021"
-rust-version = "1.70.0"
+edition = "2024"
+rust-version = "1.85.0"
 description = "The \"Simple Logic & Arithmetic Compiler\" transforms a single expression into an abstract syntax tree."
 categories = ["compilers", "parsing"]
 license = "Apache-2.0"
