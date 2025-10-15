@@ -1051,7 +1051,7 @@ mod test {
             Ok(Value::Number(4.0)),
             count(&vec![
                 Value::String(String::from(
-                    "How much wood would a woodchuck 
+                    "How much wood would a woodchuck
                      chuck if a woodchuck could chuck wood?"
                 )),
                 Value::String(String::from("wood"))
@@ -1124,11 +1124,12 @@ mod test {
             ])
         );
 
+        // `PartialEq for Value` matches *non empty string* to `true`
         assert_eq!(
-            Ok(Value::Number(-1.0)),
+            Ok(Value::Number(2.0)),
             find(&vec![
                 Value::Array(vec![
-                    Value::Boolean(true),
+                    Value::Boolean(false),
                     Value::Boolean(false),
                     Value::Boolean(true)
                 ]),

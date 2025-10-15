@@ -248,7 +248,7 @@ fn std_lib_count() {
     assert_execute("count('Donaudampfschifffahrtsgesellschaft', 'fff')", "1");
     assert_execute("count('', 'Hello')", "0");
     assert_execute("count([True, False, True, False], True)", "2");
-    assert_execute("count([True, False, True, False], 123)", "0");
+    assert_execute("count([True, False, True, False], 123)", "2");
     assert_execute("count([], 123)", "0");
 }
 
@@ -271,8 +271,8 @@ fn std_lib_full() {
     assert_bool(
         true,
         "
-            (abs(-11.2) = 11.2) and 
-            all([true, true]) and 
+            (abs(-11.2) = 11.2) and
+            all([true, true]) and
             any([true, false]) and
             bool(1) and
             not bool(0) and

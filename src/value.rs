@@ -38,14 +38,12 @@ impl Ord for Value {
             (Value::Array(left), Value::Array(right)) => left.partial_cmp(right),
 
             // allow comparison of strings and numbers if the string parses to a number
-            (Value::String(left), Value::Number(right)) => left
-                .parse::<f64>()
-                .ok()
-                .and_then(|left_num| left_num.partial_cmp(right)),
-            (Value::Number(left), Value::String(right)) => right
-                .parse::<f64>()
-                .ok()
-                .and_then(|right_num| left.partial_cmp(&right_num)),
+            (left @ Value::String(_), Value::Number(right)) => {
+                left.as_num().and_then(|parsed| parsed.partial_cmp(right))
+            }
+            (Value::Number(left), right @ Value::String(_)) => {
+                right.as_num().and_then(|parsed| left.partial_cmp(&parsed))
+            }
 
             _ => None,
         };
@@ -62,9 +60,15 @@ impl PartialEq for Value {
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Array(l0), Self::Array(r0)) => l0 == r0,
 
-            // allow equality of boolean and numbers by converting the boolean to 0 or 1
-            (Value::Boolean(left), Value::Number(right)) => f64::from(*left) == *right,
-            (Value::Number(left), Value::Boolean(right)) => *left == f64::from(*right),
+            // allow equality of `Value::Boolean` and non-empty values of other types
+            (Value::Boolean(bool), value) | (value, Value::Boolean(bool)) => {
+                *bool == value.as_bool()
+            }
+
+            // allow equality of `Value::Number` with other types
+            (Value::Number(number), value) | (value, Value::Number(number)) => {
+                Some(*number) == value.as_num()
+            }
 
             _ => self.cmp(other) == Ordering::Equal,
         }
@@ -239,6 +243,17 @@ impl Value {
         match self {
             Value::Boolean(v) => *v,
             value => !value.is_empty(),
+        }
+    }
+
+    /// Returns the number representation of the `Value`.
+    #[must_use]
+    fn as_num(&self) -> Option<f64> {
+        match self {
+            Value::Number(v) => Some(*v),
+            Value::Boolean(v) => Some(f64::from(*v)),
+            Value::String(v) => v.parse::<f64>().ok(),
+            Value::Array(v) => Some(v.len() as f64),
         }
     }
 
@@ -476,13 +491,60 @@ mod test {
     }
 
     #[test]
+    fn test_eq_number_string() {
+        assert_eq!(Value::Number(0.0), Value::String(String::from("0")));
+        assert_eq!(Value::Number(1.0), Value::String(String::from("1")));
+        assert_eq!(Value::Number(2.5), Value::String(String::from("2.5")));
+        assert_ne!(Value::Number(0.0), Value::String(String::from("1000")));
+        assert_ne!(Value::Number(1.5), Value::String(String::from("1,5")));
+    }
+
+    #[test]
     fn test_eq_boolean_number() {
-        assert!(Value::Boolean(true) == Value::Number(1.0));
-        assert!(Value::Boolean(false) == Value::Number(0.0));
-        assert!(Value::Boolean(true) != Value::Number(0.0));
-        assert!(Value::Boolean(false) != Value::Number(1.0));
-        assert!(Value::Boolean(true) != Value::Number(2.0));
-        assert!(Value::Boolean(false) != Value::Number(2.0));
+        assert_eq!(Value::Boolean(false), Value::Number(0.0));
+        assert_ne!(Value::Boolean(false), Value::Number(1.0));
+        assert_ne!(Value::Boolean(false), Value::Number(2.0));
+
+        assert_ne!(Value::Boolean(true), Value::Number(0.0));
+        assert_eq!(Value::Boolean(true), Value::Number(1.0));
+        assert_eq!(Value::Boolean(true), Value::Number(2.0));
+    }
+
+    #[test]
+    fn test_eq_array() {
+        assert_eq!(
+            Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
+            Value::Array(vec![Value::Boolean(true), Value::Boolean(false)])
+        );
+
+        assert_ne!(
+            Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
+            Value::Array(vec![Value::Boolean(true)])
+        );
+
+        assert_ne!(
+            Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
+            Value::Array(vec![Value::Boolean(false), Value::Boolean(true)])
+        );
+
+        assert_eq!(
+            Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
+            Value::Array(vec![Value::Number(3.0), Value::Number(0.0)])
+        );
+
+        assert_ne!(
+            Value::Array(vec![Value::Boolean(true), Value::Boolean(false)]),
+            Value::Array(vec![Value::Number(3.0), Value::Number(2.0)])
+        );
+    }
+
+    #[test]
+    fn test_eq_boolean_string() {
+        assert_eq!(Value::Boolean(false), Value::String(String::from("")));
+        assert_ne!(Value::Boolean(false), Value::String(String::from("abc")));
+
+        assert_eq!(Value::Boolean(true), Value::String(String::from("abc")));
+        assert_ne!(Value::Boolean(true), Value::String(String::from("")));
     }
 }
 
